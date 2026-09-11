@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerchQR Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>
+body{background:var(--bg);}
+.hidden{display:none!important;}
+
+/* ---- sign-in gate ---- */
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.gate-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:0 20px 45px -22px rgba(54,54,54,0.28);}
+.gate-card .wordmark{font-family:var(--display);font-weight:700;font-size:22px;color:var(--maroon);margin:0 0 20px;}
+.gate-card h2{font-family:var(--display);margin:0 0 18px;}
+.gate-card input{width:100%;padding:11px 14px;border:1px solid var(--line-bright);border-radius:10px;font-family:var(--body);font-size:14px;margin-bottom:10px;}
+.gate-card button{width:100%;margin-top:6px;}
+.gate-error{color:var(--maroon);font-size:13px;margin-top:10px;}
+
+/* ---- admin shell ---- */
+.admin-header{background:#fff;border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.admin-header .brand{display:flex;align-items:center;gap:12px;}
+.admin-header h1{font-family:var(--display);font-size:17px;margin:0;}
+.admin-wrap{max-width:1100px;margin:0 auto;padding:24px;}
+.tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.tab-btn{font-family:var(--display);font-weight:600;font-size:14px;padding:10px 16px;border:none;background:none;color:var(--charcoal-soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab-btn.active{color:var(--maroon);border-bottom-color:var(--maroon);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+.panel-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.btn-sm{font-family:var(--display);font-weight:600;font-size:13px;padding:9px 16px;border-radius:100px;border:1px solid var(--line-bright);background:#fff;color:var(--charcoal);cursor:pointer;}
+.btn-sm:hover{border-color:var(--maroon);color:var(--maroon);}
+.btn-sm.primary{background:var(--maroon);color:#fff;border-color:var(--maroon);}
+.btn-sm.primary:hover{background:var(--maroon-bright);}
+.btn-sm.danger:hover{border-color:#b3261e;color:#b3261e;}
+
+/* property / qr list rows */
+.list-row{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap;}
+.row-thumb{width:56px;height:56px;border-radius:8px;overflow:hidden;background:var(--bg);flex-shrink:0;}
+.row-thumb img{width:100%;height:100%;object-fit:cover;}
+.row-main{flex:1;min-width:180px;}
+.row-addr{font-weight:600;font-size:14px;}
+.row-meta{font-family:var(--mono);font-size:11.5px;color:var(--charcoal-soft);margin-top:3px;}
+.row-badges{font-size:12px;color:var(--charcoal-soft);margin-top:3px;}
+.row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line-bright);background:#fff;}
+.state-msg-inline{color:var(--charcoal-soft);font-family:var(--mono);font-size:13px;padding:20px 4px;}
+
+/* overlay / modal form */
+.overlay{position:fixed;inset:0;background:rgba(54,54,54,0.45);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .15s;}
+.overlay.open{opacity:1;pointer-events:auto;}
+.overlay-card{background:#fff;border-radius:var(--radius);max-width:720px;width:100%;padding:28px;margin-bottom:40px;}
+.overlay-card h2{font-family:var(--display);margin:0 0 18px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid .full{grid-column:1/-1;}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);margin-bottom:5px;}
+.field input, .field select, .field textarea{width:100%;padding:10px 12px;border:1px solid var(--line-bright);border-radius:10px;font-family:var(--body);font-size:14px;background:#fff;color:var(--charcoal);}
+.field textarea{resize:vertical;min-height:70px;font-family:var(--mono);font-size:12.5px;}
+.field-hint{font-size:11.5px;color:var(--charcoal-soft);margin-top:4px;}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+.missing-banner{background:var(--maroon-wash);color:var(--maroon);border:1px solid var(--maroon);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;}
+.thumb-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.thumb-chip{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line);}
+.thumb-chip img{width:100%;height:100%;object-fit:cover;}
+.thumb-chip button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--charcoal);color:#fff;padding:11px 20px;border-radius:100px;font-size:13px;opacity:0;transition:all .25s;z-index:500;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* connect-MLS status card */
+.mls-status{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;margin-bottom:18px;font-size:13.5px;}
+.mls-status.connected{background:#eaf6ec;color:#2a7a3b;border:1px solid #b6dfc0;}
+.mls-status.disconnected{background:var(--maroon-wash);color:var(--maroon);border:1px solid var(--maroon);}
+</style>
+</head>
+<body>
+
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="wordmark">PerchQR</div>
+    <h2>Admin sign in</h2>
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
+    <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn-sm primary" id="loginBtn" style="width:100%;">Sign in</button>
+    <div class="gate-error hidden" id="loginError"></div>
+  </div>
+</div>
+
+<div id="notAnAgent" class="gate hidden">
+  <div class="gate-card">
+    <div class="wordmark">PerchQR</div>
+    <p>You're signed in, but there's no PerchQR agent profile set up for this account yet. Ask Scott to add you.</p>
+    <button class="btn-sm" id="notAgentSignOutBtn" style="width:100%;">Sign out</button>
+  </div>
+</div>
+
+<div id="adminApp" class="hidden">
+  <div class="admin-header">
+    <div class="brand"><h1 id="adminTitle">PerchQR Admin</h1></div>
+    <button class="btn-sm" id="signOutBtn">Sign out</button>
+  </div>
+
+  <div class="admin-wrap">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="properties">Properties</button>
+      <button class="tab-btn" data-tab="mls">Connect MLS</button>
+      <button class="tab-btn" data-tab="testimonials">Testimonials</button>
+      <button class="tab-btn" data-tab="homepage">Home Page</button>
+      <button class="tab-btn" data-tab="qr">QR Codes</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-properties">
+      <div class="panel-toolbar">
+        <div></div>
+        <button class="btn-sm primary" id="addPropertyBtn">+ Add property</button>
+      </div>
+      <div id="propertyList"><div class="state-msg-inline">Loading&hellip;</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-mls">
+      <div class="overlay-card" style="max-width:560px;padding:24px;">
+        <h2 style="font-size:16px;">Connect your MLS</h2>
+        <div id="mlsStatus" class="mls-status disconnected">Not connected yet.</div>
+
+        <p class="field-hint" style="margin-bottom:16px;">
+          Get a free access token from your MLS's Spark Datamart
+          (<a href="https://sparkplatform.com/ticket" target="_blank" rel="noopener">sparkplatform.com/ticket</a>):
+          sign in, search for your board, subscribe to the free
+          "A Broker or Agent's Own Data" plan (or whatever your board calls its
+          own-data role), and paste the Access Token it gives you below. This
+          only needs doing once — it lets the "Pull in from MLS" button on the
+          Add Property form auto-fill a listing from its MLS number.
+        </p>
+
+        <div class="field" style="margin-bottom:12px;"><label>MLS / board name</label><input id="mls_name" placeholder="e.g. Washington County Board of REALTORS"></div>
+        <div class="field" style="margin-bottom:12px;"><label>Your Flexmls username (optional, for reference)</label><input id="mls_flexmls_username"></div>
+        <div class="field" style="margin-bottom:12px;"><label>Access Token</label><input id="mls_access_token" type="password" placeholder="Paste the token from Spark Datamart"></div>
+        <div class="field" style="margin-bottom:16px;"><label>API Feed ID (optional)</label><input id="mls_api_feed_id" placeholder="Only needed if support ever asks for it"></div>
+        <div class="field-hint" style="margin-bottom:16px;">Treat this token like a password — it's stored so only you (and PerchQR's server-side lookup) can use it, never shown publicly.</div>
+
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button class="btn-sm primary" id="mlsSaveBtn">Save connection</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-testimonials">
+      <div class="panel-toolbar">
+        <div></div>
+        <button class="btn-sm primary" id="addTestimonialBtn">+ Add testimonial</button>
+      </div>
+      <div id="testimonialList"><div class="state-msg-inline">Loading&hellip;</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-homepage">
+      <div class="overlay-card" style="max-width:560px;padding:24px;">
+        <h2 style="font-size:16px;">Home page welcome video</h2>
+        <p class="field-hint" style="margin-bottom:16px;">Optional. Shown at the top of your homepage; if you don't upload one, that space is simply left out.</p>
+
+        <div class="field" style="margin-bottom:8px;">
+          <label>Welcome video</label>
+          <input type="file" id="homeVideoFile" accept="video/*">
+          <div id="homeVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
+        </div>
+
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button class="btn-sm primary" id="homeVideoSaveBtn">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-qr">
+      <div class="panel-toolbar">
+        <div></div>
+        <button class="btn-sm primary" id="qrNewBtn">+ New QR code</button>
+      </div>
+      <div id="qrList"><div class="state-msg-inline">Loading&hellip;</div></div>
+
+      <h2 style="font-size:16px;margin:28px 0 10px;">Recent scans</h2>
+      <p class="field-hint" style="margin-bottom:12px;">Every time someone scans one of your QR codes, it's logged here.</p>
+      <div id="qrScanList"><div class="state-msg-inline">Loading&hellip;</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Property add/edit form -->
+<div class="overlay" id="propertyOverlay">
+  <div class="overlay-card">
+    <h2 id="propertyFormTitle">Add property</h2>
+    <div id="missingBanner" class="missing-banner hidden"></div>
+
+    <div class="field full" id="mlsLookupSection">
+      <label>Pull in from MLS (optional)</label>
+      <div style="display:flex;gap:8px;">
+        <input id="f_mls_lookup" placeholder="MLS #" style="flex:1;">
+        <button type="button" class="btn-sm primary" id="mlsLookupBtn" style="white-space:nowrap;">Fetch listing</button>
+      </div>
+      <div class="field-hint" id="mlsLookupStatus">Pulls the listing details and photos straight from the MLS feed. Review everything below before saving — this only fills in the form, it doesn't save anything by itself. Requires connecting your MLS first (see the Connect MLS tab).</div>
+    </div>
+
+    <div class="field full">
+      <label>Import from MLS listing sheet (PDF, optional)</label>
+      <input type="file" id="f_pdf_import" accept="application/pdf">
+      <div class="field-hint" id="pdfImportStatus">Best-effort — always review every field afterward. Can't extract the photo; add that separately.</div>
+    </div>
+
+    <div class="form-grid" style="margin-top:16px;">
+      <div class="field full">
+        <label>Hero photo</label>
+        <input type="file" id="f_hero" accept="image/*">
+        <div id="heroPreview" class="thumb-strip"></div>
+      </div>
+      <div class="field full">
+        <label>Additional photos (up to 10 total)</label>
+        <input type="file" id="f_gallery" accept="image/*" multiple>
+        <div id="galleryPreview" class="thumb-strip"></div>
+      </div>
+      <div class="field full">
+        <label>Video (optional)</label>
+        <input type="file" id="f_video" accept="video/*">
+        <div id="videoPreview" class="field-hint"></div>
+      </div>
+      <div class="field full"><label>Matterport 3D tour URL</label><input id="f_matterport_url"></div>
+
+      <div class="field"><label>Street address *</label><input id="f_addr"></div>
+      <div class="field"><label>City, State ZIP *</label><input id="f_city"></div>
+
+      <div class="field full" style="display:flex;gap:10px;align-items:flex-end;">
+        <div style="flex:1;"><label>Latitude</label><input id="f_lat"></div>
+        <div style="flex:1;"><label>Longitude</label><input id="f_lng"></div>
+        <button type="button" class="btn-sm" id="lookupCoordsBtn" style="white-space:nowrap;">Look up from address</button>
+        <button type="button" class="btn-sm" id="useMyLocationBtn" style="white-space:nowrap;" title="Stand at the property with this page open on your phone">📍 Use my location</button>
+      </div>
+      <div class="field full" id="coordsAccuracyNote" style="margin-top:-8px;"></div>
+
+      <div class="field"><label>Price *</label><input id="f_price"></div>
+      <div class="field"><label>Original price</label><input id="f_orig_price"></div>
+
+      <div class="field"><label>Status *</label>
+        <select id="f_status"><option>Active</option><option>Pending</option><option>Sold</option></select>
+      </div>
+      <div class="field"><label>Type *</label>
+        <select id="f_type"><option value="residential">Residential</option><option value="land">Land</option><option value="business">Business Opportunity</option></select>
+      </div>
+
+      <div class="field"><label>MLS #</label><input id="f_mls"></div>
+      <div class="field"><label>Elevation</label><input id="f_elev"></div>
+      <div class="field"><label>Beds</label><input id="f_beds"></div>
+      <div class="field"><label>Baths</label><input id="f_baths"></div>
+      <div class="field"><label>SqFt</label><input id="f_sqft"></div>
+      <div class="field"><label>Lot</label><input id="f_lot"></div>
+      <div class="field"><label>Subdivision</label><input id="f_subdivision"></div>
+      <div class="field"><label>Year built</label><input id="f_year_built"></div>
+      <div class="field full"><label>Listed date</label><input id="f_listed"></div>
+
+      <div class="field full"><label>Card blurb *</label><input id="f_blurb"></div>
+      <div class="field full"><label>Full description *</label><textarea id="f_public_remarks"></textarea></div>
+
+      <div class="field full">
+        <label>Property details (one "Label: Value" per line)</label>
+        <textarea id="f_facts"></textarea>
+      </div>
+      <div class="field full">
+        <label>Room list (one per line)</label>
+        <textarea id="f_rooms"></textarea>
+      </div>
+
+      <div class="field"><label>Client testimonial (Sold only)</label><textarea id="f_testimonial"></textarea></div>
+      <div class="field"><label>Testimonial from</label><input id="f_testimonial_name"></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-sm" id="propertyCancelBtn">Cancel</button>
+      <button class="btn-sm primary" id="propertySaveBtn">Save property</button>
+    </div>
+  </div>
+</div>
+
+<!-- Testimonial add/edit form -->
+<div class="overlay" id="testimonialOverlay">
+  <div class="overlay-card" style="max-width:480px;">
+    <h2 id="testimonialFormTitle">Add testimonial</h2>
+    <div class="field" style="margin-bottom:12px;"><label>Client name</label><input id="t_client_name" placeholder="e.g. The Hendersons"></div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Related property (optional)</label>
+      <select id="t_property_id"><option value="">None</option></select>
+    </div>
+    <div class="field" style="margin-bottom:12px;"><label>Testimonial</label><textarea id="t_quote" rows="4" placeholder="Paste the client's testimonial here"></textarea></div>
+    <div class="form-actions">
+      <button class="btn-sm" id="testimonialCancelBtn">Cancel</button>
+      <button class="btn-sm primary" id="testimonialSaveBtn">Save testimonial</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR code form -->
+<div class="overlay" id="qrFormOverlay">
+  <div class="overlay-card" style="max-width:420px;">
+    <h2>New QR code</h2>
+    <div class="field" style="margin-bottom:12px;"><label>Label</label><input id="qr_label" placeholder="e.g. Yard sign — Steam Engine"></div>
+    <div class="field" style="margin-bottom:12px;"><label>Destination</label><input id="qr_url" placeholder="e.g. your listing's page, or your homepage"><div class="field-hint">Where this code sends visitors. Paste any PerchQR page — a specific listing, or your homepage.</div></div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Center logo (optional)</label>
+      <input type="file" id="qr_logo" accept="image/*">
+      <div class="field-hint">Defaults to no logo. Uses a white backdrop so the code stays scannable.</div>
+    </div>
+    <button class="btn-sm primary" id="qrGenerateBtn" style="width:100%;">Generate preview</button>
+    <div id="qrResultWrap" style="display:none;flex-direction:column;align-items:center;gap:14px;margin-top:16px;">
+      <div id="qrCodeContainer"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-sm" id="qrFormCancelBtn">Cancel</button>
+      <button class="btn-sm primary hidden" id="qrSaveBtn">Save &amp; download</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2600);
+}
+
+function slugify(s) {
+  return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'item';
+}
+function randSuffix() { return Math.random().toString(36).slice(2, 6); }
+
+/* ============================================================
+   Auth — sign in, then load THIS user's `agents` row. Every query
+   below is scoped by AGENT.id, and RLS backs that up server-side.
+   ============================================================ */
+const gate = document.getElementById('gate');
+const notAnAgent = document.getElementById('notAnAgent');
+const adminApp = document.getElementById('adminApp');
+let AGENT = null;
+
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    gate.classList.remove('hidden');
+    notAnAgent.classList.add('hidden');
+    adminApp.classList.add('hidden');
+    return;
+  }
+  const { data: agent, error } = await sb.from('agents').select('*').eq('id', session.user.id).maybeSingle();
+  if (error || !agent) {
+    gate.classList.add('hidden');
+    notAnAgent.classList.remove('hidden');
+    adminApp.classList.add('hidden');
+    if (error) console.error(error);
+    return;
+  }
+  AGENT = agent;
+  gate.classList.add('hidden');
+  notAnAgent.classList.add('hidden');
+  adminApp.classList.remove('hidden');
+  document.getElementById('adminTitle').textContent = `${agent.display_name} — Admin`;
+  loadProperties();
+  loadMlsStatus();
+  loadQrCodes();
+  loadQrScans();
+  loadTestimonials();
+  loadHomeSettings();
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+  checkAuth();
+});
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('loginBtn').click();
+});
+document.getElementById('signOutBtn').addEventListener('click', async () => { await sb.auth.signOut(); checkAuth(); });
+document.getElementById('notAgentSignOutBtn').addEventListener('click', async () => { await sb.auth.signOut(); checkAuth(); });
+checkAuth();
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   Storage helpers — every path is prefixed with AGENT.id so the
+   storage.objects RLS policies (first path segment = auth.uid()) hold.
+   ============================================================ */
+async function uploadFile(bucket, propId, kind, file) {
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const path = `${AGENT.id}/${propId}/${kind}-${Date.now()}-${randSuffix()}.${ext}`;
+  const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type || undefined });
+  if (error) throw error;
+  return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+/* ============================================================
+   Properties: list + quick status
+   ============================================================ */
+let PROPERTIES = [];
+
+async function loadProperties() {
+  const { data, error } = await sb.from('properties').select('*').eq('agent_id', AGENT.id).order('created_at', { ascending: true });
+  const listEl = document.getElementById('propertyList');
+  if (error) { listEl.innerHTML = '<div class="state-msg-inline">Could not load properties.</div>'; console.error(error); return; }
+  PROPERTIES = data || [];
+  renderPropertyList();
+}
+
+function renderPropertyList() {
+  const listEl = document.getElementById('propertyList');
+  if (!PROPERTIES.length) { listEl.innerHTML = '<div class="state-msg-inline">No properties yet — add your first one above.</div>'; return; }
+  listEl.innerHTML = PROPERTIES.map(p => {
+    const badges = [];
+    if (p.video_url) badges.push('🎥 video');
+    if ((p.gallery_photo_urls || []).length) badges.push(`📷 +${p.gallery_photo_urls.length}`);
+    if (p.matterport_url) badges.push('🏠 3D tour');
+    return `<div class="list-row" data-id="${p.id}">
+      <div class="row-thumb"><img src="${Perch.esc(p.hero_photo_url || '')}" alt=""></div>
+      <div class="row-main">
+        <div class="row-addr">${Perch.esc(p.addr)}</div>
+        <div class="row-meta">${Perch.esc(p.price)} &middot; ${Perch.TYPE_LABEL[p.type] || p.type}${p.mls ? ' &middot; MLS #' + Perch.esc(p.mls) : ''}</div>
+        ${badges.length ? `<div class="row-badges">${badges.join(' &middot; ')}</div>` : ''}
+      </div>
+      <div class="row-actions">
+        <select class="qstatus" data-id="${p.id}">
+          <option value="Active"${p.status === 'Active' ? ' selected' : ''}>Active</option>
+          <option value="Pending"${p.status === 'Pending' ? ' selected' : ''}>Pending</option>
+          <option value="Sold"${p.status === 'Sold' ? ' selected' : ''}>Sold</option>
+        </select>
+        <button class="btn-sm" data-preview="${p.id}">Preview</button>
+        <button class="btn-sm" data-edit="${p.id}">Edit</button>
+        <button class="btn-sm danger" data-delete="${p.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('.qstatus').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const id = sel.dataset.id;
+      const p = PROPERTIES.find(x => x.id === id);
+      const prev = p.status;
+      const next = sel.value;
+      p.status = next;
+      const { error } = await sb.from('properties').update({ status: next }).eq('id', id);
+      if (error) { p.status = prev; sel.value = prev; toast('Could not update status'); console.error(error); }
+      else toast('Status updated');
+    });
+  });
+  listEl.querySelectorAll('[data-preview]').forEach(btn => btn.addEventListener('click', () => window.open(`/${AGENT.slug}/listing?id=${encodeURIComponent(btn.dataset.preview)}`, '_blank')));
+  listEl.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openPropertyForm(btn.dataset.edit)));
+  listEl.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteProperty(btn.dataset.delete)));
+}
+
+async function deleteProperty(id) {
+  const p = PROPERTIES.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Delete "${p.addr}"? This can't be undone.`)) return;
+  const { error } = await sb.from('properties').delete().eq('id', id);
+  if (error) { toast('Delete failed'); console.error(error); return; }
+  PROPERTIES = PROPERTIES.filter(x => x.id !== id);
+  renderPropertyList();
+  toast('Property deleted');
+}
+
+/* ============================================================
+   Property add/edit form
+   ============================================================ */
+const propertyOverlay = document.getElementById('propertyOverlay');
+let editingId = null;
+let heroFile = null, heroExistingUrl = null;
+let galleryFiles = [];
+let videoFile = null, videoExistingUrl = null, videoRemoved = false;
+
+const FIELD_IDS = ['addr','city','lat','lng','price','orig_price','status','type','mls','elev','beds','baths',
+  'sqft','lot','subdivision','year_built','listed','blurb','public_remarks','facts','rooms',
+  'testimonial','testimonial_name','matterport_url'];
+
+function resetPropertyForm() {
+  FIELD_IDS.forEach(id => { const el = document.getElementById('f_' + id); if (el) el.value = ''; });
+  document.getElementById('f_status').value = 'Active';
+  document.getElementById('f_type').value = 'residential';
+  document.getElementById('missingBanner').classList.add('hidden');
+  document.getElementById('pdfImportStatus').textContent = "Best-effort — always review every field afterward. Can't extract the photo; add that separately.";
+  document.getElementById('f_mls_lookup').value = '';
+  document.getElementById('mlsLookupStatus').textContent = "Pulls the listing details and photos straight from the MLS feed. Review everything below before saving — this only fills in the form, it doesn't save anything by itself. Requires connecting your MLS first (see the Connect MLS tab).";
+  document.getElementById('f_pdf_import').value = '';
+  document.getElementById('coordsAccuracyNote').innerHTML = '';
+  heroFile = null; heroExistingUrl = null;
+  galleryFiles = [];
+  videoFile = null; videoExistingUrl = null; videoRemoved = false;
+  renderHeroPreview(); renderGalleryPreview(); renderVideoPreview();
+}
+
+function renderHeroPreview() {
+  const src = heroFile ? URL.createObjectURL(heroFile) : heroExistingUrl;
+  document.getElementById('heroPreview').innerHTML = src ? `<div class="thumb-chip"><img src="${src}"></div>` : '';
+}
+function renderGalleryPreview() {
+  document.getElementById('galleryPreview').innerHTML = galleryFiles.map((g, i) => {
+    const src = g.file ? URL.createObjectURL(g.file) : g.url;
+    return `<div class="thumb-chip"><img src="${src}"><button type="button" data-remove-gallery="${i}">&times;</button></div>`;
+  }).join('');
+  document.querySelectorAll('[data-remove-gallery]').forEach(btn => btn.addEventListener('click', () => {
+    galleryFiles.splice(parseInt(btn.dataset.removeGallery, 10), 1);
+    renderGalleryPreview();
+  }));
+}
+function renderVideoPreview() {
+  const el = document.getElementById('videoPreview');
+  if (videoFile) el.textContent = `Selected: ${videoFile.name} (${(videoFile.size / 1024 / 1024).toFixed(1)} MB)`;
+  else if (videoExistingUrl && !videoRemoved) el.innerHTML = `Current video attached. <a href="#" id="removeVideoLink">Remove</a>`;
+  else el.textContent = '';
+  const removeLink = document.getElementById('removeVideoLink');
+  if (removeLink) removeLink.addEventListener('click', (e) => { e.preventDefault(); videoRemoved = true; renderVideoPreview(); });
+}
+
+document.getElementById('f_hero').addEventListener('change', (e) => { heroFile = e.target.files[0] || null; renderHeroPreview(); });
+document.getElementById('f_gallery').addEventListener('change', (e) => {
+  const existingCount = galleryFiles.length;
+  const room = 10 - existingCount;
+  const picked = Array.from(e.target.files).slice(0, Math.max(room, 0));
+  if (e.target.files.length > room) toast(`Only ${room} more photo(s) can be added (10 max).`);
+  picked.forEach(file => galleryFiles.push({ file }));
+  e.target.value = '';
+  renderGalleryPreview();
+});
+document.getElementById('f_video').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 60 * 1024 * 1024) toast('That video is over 60MB — it will still upload, but consider a smaller file for faster loading.');
+  videoFile = file; videoRemoved = false;
+  renderVideoPreview();
+});
+
+function openPropertyForm(id) {
+  resetPropertyForm();
+  editingId = id || null;
+  document.getElementById('propertyFormTitle').textContent = id ? 'Edit property' : 'Add property';
+  document.getElementById('mlsLookupSection').classList.toggle('hidden', !!id);
+  if (id) {
+    const p = PROPERTIES.find(x => x.id === id);
+    document.getElementById('f_addr').value = p.addr || '';
+    document.getElementById('f_city').value = p.city || '';
+    document.getElementById('f_lat').value = p.lat ?? '';
+    document.getElementById('f_lng').value = p.lng ?? '';
+    if (p.lat && p.lng) showCoordsNote(`Currently saved. <a href="${mapLink(p.lat, p.lng)}" target="_blank" rel="noopener">Check on map &rarr;</a>`);
+    document.getElementById('f_price').value = p.price || '';
+    document.getElementById('f_orig_price').value = p.orig_price || '';
+    document.getElementById('f_status').value = p.status || 'Active';
+    document.getElementById('f_type').value = p.type || 'residential';
+    document.getElementById('f_mls').value = p.mls || '';
+    document.getElementById('f_elev').value = p.elev || '';
+    document.getElementById('f_beds').value = p.beds || '';
+    document.getElementById('f_baths').value = p.baths || '';
+    document.getElementById('f_sqft').value = p.sqft || '';
+    document.getElementById('f_lot').value = p.lot || '';
+    document.getElementById('f_subdivision').value = p.subdivision || '';
+    document.getElementById('f_year_built').value = p.year_built || '';
+    document.getElementById('f_listed').value = p.listed || '';
+    document.getElementById('f_blurb').value = p.blurb || '';
+    document.getElementById('f_public_remarks').value = p.public_remarks || '';
+    document.getElementById('f_facts').value = (p.facts || []).map(([k, v]) => `${k}: ${v}`).join('\n');
+    document.getElementById('f_rooms').value = (p.rooms || []).join('\n');
+    document.getElementById('f_testimonial').value = p.testimonial || '';
+    document.getElementById('f_testimonial_name').value = p.testimonial_name || '';
+    document.getElementById('f_matterport_url').value = p.matterport_url || '';
+    heroExistingUrl = p.hero_photo_url || null;
+    galleryFiles = (p.gallery_photo_urls || []).map(url => ({ url }));
+    videoExistingUrl = p.video_url || null;
+    renderHeroPreview(); renderGalleryPreview(); renderVideoPreview();
+  }
+  propertyOverlay.classList.add('open');
+}
+document.getElementById('addPropertyBtn').addEventListener('click', () => openPropertyForm(null));
+document.getElementById('propertyCancelBtn').addEventListener('click', () => propertyOverlay.classList.remove('open'));
+
+document.getElementById('mlsLookupBtn').addEventListener('click', async () => {
+  const mlsNumber = document.getElementById('f_mls_lookup').value.trim();
+  const statusEl = document.getElementById('mlsLookupStatus');
+  const btn = document.getElementById('mlsLookupBtn');
+  if (!mlsNumber) { toast('Enter an MLS number first'); return; }
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  statusEl.textContent = 'Looking up the listing and downloading photos — this can take a few seconds…';
+  try {
+    const { data, error } = await sb.functions.invoke('mls-lookup', { body: { mlsNumber } });
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+    const p = data.data;
+    document.getElementById('f_addr').value = p.addr || '';
+    document.getElementById('f_city').value = p.city || '';
+    document.getElementById('f_price').value = p.price || '';
+    document.getElementById('f_status').value = p.status || 'Active';
+    document.getElementById('f_type').value = p.type || 'residential';
+    document.getElementById('f_mls').value = p.mls || '';
+    document.getElementById('f_beds').value = p.beds || '';
+    document.getElementById('f_baths').value = p.baths || '';
+    document.getElementById('f_sqft').value = p.sqft || '';
+    document.getElementById('f_lot').value = p.lot || '';
+    document.getElementById('f_subdivision').value = p.subdivision || '';
+    document.getElementById('f_year_built').value = p.year_built || '';
+    document.getElementById('f_listed').value = p.listed || '';
+    document.getElementById('f_blurb').value = p.blurb || '';
+    document.getElementById('f_public_remarks').value = p.public_remarks || '';
+    document.getElementById('f_facts').value = (p.facts || []).map(([k, v]) => `${k}: ${v}`).join('\n');
+    document.getElementById('f_rooms').value = (p.rooms || []).join('\n');
+    if (p.lat != null) document.getElementById('f_lat').value = p.lat;
+    if (p.lng != null) document.getElementById('f_lng').value = p.lng;
+    if (p.lat != null && p.lng != null) showCoordsNote(`Pulled from MLS. <a href="${mapLink(p.lat, p.lng)}" target="_blank" rel="noopener">Check on map &rarr;</a>`);
+    heroExistingUrl = p.hero_photo_url || null;
+    galleryFiles = (p.gallery_photo_urls || []).map(url => ({ url }));
+    renderHeroPreview(); renderGalleryPreview();
+    statusEl.textContent = 'Pulled in — review every field below before saving.';
+    toast('Listing pulled in from MLS');
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = err.message && err.message.includes('MLS') ? err.message : "Couldn't find or fetch that listing — double check the MLS number and that you're connected (Connect MLS tab).";
+  } finally {
+    btn.disabled = false; btn.textContent = 'Fetch listing';
+  }
+});
+
+function parseFacts(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const idx = line.indexOf(':');
+    if (idx === -1) return [line, ''];
+    return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
+  });
+}
+function parseRooms(text) {
+  return text.split('\n').map(l => l.trim()).filter(Boolean);
+}
+
+document.getElementById('propertySaveBtn').addEventListener('click', async () => {
+  const val = id => document.getElementById('f_' + id).value.trim();
+  const required = { addr: val('addr'), city: val('city'), price: val('price'), blurb: val('blurb'), public_remarks: val('public_remarks') };
+  const missing = Object.entries(required).filter(([, v]) => !v).map(([k]) => k);
+  const banner = document.getElementById('missingBanner');
+  if (missing.length) {
+    banner.textContent = 'Please fill in: ' + missing.join(', ');
+    banner.classList.remove('hidden');
+    return;
+  }
+  banner.classList.add('hidden');
+
+  const saveBtn = document.getElementById('propertySaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    const id = editingId || (slugify(val('addr')) + '-' + randSuffix());
+
+    let heroUrl = heroExistingUrl;
+    if (heroFile) heroUrl = await uploadFile('property-photos', id, 'hero', heroFile);
+
+    const galleryUrls = [];
+    for (const g of galleryFiles) {
+      if (g.url) galleryUrls.push(g.url);
+      else galleryUrls.push(await uploadFile('property-photos', id, 'gallery', g.file));
+    }
+
+    let videoUrl = videoRemoved ? null : videoExistingUrl;
+    if (videoFile) videoUrl = await uploadFile('property-videos', id, 'video', videoFile);
+
+    const row = {
+      id,
+      agent_id: AGENT.id,
+      addr: required.addr,
+      city: required.city,
+      price: required.price,
+      orig_price: val('orig_price') || required.price,
+      status: val('status') || 'Active',
+      type: val('type') || 'residential',
+      mls: val('mls'),
+      elev: val('elev'),
+      beds: val('beds'),
+      baths: val('baths'),
+      sqft: val('sqft'),
+      lot: val('lot'),
+      subdivision: val('subdivision'),
+      year_built: val('year_built'),
+      listed: val('listed'),
+      blurb: required.blurb,
+      public_remarks: required.public_remarks,
+      facts: parseFacts(document.getElementById('f_facts').value),
+      rooms: parseRooms(document.getElementById('f_rooms').value),
+      lat: val('lat') ? parseFloat(val('lat')) : null,
+      lng: val('lng') ? parseFloat(val('lng')) : null,
+      matterport_url: val('matterport_url') || null,
+      testimonial: val('testimonial') || null,
+      testimonial_name: val('testimonial_name') || null,
+      hero_photo_url: heroUrl,
+      gallery_photo_urls: galleryUrls,
+      video_url: videoUrl,
+    };
+
+    const { error } = await sb.from('properties').upsert(row);
+    if (error) throw error;
+
+    propertyOverlay.classList.remove('open');
+    toast(editingId ? 'Property updated' : 'Property added');
+    await loadProperties();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save property';
+  }
+});
+
+/* ============================================================
+   Connect MLS
+   ============================================================ */
+async function loadMlsStatus() {
+  const { data, error } = await sb.from('mls_credentials').select('mls_name, flexmls_username, api_feed_id, connected_at').eq('agent_id', AGENT.id).maybeSingle();
+  const statusEl = document.getElementById('mlsStatus');
+  if (error) { console.error(error); return; }
+  if (data) {
+    statusEl.className = 'mls-status connected';
+    statusEl.textContent = `Connected to ${data.mls_name}${data.flexmls_username ? ' as ' + data.flexmls_username : ''} (since ${new Date(data.connected_at).toLocaleDateString()}).`;
+    document.getElementById('mls_name').value = data.mls_name || '';
+    document.getElementById('mls_flexmls_username').value = data.flexmls_username || '';
+    document.getElementById('mls_api_feed_id').value = data.api_feed_id || '';
+    document.getElementById('mls_access_token').placeholder = 'Leave blank to keep your current token';
+  } else {
+    statusEl.className = 'mls-status disconnected';
+    statusEl.textContent = 'Not connected yet — the MLS lookup on the Add Property form needs this first.';
+  }
+}
+
+document.getElementById('mlsSaveBtn').addEventListener('click', async () => {
+  const mls_name = document.getElementById('mls_name').value.trim();
+  const flexmls_username = document.getElementById('mls_flexmls_username').value.trim();
+  const access_token = document.getElementById('mls_access_token').value.trim();
+  const api_feed_id = document.getElementById('mls_api_feed_id').value.trim();
+  if (!mls_name) { toast('Enter your MLS/board name'); return; }
+
+  const saveBtn = document.getElementById('mlsSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    // Fetch any existing token first so leaving the field blank on a
+    // reconnect (to update the board name, say) doesn't wipe it out.
+    let tokenToSave = access_token;
+    if (!tokenToSave) {
+      const { data: existing } = await sb.from('mls_credentials').select('access_token').eq('agent_id', AGENT.id).maybeSingle();
+      if (!existing) { toast('Paste an access token first'); saveBtn.disabled = false; saveBtn.textContent = 'Save connection'; return; }
+      tokenToSave = existing.access_token;
+    }
+    const { error } = await sb.from('mls_credentials').upsert({
+      agent_id: AGENT.id,
+      mls_name,
+      flexmls_username: flexmls_username || null,
+      access_token: tokenToSave,
+      api_feed_id: api_feed_id || null,
+    });
+    if (error) throw error;
+    document.getElementById('mls_access_token').value = '';
+    toast('MLS connection saved');
+    await loadMlsStatus();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save connection';
+  }
+});
+
+/* ============================================================
+   Testimonials
+   ============================================================ */
+let TESTIMONIALS = [];
+const testimonialOverlay = document.getElementById('testimonialOverlay');
+let editingTestimonialId = null;
+
+async function loadTestimonials() {
+  const { data, error } = await sb.from('testimonials').select('*').eq('agent_id', AGENT.id).order('created_at', { ascending: false });
+  const listEl = document.getElementById('testimonialList');
+  if (error) { listEl.innerHTML = '<div class="state-msg-inline">Could not load testimonials.</div>'; console.error(error); return; }
+  TESTIMONIALS = data || [];
+  renderTestimonialList();
+}
+
+function renderTestimonialList() {
+  const listEl = document.getElementById('testimonialList');
+  if (!TESTIMONIALS.length) { listEl.innerHTML = '<div class="state-msg-inline">No testimonials yet — add your first one above.</div>'; return; }
+  listEl.innerHTML = TESTIMONIALS.map(t => {
+    const prop = (PROPERTIES || []).find(p => p.id === t.property_id);
+    return `<div class="list-row" data-id="${t.id}">
+      <div class="row-main">
+        <div class="row-addr">${Perch.esc(t.client_name)}</div>
+        <div class="row-meta" style="font-family:var(--body);font-style:italic;">&ldquo;${Perch.esc(t.quote.length > 120 ? t.quote.slice(0, 117) + '…' : t.quote)}&rdquo;</div>
+        ${prop ? `<div class="row-badges">Re: ${Perch.esc(prop.addr)}</div>` : ''}
+      </div>
+      <div class="row-actions">
+        <button class="btn-sm" data-edit-t="${t.id}">Edit</button>
+        <button class="btn-sm danger" data-delete-t="${t.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('[data-edit-t]').forEach(btn => btn.addEventListener('click', () => openTestimonialForm(btn.dataset.editT)));
+  listEl.querySelectorAll('[data-delete-t]').forEach(btn => btn.addEventListener('click', () => deleteTestimonial(btn.dataset.deleteT)));
+}
+
+async function deleteTestimonial(id) {
+  const t = TESTIMONIALS.find(x => x.id === id);
+  if (!t || !confirm(`Delete the testimonial from "${t.client_name}"?`)) return;
+  const { error } = await sb.from('testimonials').delete().eq('id', id);
+  if (error) { toast('Delete failed'); console.error(error); return; }
+  TESTIMONIALS = TESTIMONIALS.filter(x => x.id !== id);
+  renderTestimonialList();
+  toast('Testimonial deleted');
+}
+
+function openTestimonialForm(id) {
+  editingTestimonialId = id || null;
+  document.getElementById('testimonialFormTitle').textContent = id ? 'Edit testimonial' : 'Add testimonial';
+  const propSelect = document.getElementById('t_property_id');
+  propSelect.innerHTML = '<option value="">None</option>' + (PROPERTIES || []).map(p => `<option value="${p.id}">${Perch.esc(p.addr)}</option>`).join('');
+  if (id) {
+    const t = TESTIMONIALS.find(x => x.id === id);
+    document.getElementById('t_client_name').value = t.client_name || '';
+    document.getElementById('t_quote').value = t.quote || '';
+    propSelect.value = t.property_id || '';
+  } else {
+    document.getElementById('t_client_name').value = '';
+    document.getElementById('t_quote').value = '';
+    propSelect.value = '';
+  }
+  testimonialOverlay.classList.add('open');
+}
+document.getElementById('addTestimonialBtn').addEventListener('click', () => openTestimonialForm(null));
+document.getElementById('testimonialCancelBtn').addEventListener('click', () => testimonialOverlay.classList.remove('open'));
+
+document.getElementById('testimonialSaveBtn').addEventListener('click', async () => {
+  const client_name = document.getElementById('t_client_name').value.trim();
+  const quote = document.getElementById('t_quote').value.trim();
+  const property_id = document.getElementById('t_property_id').value || null;
+  if (!client_name || !quote) { toast('Enter a client name and testimonial'); return; }
+  const saveBtn = document.getElementById('testimonialSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    const row = { client_name, quote, property_id, agent_id: AGENT.id };
+    let error;
+    if (editingTestimonialId) {
+      ({ error } = await sb.from('testimonials').update(row).eq('id', editingTestimonialId));
+    } else {
+      ({ error } = await sb.from('testimonials').insert(row));
+    }
+    if (error) throw error;
+    testimonialOverlay.classList.remove('open');
+    toast(editingTestimonialId ? 'Testimonial updated' : 'Testimonial added');
+    await loadTestimonials();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save testimonial';
+  }
+});
+
+/* ============================================================
+   Home page settings (welcome video) — agent_settings, one row per agent
+   ============================================================ */
+let homeVideoFile = null;
+
+async function loadHomeSettings() {
+  const { data, error } = await sb.from('agent_settings').select('home_video_url').eq('agent_id', AGENT.id).maybeSingle();
+  const statusEl = document.getElementById('homeVideoStatus');
+  if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
+  statusEl.textContent = (data && data.home_video_url) ? 'A video is currently set.' : 'No video uploaded yet.';
+}
+
+document.getElementById('homeVideoFile').addEventListener('change', (e) => {
+  homeVideoFile = e.target.files[0] || null;
+  const statusEl = document.getElementById('homeVideoStatus');
+  if (homeVideoFile) statusEl.textContent = `Selected: ${homeVideoFile.name} (${(homeVideoFile.size / 1024 / 1024).toFixed(1)} MB) — click Save to upload.`;
+});
+
+document.getElementById('homeVideoSaveBtn').addEventListener('click', async () => {
+  const saveBtn = document.getElementById('homeVideoSaveBtn');
+  if (!homeVideoFile) { toast('Choose a video file first'); return; }
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    const url = await uploadFile('property-videos', 'home-page', 'video', homeVideoFile);
+    const { error } = await sb.from('agent_settings').upsert({ agent_id: AGENT.id, home_video_url: url });
+    if (error) throw error;
+    toast('Home page video updated');
+    homeVideoFile = null;
+    document.getElementById('homeVideoFile').value = '';
+    await loadHomeSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+  }
+});
+
+/* ============================================================
+   Address -> coordinates lookup
+   ============================================================ */
+function mapLink(lat, lng) { return `https://www.google.com/maps?q=${lat},${lng}`; }
+function showCoordsNote(html) { document.getElementById('coordsAccuracyNote').innerHTML = html; }
+
+function describePrecision(result) {
+  return ['house', 'building', 'address', 'amenity', 'shop', 'tourism', 'leisure'].includes(result.addresstype);
+}
+
+async function lookupCoordsFromAddress({ silent } = {}) {
+  const addr = document.getElementById('f_addr').value.trim();
+  const city = document.getElementById('f_city').value.trim();
+  if (!addr) { if (!silent) toast('Enter a street address first'); return; }
+  try {
+    const q = encodeURIComponent(`${addr}, ${city}`);
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`, {
+      headers: { 'Accept-Language': 'en' },
+    });
+    const results = await res.json();
+    if (!results.length) {
+      if (!silent) toast('Could not find coordinates for that address — try "Use my location" instead');
+      showCoordsNote('<span style="color:var(--maroon);">No match found for this address. Try the "Use my location" button while standing at the property, or enter coordinates manually.</span>');
+      return;
+    }
+    const r = results[0];
+    document.getElementById('f_lat').value = r.lat;
+    document.getElementById('f_lng').value = r.lon;
+    if (describePrecision(r)) {
+      showCoordsNote(`<span style="color:#2a7a3b;">Matched: ${Perch.esc(r.display_name)}. <a href="${mapLink(r.lat, r.lon)}" target="_blank" rel="noopener">Check on map &rarr;</a></span>`);
+      if (!silent) toast('Coordinates found');
+    } else {
+      showCoordsNote(`<span style="color:var(--maroon);">Only matched to the street (${Perch.esc(r.display_name)}), not this specific address. <a href="${mapLink(r.lat, r.lon)}" target="_blank" rel="noopener">Check on map &rarr;</a> or use "Use my location" while standing at the property.</span>`);
+      if (!silent) toast('Only a rough street-level match — please verify');
+    }
+  } catch (err) {
+    console.error(err);
+    if (!silent) toast('Lookup failed — check your connection');
+  }
+}
+
+document.getElementById('lookupCoordsBtn').addEventListener('click', () => lookupCoordsFromAddress());
+document.getElementById('f_city').addEventListener('blur', () => {
+  if (!document.getElementById('f_lat').value && !document.getElementById('f_lng').value) {
+    lookupCoordsFromAddress({ silent: true });
+  }
+});
+
+document.getElementById('useMyLocationBtn').addEventListener('click', () => {
+  if (!navigator.geolocation) { toast('Your browser/device does not support location lookup'); return; }
+  showCoordsNote('Getting your current location&hellip;');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      document.getElementById('f_lat').value = latitude;
+      document.getElementById('f_lng').value = longitude;
+      const good = accuracy <= 30;
+      showCoordsNote(`<span style="color:${good ? '#2a7a3b' : 'var(--maroon)'};">Set from your current location (accurate to about ${Math.round(accuracy)}m).${good ? '' : ' Try again outdoors with a clear sky view for a tighter fix.'} <a href="${mapLink(latitude, longitude)}" target="_blank" rel="noopener">Check on map &rarr;</a></span>`);
+      toast('Location set from GPS');
+    },
+    (err) => {
+      console.error(err);
+      showCoordsNote('<span style="color:var(--maroon);">Could not get your location — check location permission for this site.</span>');
+      toast('Could not get your location');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+});
+
+/* ============================================================
+   PDF import (MLS listing sheet — best effort)
+   ============================================================ */
+const EXCLUDE_LABELS_ENTIRELY = new Set([
+  'Private Remarks', 'Showing Instructions', 'Owner', 'Parcel Number',
+  'Tax Acct', 'Tax Acct #', 'PID YN', 'Tax Serial', 'Tax Serial #', 'Mill',
+  'Paid By', 'Existing Loans', 'Expiration Date', 'Status Change Date',
+  'Fallthrough Date', 'Building Permit', 'Building Permit #',
+  'Agent Days on Market', 'Cumulative Days on Market', 'LA', 'LO',
+  'License #', 'Directions', 'Concessions', 'Concessions Amount',
+  'Concessions Available', 'Financing Remarks', 'Sold Price Per/SqFt',
+  'Owner/Agent', 'Marketing Begin Date', 'Delayed Marketing', 'Exempt Listing',
+  'For Sale or Rent', 'Listing Type', 'Terms of Sale', 'Possession',
+]);
+const EXCLUDE_FROM_FACTS = new Set([
+  'Full Baths', 'Half Baths', 'Total Bedrooms',
+  'List Price', 'Original List Price', 'Listing Date', 'Public Remarks',
+]);
+
+async function extractPdfText(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let lastY = null;
+    let line = '';
+    content.items.forEach(item => {
+      const y = item.transform[5];
+      if (lastY !== null && Math.abs(y - lastY) > 2) { fullText += line.trim() + '\n'; line = ''; }
+      line += item.str + ' ';
+      lastY = y;
+    });
+    fullText += line.trim() + '\n';
+  }
+  return fullText;
+}
+
+function parseListingPdfText(text) {
+  const parsed = {};
+  const headerMatch = text.match(/([^\n]+?)\s+(\d{5,7})\s+(Residential|Land|Business Opp)\s+(Active|Pending|Sold)\s+\$([\d,]+)/);
+  if (headerMatch) {
+    const parts = headerMatch[1].split(',').map(s => s.trim());
+    parsed.addr = parts[0] || '';
+    parsed.city = parts.slice(1).join(', ');
+    parsed.mls = headerMatch[2];
+    parsed.type = headerMatch[3] === 'Residential' ? 'residential' : headerMatch[3] === 'Land' ? 'land' : 'business';
+    parsed.status = headerMatch[4];
+    parsed.price = '$' + headerMatch[5];
+  }
+
+  const labelRe = /([A-Z][A-Za-z0-9\/#% ]{1,38}?):\s*/g;
+  const matches = [...text.matchAll(labelRe)];
+  const pairs = [];
+  for (let i = 0; i < matches.length; i++) {
+    const label = matches[i][1].trim();
+    const start = matches[i].index + matches[i][0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index : text.length;
+    const value = text.slice(start, end).trim().replace(/\s+/g, ' ');
+    if (label && value) pairs.push([label, value]);
+  }
+
+  const facts = [];
+  pairs.forEach(([label, value]) => {
+    if (EXCLUDE_LABELS_ENTIRELY.has(label)) return;
+    if (label === 'Elementary' || label === 'High' || label === 'Jr. High' || label === 'Sr. High') return;
+    if (label === 'Public Remarks') { parsed.public_remarks = value; return; }
+    if (label === 'Total Bedrooms') { parsed.beds = value; return; }
+    if (label === 'Listing Date' && !parsed.listed) { parsed.listed = value; return; }
+    if (label === 'Original List Price' && !parsed.orig_price) { parsed.orig_price = value.startsWith('$') ? value : '$' + value; return; }
+    if (label === 'List Price' && !parsed.price) { parsed.price = value.startsWith('$') ? value : '$' + value; return; }
+    if (label === 'Subdivision' && !parsed.subdivision) parsed.subdivision = value;
+    if (label === 'Year Built' && !parsed.year_built) parsed.year_built = value;
+    if (label === 'Total SqFt' && !parsed.sqft) parsed.sqft = value;
+    if (label === 'Lot Acres' && !parsed.lot) parsed.lot = value + ' ac';
+    if (label === 'Total Acres' && !parsed.lot) parsed.lot = value + ' ac';
+    if (!EXCLUDE_FROM_FACTS.has(label)) facts.push([label, value]);
+  });
+
+  const schoolMatch = text.match(/Elementary:\s*([A-Za-z .'-]+?)\s+Jr\.?\s*High:\s*([A-Za-z .'-]+?)\s+Sr\.?\s*High:\s*([A-Za-z .'-]+?)(?:\n|\s{2,}|$)/);
+  if (schoolMatch) facts.push(['Elementary / Jr / Sr High', `${schoolMatch[1].trim()} / ${schoolMatch[2].trim()} / ${schoolMatch[3].trim()}`]);
+
+  const fullBaths = pairs.find(([l]) => l === 'Full Baths');
+  const halfBaths = pairs.find(([l]) => l === 'Half Baths');
+  if (fullBaths) {
+    parsed.baths = halfBaths && halfBaths[1] !== '0' ? `${fullBaths[1]}.${halfBaths[1]}` : fullBaths[1];
+    facts.unshift(['Full / Half Baths', `${fullBaths[1]} / ${halfBaths ? halfBaths[1] : '0'}`]);
+  }
+
+  parsed.facts = facts;
+  return parsed;
+}
+
+function prefillFormFromParsed(parsed) {
+  const set = (id, v) => { if (v) document.getElementById(id).value = v; };
+  set('f_addr', parsed.addr); set('f_city', parsed.city); set('f_price', parsed.price);
+  set('f_orig_price', parsed.orig_price); set('f_status', parsed.status); set('f_type', parsed.type);
+  set('f_mls', parsed.mls); set('f_beds', parsed.beds); set('f_baths', parsed.baths); set('f_sqft', parsed.sqft);
+  set('f_lot', parsed.lot); set('f_subdivision', parsed.subdivision); set('f_year_built', parsed.year_built);
+  set('f_listed', parsed.listed);
+  if (parsed.public_remarks) {
+    document.getElementById('f_public_remarks').value = parsed.public_remarks;
+    const firstSentence = parsed.public_remarks.split(/(?<=[.!?])\s/)[0];
+    document.getElementById('f_blurb').value = firstSentence.length <= 140 ? firstSentence : firstSentence.slice(0, 137) + '…';
+  }
+  if (parsed.facts && parsed.facts.length) document.getElementById('f_facts').value = parsed.facts.map(([k, v]) => `${k}: ${v}`).join('\n');
+}
+
+document.getElementById('f_pdf_import').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('pdfImportStatus');
+  if (!file) return;
+  if (typeof pdfjsLib === 'undefined') { statusEl.textContent = 'Could not load the PDF reader — check your connection.'; return; }
+  statusEl.textContent = 'Reading PDF…';
+  try {
+    const text = await extractPdfText(file);
+    const parsed = parseListingPdfText(text);
+    if (!parsed.addr && !parsed.public_remarks) {
+      statusEl.textContent = "Couldn't recognize this PDF's layout — try filling the form in by hand.";
+      return;
+    }
+    prefillFormFromParsed(parsed);
+    statusEl.textContent = 'Imported below — review every field (and add a photo) before saving.';
+    toast('Imported from PDF — review before saving.');
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Could not read that PDF.';
+  }
+});
+
+/* ============================================================
+   QR code manager (with optional center logo). Every code encodes
+   "<site origin>/q/<qr_codes.id>" — the redirector resolves it, logs the
+   scan, and forwards to the "url" saved below. See PLANNING.md "Tenant URL
+   shape" for why the destination is never encoded directly.
+   ============================================================ */
+let QR_CODES = [];
+const qrFormOverlay = document.getElementById('qrFormOverlay');
+
+async function loadQrCodes() {
+  const { data, error } = await sb.from('qr_codes').select('*').eq('agent_id', AGENT.id).order('created_at', { ascending: false });
+  if (error) { console.error(error); return; }
+  QR_CODES = data || [];
+  renderQrList();
+}
+
+function renderQrList() {
+  const listEl = document.getElementById('qrList');
+  if (!QR_CODES.length) { listEl.innerHTML = '<div class="state-msg-inline">No saved QR codes yet.</div>'; return; }
+  listEl.innerHTML = QR_CODES.map(q => `<div class="list-row" data-id="${q.id}">
+      <div class="row-thumb">${q.image_url ? `<img src="${Perch.esc(q.image_url)}">` : ''}</div>
+      <div class="row-main">
+        <div class="row-addr">${Perch.esc(q.label)}</div>
+        <div class="row-meta">${Perch.esc(q.url)}</div>
+      </div>
+      <div class="row-actions">
+        ${q.image_url ? `<a class="btn-sm" href="${Perch.esc(q.image_url)}" download="perchqr-${slugify(q.label)}.png">Download</a>` : ''}
+        <button class="btn-sm danger" data-delete-qr="${q.id}">Delete</button>
+      </div>
+    </div>`).join('');
+  listEl.querySelectorAll('[data-delete-qr]').forEach(btn => btn.addEventListener('click', () => deleteQr(btn.dataset.deleteQr)));
+}
+
+function scanHaversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+const SCAN_NEARBY_METERS = 30.48; // 100 feet — display hint only, no routing depends on this anymore
+
+async function loadQrScans() {
+  const listEl = document.getElementById('qrScanList');
+  const [{ data, error }, { data: props }] = await Promise.all([
+    sb.from('qr_scans').select('id, scanned_at, lat, lng, qr_codes(label, url)').eq('agent_id', AGENT.id).order('scanned_at', { ascending: false }).limit(50),
+    sb.from('properties').select('addr, city, lat, lng').eq('agent_id', AGENT.id).not('lat', 'is', null).not('lng', 'is', null),
+  ]);
+  if (error) { console.error(error); listEl.innerHTML = '<div class="state-msg-inline">Couldn\'t load scan history.</div>'; return; }
+  if (!data || !data.length) { listEl.innerHTML = '<div class="state-msg-inline">No scans logged yet.</div>'; return; }
+
+  function nearestListingAddr(lat, lng) {
+    if (!props || !props.length) return null;
+    let nearest = null, nearestDist = Infinity;
+    props.forEach(p => {
+      const d = scanHaversine(lat, lng, p.lat, p.lng);
+      if (d < nearestDist) { nearestDist = d; nearest = p; }
+    });
+    return (nearest && nearestDist <= SCAN_NEARBY_METERS) ? nearest.addr : null;
+  }
+
+  listEl.innerHTML = data.map(s => {
+    let locationHtml = ' &middot; Location not shared';
+    if (s.lat != null && s.lng != null) {
+      const near = nearestListingAddr(s.lat, s.lng);
+      locationHtml = ` &middot; <a href="${mapLink(s.lat, s.lng)}" target="_blank" rel="noopener">View location &rarr;</a>` +
+        (near ? ` (near ${Perch.esc(near)})` : '');
+    }
+    return `<div class="list-row" data-scan-id="${s.id}">
+      <div class="row-main">
+        <div class="row-addr">${Perch.esc(s.qr_codes ? s.qr_codes.label : 'Deleted QR code')}</div>
+        <div class="row-meta">${new Date(s.scanned_at).toLocaleString()}${locationHtml}</div>
+      </div>
+      <div class="row-actions">
+        <button class="btn-sm danger" data-delete-scan="${s.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+  listEl.querySelectorAll('[data-delete-scan]').forEach(btn => btn.addEventListener('click', () => deleteQrScan(btn.dataset.deleteScan)));
+}
+
+async function deleteQrScan(id) {
+  const { error } = await sb.from('qr_scans').delete().eq('id', id);
+  if (error) { toast('Delete failed'); console.error(error); return; }
+  await loadQrScans();
+}
+
+async function deleteQr(id) {
+  const q = QR_CODES.find(x => x.id === id);
+  if (!q || !confirm(`Delete the QR code "${q.label}"?`)) return;
+  const { error } = await sb.from('qr_codes').delete().eq('id', id);
+  if (error) { toast('Delete failed'); console.error(error); return; }
+  QR_CODES = QR_CODES.filter(x => x.id !== id);
+  renderQrList();
+  toast('QR code deleted');
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function loadImage(src) {
+  return new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
+}
+
+let previewedUrl = null;
+let previewCanvas = null;
+let previewedId = null;
+
+function openQrForm() {
+  document.getElementById('qr_label').value = '';
+  document.getElementById('qr_url').value = '';
+  document.getElementById('qr_logo').value = '';
+  document.getElementById('qrResultWrap').style.display = 'none';
+  document.getElementById('qrCodeContainer').innerHTML = '';
+  document.getElementById('qrSaveBtn').classList.add('hidden');
+  previewedUrl = null; previewCanvas = null; previewedId = null;
+  qrFormOverlay.classList.add('open');
+}
+document.getElementById('qrNewBtn').addEventListener('click', openQrForm);
+document.getElementById('qrFormCancelBtn').addEventListener('click', () => qrFormOverlay.classList.remove('open'));
+
+document.getElementById('qrGenerateBtn').addEventListener('click', async () => {
+  let url = document.getElementById('qr_url').value.trim();
+  const label = document.getElementById('qr_label').value.trim();
+  if (!label) { toast('Give this QR code a label first'); return; }
+  if (!url) { toast('Enter a destination first'); return; }
+  if (!/^https?:\/\//i.test(url)) url = window.location.origin + (url.startsWith('/') ? url : '/' + url);
+  document.getElementById('qr_url').value = url;
+  if (typeof QRCode === 'undefined') { toast('Could not load the QR library — check your connection.'); return; }
+
+  // The QR image always encodes the stable redirector, never the destination
+  // directly, so printed signs survive the destination (or the agent's slug)
+  // changing later — the redirector just looks up this id's current "url".
+  const qrId = crypto.randomUUID();
+  const trackedUrl = window.location.origin + '/q/' + qrId;
+
+  const container = document.getElementById('qrCodeContainer');
+  container.innerHTML = '';
+  new QRCode(container, { text: trackedUrl, width: 240, height: 240, colorDark: '#363636', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+  await new Promise(r => setTimeout(r, 60)); // qrcodejs renders async
+
+  const qrCanvas = container.querySelector('canvas');
+  const qrImg = container.querySelector('img');
+  const logoFile = document.getElementById('qr_logo').files[0];
+  if (qrCanvas && logoFile) {
+    const logoImg = await loadImage(URL.createObjectURL(logoFile));
+    const ctx = qrCanvas.getContext('2d');
+    const size = qrCanvas.width;
+    const logoSize = Math.round(size * 0.30);
+    const cx = (size - logoSize) / 2, cy = (size - logoSize) / 2, pad = 6;
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, cx - pad, cy - pad, logoSize + pad * 2, logoSize + pad * 2, 10);
+    ctx.fill();
+    ctx.drawImage(logoImg, cx, cy, logoSize, logoSize);
+    if (qrImg) qrImg.src = qrCanvas.toDataURL('image/png');
+  }
+
+  previewedUrl = url;
+  previewCanvas = qrCanvas;
+  previewedId = qrId;
+  document.getElementById('qrResultWrap').style.display = 'flex';
+  document.getElementById('qrSaveBtn').classList.remove('hidden');
+});
+
+document.getElementById('qrSaveBtn').addEventListener('click', async () => {
+  const label = document.getElementById('qr_label').value.trim();
+  const url = document.getElementById('qr_url').value.trim();
+  if (!label || !url || !previewedUrl || !previewCanvas) { toast('Preview the code before saving'); return; }
+  const saveBtn = document.getElementById('qrSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    const blob = await new Promise(resolve => previewCanvas.toBlob(resolve, 'image/png'));
+    const path = `${AGENT.id}/qrcodes/${slugify(label)}-${randSuffix()}.png`;
+    const { error: upErr } = await sb.storage.from('qr-codes').upload(path, blob, { contentType: 'image/png' });
+    if (upErr) throw upErr;
+    const { data: signed, error: signErr } = await sb.storage.from('qr-codes').createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    if (signErr) throw signErr;
+    const { error: dbErr } = await sb.from('qr_codes').insert({ id: previewedId, agent_id: AGENT.id, label, url, image_url: signed.signedUrl });
+    if (dbErr) throw dbErr;
+
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `perchqr-${slugify(label)}.png`;
+    a.click();
+
+    qrFormOverlay.classList.remove('open');
+    toast('QR code saved and downloaded');
+    await loadQrCodes();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save & download';
+  }
+});
+</script>
+</body>
+</html>

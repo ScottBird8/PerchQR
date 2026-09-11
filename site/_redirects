@@ -1,0 +1,29 @@
+# PerchQR routing.
+#
+# Netlify checks for a real file/folder at the requested path BEFORE applying
+# any rule below, so /assets/*, /favicon.ico, etc. are served directly and
+# never reach these rewrites — only paths with no matching file fall through.
+#
+# These are 200 rewrites (the file changes, the browser's URL bar doesn't),
+# which is why every page these rules point at uses ABSOLUTE asset/link paths
+# instead of relative ones — see the comment at the top of assets/perch.js.
+
+# QR redirector: /q/<qr_codes.id> -> resolves the code, logs the scan, and
+# forwards to its stored destination. See site/q.html.
+/q/:id           /q.html?id=:id       200
+
+# Per-agent listing detail page: /<slug>/listing?id=<propertyId>
+/:slug/listing   /listing.html        200
+
+# Admin panel.
+/app             /app.html            200
+
+# TODO: the other reserved words in PLANNING.md's "Tenant URL shape" list
+# (admin, api, www, login, signup, …) don't have real pages yet, so they're
+# not routed here — but they're still blocked from being CLAIMED as a slug at
+# signup time (once self-serve signup exists). If a page is ever built for one
+# of them, add its explicit rule here, above the catch-all below.
+
+# Per-agent homepage — MUST stay last, since it matches any single path
+# segment that isn't a real file and isn't matched by a rule above.
+/:slug           /index.html          200

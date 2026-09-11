@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerchQR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>.remarks{white-space:pre-wrap;}</style>
+</head>
+<body>
+<div id="app"><div class="state-msg">Loading listing&hellip;</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
+<script>
+(async function () {
+  const app = document.getElementById('app');
+  const esc = Perch.esc;
+
+  // Reached via the "/:slug/listing" rewrite in _redirects, which preserves
+  // the browser's URL, so the agent slug is still the first path segment.
+  const segments = window.location.pathname.split('/').filter(Boolean);
+  const slug = segments[0] || null;
+  const id = new URLSearchParams(window.location.search).get('id');
+
+  if (!slug || !id) {
+    app.innerHTML = '<div class="state-msg">No listing specified.</div>';
+    return;
+  }
+
+  const { data: agent, error: agentError } = await sb
+    .from('agents').select('*').eq('slug', slug).maybeSingle();
+
+  if (agentError || !agent) {
+    app.innerHTML = '<div class="state-msg">We couldn\'t find that agent\'s page.</div>';
+    if (agentError) console.error(agentError);
+    return;
+  }
+
+  // Scoped to this agent's id even though property ids are already globally
+  // unique — keeps a wrong-agent-slug-for-this-id URL from ever rendering
+  // someone else's listing under the wrong agent's branding.
+  const [{ data: p, error }, { data: others }] = await Promise.all([
+    sb.from('properties').select('*').eq('id', id).eq('agent_id', agent.id).maybeSingle(),
+    sb.from('properties').select('*').eq('agent_id', agent.id).neq('status', 'Sold').order('created_at', { ascending: true }),
+  ]);
+
+  if (error || !p) {
+    app.innerHTML = `<div class="state-msg">That listing couldn't be found. <a href="/${esc(agent.slug)}">See all listings &rarr;</a></div>`;
+    if (error) console.error(error);
+    return;
+  }
+
+  document.title = `${p.full_addr} | ${p.price} | ${agent.brokerage_name || agent.display_name}`;
+
+  const qf = [];
+  if (p.beds) qf.push(`<div class="qf"><div class="num">${esc(p.beds)}</div><div class="lbl">Bedrooms</div></div>`);
+  if (p.baths) qf.push(`<div class="qf"><div class="num">${esc(p.baths)}</div><div class="lbl">Bathrooms</div></div>`);
+  if (p.sqft) qf.push(`<div class="qf"><div class="num">${esc(p.sqft)}</div><div class="lbl">Total SqFt</div></div>`);
+  if (p.lot) qf.push(`<div class="qf"><div class="num">${esc(p.lot)}</div><div class="lbl">Lot Size</div></div>`);
+  if (p.elev) qf.push(`<div class="qf"><div class="num">${esc(p.elev)}</div><div class="lbl">Elevation</div></div>`);
+
+  const isSold = p.status === 'Sold';
+  const soldRibbon = isSold ? '<div class="sold-ribbon">Sold</div>' : '';
+
+  let videoOverlay = '';
+  if (p.video_url) {
+    videoOverlay = `<div class="hero-video-overlay" id="heroVideoOverlay">
+        <video id="propVideo" playsinline preload="metadata"><source src="${esc(p.video_url)}" type="video/mp4"></video>
+        <div class="video-caption"><span class="dot"></span>A message from ${esc(agent.display_name.split(' ')[0])}</div>
+        <div class="video-play-btn" id="videoPlayBtn"><div class="circle"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>
+        <button class="video-toggle-btn" id="videoToggleBtn" type="button" aria-label="Pause or play video">
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <div class="replay-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></div>
+      </div>`;
+  }
+
+  let testimonialBlock = '';
+  let referralCta = '';
+  if (isSold) {
+    if (p.testimonial) {
+      const who = p.testimonial_name ? `&mdash; ${esc(p.testimonial_name)}` : '&mdash; Happy Client';
+      testimonialBlock = `<div class="testimonial-block">
+      <div class="quote">&ldquo;${esc(p.testimonial)}&rdquo;</div>
+      <div class="who">${who}</div>
+    </div>`;
+    }
+    const first = esc(agent.display_name.split(' ')[0]);
+    referralCta = `<div class="referral-cta">
+      <h3>Know someone buying or selling nearby?</h3>
+      <p>I'd love the chance to help them the way I helped with this one. Referrals are the best compliment I can get.</p>
+      <div class="hero-actions" style="justify-content:center;">
+        ${agent.phone ? `<a href="tel:${esc(agent.phone)}" class="btn btn-primary">Call ${esc(Perch.formatPhone(agent.phone))}</a>` : ''}
+        ${agent.phone ? `<a href="sms:${esc(agent.phone)}" class="btn btn-ghost">Text ${first}</a>` : ''}
+        ${agent.email ? `<a href="mailto:${esc(agent.email)}" class="btn btn-ghost">Email ${first}</a>` : ''}
+      </div>
+    </div>`;
+  }
+
+  const allPhotos = [p.hero_photo_url, ...(p.gallery_photo_urls || [])].filter(Boolean);
+  let galleryNav = '';
+  let galleryStrip = '';
+  if (allPhotos.length > 1) {
+    galleryNav = `<button class="pd-hero-nav prev" id="pdHeroPrev" type="button" aria-label="Previous photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="pd-hero-nav next" id="pdHeroNext" type="button" aria-label="Next photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+      <div class="pd-hero-counter" id="pdHeroCounter">1 / ${allPhotos.length}</div>`;
+    const thumbs = allPhotos.map((src, i) => `<button class="pd-gallery-thumb${i === 0 ? ' active' : ''}" data-index="${i}" type="button"><img src="${esc(src)}" alt="Photo ${i + 1}"></button>`).join('\n');
+    galleryStrip = `<div class="pd-gallery-strip" id="pdGalleryStrip">${thumbs}</div>`;
+  }
+
+  let matterportSection = '';
+  if (p.matterport_url) {
+    matterportSection = `<div class="pd-section">
+      <h3>3D Tour</h3>
+      <div class="matterport-card" id="matterportCard">
+        <div class="matterport-head">
+          <span class="label">🏠 Walk through in 3D</span>
+          <button class="matterport-toggle" id="matterportToggle" type="button">
+            <svg id="matterportIconExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M8 3H3v5M21 8V3h-5M16 21h5v-5M3 16v5h5"/></svg>
+            <svg id="matterportIconCollapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="display:none;"><path d="M9 3v5H3M15 3v5h6M9 21v-5H3M15 21v-5h6"/></svg>
+            <span id="matterportToggleLabel">Full screen</span>
+          </button>
+        </div>
+        <div class="matterport-frame-wrap">
+          <iframe src="${esc(p.matterport_url)}" allow="xr-spatial-tracking; gyroscope; accelerometer" allowfullscreen title="Matterport 3D Tour"></iframe>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  app.innerHTML = `${Perch.renderHeader(agent)}
+<div class="layout">
+  <main class="content">
+    <div class="breadcrumb"><a href="/${esc(agent.slug)}">All listings</a> / ${esc(p.addr)}</div>
+    <div class="pd-hero">${soldRibbon}<img id="pdHeroImg" src="${esc(p.hero_photo_url || '')}" alt="${esc(p.full_addr)}">${videoOverlay}${galleryNav}</div>
+    ${galleryStrip}
+    <div class="pd-header">
+      <div>
+        <div class="pd-price">${esc(p.price)}${p.orig_price && p.orig_price !== p.price ? `<span class="orig">orig. ${esc(p.orig_price)}</span>` : ''}</div>
+        <p class="pd-addr"><strong>${esc(p.addr)}</strong><br>${esc(p.city)}${p.subdivision ? ' &middot; ' + esc(p.subdivision) : ''}</p>
+      </div>
+      <div class="pd-tags">
+        <span class="tag status">${esc(p.status)}</span>
+        <span class="tag">${Perch.TYPE_LABEL[p.type] || p.type}</span>
+        ${p.mls ? `<span class="tag">MLS #${esc(p.mls)}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="quickfacts">${qf.join('')}</div>
+
+    ${testimonialBlock}
+
+    ${matterportSection}
+
+    <div class="pd-section">
+      <h3>About this property</h3>
+      <div class="remarks">${esc(p.public_remarks)}</div>
+    </div>
+
+    <div class="pd-section">
+      <h3>Property details</h3>
+      <div class="fact-grid">
+        ${Perch.renderFacts(p.facts)}
+      </div>
+    </div>
+
+    ${Perch.renderRooms(p.rooms)}
+
+    ${referralCta}
+
+    ${Perch.renderOtherListings(agent, others || [], p.id)}
+
+    <div class="pd-section">
+      <h3>Listing information</h3>
+      <div class="fact-grid">
+        <div class="fact"><div class="k">Listed</div><div class="v">${p.listed ? esc(p.listed) : '—'}</div></div>
+        <div class="fact"><div class="k">Listing Agent</div><div class="v">${esc(agent.display_name)}${agent.license_number ? ' &middot; Lic. #' + esc(agent.license_number) : ''}</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+${Perch.renderContact(agent)}
+${Perch.renderFooter(agent)}`;
+
+  Perch.wireHeader();
+  Perch.initGallery(allPhotos);
+  if (p.video_url) Perch.initPropertyVideo(p.id);
+  if (p.matterport_url) Perch.initMatterport();
+})();
+</script>
+</body>
+</html>

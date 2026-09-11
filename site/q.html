@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerchQR</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<!--
+  QR redirector. Every QR code PerchQR generates encodes /q/<qr_codes.id>,
+  NEVER an agent's slug or a specific listing URL directly — see PLANNING.md
+  "Tenant URL shape". This page resolves that id, logs the scan, and forwards
+  the visitor to the code's stored destination. Printed signs stay valid even
+  if an agent's slug or a listing's URL later changes, because only the
+  destination row (editable in the admin) ever needs updating.
+
+  Reached via "/q/:id -> /q.html?id=:id" in _redirects.
+-->
+<div class="state-wrap" style="min-height:100vh;display:flex;align-items:center;justify-content:center;">
+  <div class="state-msg" id="msg">Redirecting&hellip;</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
+<script>
+(async function () {
+  const msg = document.getElementById('msg');
+  const id = new URLSearchParams(window.location.search).get('id');
+
+  if (!id) {
+    msg.textContent = 'This QR link is missing its code.';
+    return;
+  }
+
+  const { data: qr, error } = await sb
+    .from('qr_codes').select('id, agent_id, url').eq('id', id).maybeSingle();
+
+  if (error || !qr) {
+    msg.textContent = 'This QR code is no longer valid.';
+    if (error) console.error(error);
+    return;
+  }
+
+  // Best-effort geolocation on the scan event, never blocking the redirect —
+  // no "nearest listing" matching in v1 (see PLANNING.md), just attaching
+  // coordinates to the log entry when the visitor happens to grant them fast.
+  let coords = null;
+  try {
+    coords = await new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      const timer = setTimeout(() => resolve(null), 1200);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { clearTimeout(timer); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+        () => { clearTimeout(timer); resolve(null); },
+        { timeout: 1200 }
+      );
+    });
+  } catch (e) { /* not fatal */ }
+
+  await Perch.recordQrScan(qr.agent_id, qr.id, coords);
+  window.location.replace(qr.url);
+})();
+</script>
+</body>
+</html>

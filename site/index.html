@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerchQR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<div id="app"><div class="state-msg">Loading&hellip;</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
+<script>
+(async function () {
+  const app = document.getElementById('app');
+
+  // Served both at "/" (no slug) and at "/<agent-slug>" via the Netlify
+  // rewrite in _redirects — the browser URL bar keeps whichever path the
+  // visitor actually requested, so it's read from location.pathname here
+  // rather than baked in at build time (there is no build time).
+  const segments = window.location.pathname.split('/').filter(Boolean);
+  const slug = segments[0] || null;
+
+  if (!slug) {
+    app.innerHTML = '<div class="state-msg">This is PerchQR. Visit an agent\'s own link — e.g. perchqr.com/&lt;agent-name&gt; — to see their site.</div>';
+    return;
+  }
+
+  const { data: agent, error: agentError } = await sb
+    .from('agents').select('*').eq('slug', slug).maybeSingle();
+
+  if (agentError || !agent) {
+    app.innerHTML = '<div class="state-msg">We couldn\'t find that agent\'s page.</div>';
+    if (agentError) console.error(agentError);
+    return;
+  }
+
+  document.title = `${agent.display_name} | ${agent.brokerage_name || 'Listings'}`;
+
+  const [{ data: properties, error }, { data: testimonials }, { data: settings }] = await Promise.all([
+    sb.from('properties').select('*').eq('agent_id', agent.id).neq('status', 'Sold').order('created_at', { ascending: true }),
+    sb.from('testimonials').select('*').eq('agent_id', agent.id).order('quote_length', { ascending: true }),
+    sb.from('agent_settings').select('home_video_url').eq('agent_id', agent.id).maybeSingle(),
+  ]);
+
+  if (error) {
+    app.innerHTML = '<div class="state-msg">Couldn\'t load listings right now. Please try again shortly.</div>';
+    console.error(error);
+    return;
+  }
+
+  const homeVideoUrl = settings && settings.home_video_url;
+
+  const tChunks = [];
+  for (let i = 0; i < (testimonials || []).length; i += 3) tChunks.push(testimonials.slice(i, i + 3));
+  const testimonialsSection = tChunks.length ? `<div class="testimonials-section">
+      <div class="section-head"><h2>What clients are saying</h2></div>
+      <div class="t-carousel" id="testimonialsCarousel">
+        ${tChunks.length > 1 ? `<button class="t-nav prev" id="testimonialsPrev" type="button" aria-label="Previous testimonials"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>` : ''}
+        <div class="t-grid" id="testimonialsGrid">${tChunks[0].map(Perch.renderTestimonialCard).join('')}</div>
+        ${tChunks.length > 1 ? `<button class="t-nav next" id="testimonialsNext" type="button" aria-label="Next testimonials"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>` : ''}
+      </div>
+      ${tChunks.length > 1 ? `<div class="t-dots" id="testimonialsDots">${tChunks.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
+    </div>` : '';
+
+  const propButtons = (properties || []).map(p => `<a class="hero-prop-btn" href="/${agent.slug}/listing?id=${encodeURIComponent(p.id)}">
+      <div class="hero-prop-thumb"><img src="${Perch.esc(p.hero_photo_url || '')}" alt="${Perch.esc(p.full_addr)}"></div>
+      <div class="hero-prop-text">
+        <div class="hero-prop-addr">${Perch.esc(p.addr)}<span class="hero-prop-city">, ${Perch.esc((p.city || '').split(',')[0].trim())}</span></div>
+        <div class="hero-prop-meta">${Perch.esc(p.price)} &middot; ${Perch.TYPE_LABEL[p.type] || p.type}</div>
+      </div>
+    </a>`).join('');
+
+  const videoPanel = homeVideoUrl ? `<div class="hero-video-wrap" id="heroVideoWrap">
+        <video id="welcomeVideo" playsinline preload="metadata">
+          <source src="${Perch.esc(homeVideoUrl)}" type="video/mp4">
+        </video>
+        <div class="video-tag"><span class="dot"></span>Welcome</div>
+        <div class="play-overlay" id="playOverlay">
+          <div class="play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="replay-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></div>
+      </div>` : '';
+
+  app.innerHTML = `${Perch.renderHeader(agent)}
+<div class="layout">
+  <main class="content">
+    <section class="hero${homeVideoUrl ? '' : ' no-video'}">
+      <div class="hero-listings-panel">
+        <div class="listings-panel-head">
+          <h2>My Listings</h2>
+        </div>
+        <div class="hero-prop-list" id="listings">
+          ${propButtons || '<div class="state-msg" style="margin:20px 4px;">No active listings right now — check back soon.</div>'}
+        </div>
+      </div>
+      ${videoPanel}
+    </section>
+  </main>
+</div>
+${testimonialsSection}
+${Perch.renderContact(agent)}
+${Perch.renderFooter(agent)}`;
+
+  Perch.wireHeader();
+  if (homeVideoUrl) Perch.initHomeVideo();
+
+  if (tChunks.length > 1) {
+    let idx = 0;
+    let timer = null;
+    const grid = document.getElementById('testimonialsGrid');
+    const dots = document.querySelectorAll('#testimonialsDots span');
+
+    function show(i) {
+      idx = (i + tChunks.length) % tChunks.length;
+      grid.innerHTML = tChunks[idx].map(Perch.renderTestimonialCard).join('');
+      dots.forEach((el, di) => el.classList.toggle('active', di === idx));
+    }
+    function start() { timer = setInterval(() => show(idx + 1), 6000); }
+    function stop() { clearTimeout(timer); clearInterval(timer); }
+    function restart() { stop(); start(); }
+
+    start();
+
+    const carousel = document.getElementById('testimonialsCarousel');
+    carousel.addEventListener('mouseenter', stop);
+    carousel.addEventListener('mouseleave', start);
+
+    document.getElementById('testimonialsPrev').addEventListener('click', () => { show(idx - 1); restart(); });
+    document.getElementById('testimonialsNext').addEventListener('click', () => { show(idx + 1); restart(); });
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { show(i); restart(); }));
+  }
+})();
+</script>
+</body>
+</html>
