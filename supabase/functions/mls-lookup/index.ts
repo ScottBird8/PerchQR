@@ -85,17 +85,42 @@ Deno.serve(async (req) => {
 
     const sparkHeaders = { Authorization: `Bearer ${creds.access_token}`, Accept: 'application/json' };
 
-    const filter = `ListingId Eq '${cleanMls}'`;
-    const listingRes = await fetch(
-      `https://replication.sparkapi.com/v1/listings?_filter=${encodeURIComponent(filter)}`,
-      { headers: sparkHeaders }
-    );
-    const listingJson = await listingRes.json();
+    // TEMP DIAGNOSTIC (2026-09): try the number exactly as typed first, then
+    // — since MLS numbers with a dash (e.g. "26-274631") are sometimes stored
+    // by Spark without it — retry with non-alphanumerics stripped. If both
+    // fail, the error includes exactly what was tried and Spark's raw
+    // response, to figure out what's actually going on rather than guessing.
+    // Remove this expanded diagnostic once the real cause is confirmed.
+    async function trySparkFilter(idValue: string) {
+      const filter = `ListingId Eq '${idValue}'`;
+      const res = await fetch(
+        `https://replication.sparkapi.com/v1/listings?_filter=${encodeURIComponent(filter)}`,
+        { headers: sparkHeaders }
+      );
+      const body = await res.json();
+      return { res, body, filter };
+    }
+
+    let attempt = await trySparkFilter(cleanMls);
+    const strippedMls = cleanMls.replace(/[^a-zA-Z0-9]/g, '');
+    if (attempt.body?.D?.Success && !attempt.body.D.Results?.length && strippedMls !== cleanMls) {
+      attempt = await trySparkFilter(strippedMls);
+    }
+    const { res: listingRes, body: listingJson, filter } = attempt;
+
     if (!listingRes.ok || !listingJson?.D?.Success) {
-      return json({ error: listingJson?.D?.Message || 'Spark API request failed — check your MLS connection is still valid' }, 502);
+      return json({
+        error: `Spark API request failed for filter [${filter}]: ${listingJson?.D?.Message || 'unknown error'} (HTTP ${listingRes.status})`,
+      }, 502);
     }
     const listing = listingJson.D.Results?.[0];
-    if (!listing) return json({ error: `No listing found for MLS #${cleanMls}` }, 404);
+    if (!listing) {
+      return json({
+        error: `No listing found for MLS #${cleanMls}. Tried filters: "${cleanMls}"` +
+          (strippedMls !== cleanMls ? ` and "${strippedMls}"` : '') +
+          `. Spark responded Success with ${listingJson.D.Results?.length ?? 0} results.`,
+      }, 404);
+    }
     const f = listing.StandardFields || {};
 
     // Photos: fetch the list, download each, re-upload into our own Storage
