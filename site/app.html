@@ -613,7 +613,19 @@ document.getElementById('mlsLookupBtn').addEventListener('click', async () => {
   statusEl.textContent = 'Looking up the listing and downloading photos — this can take a few seconds…';
   try {
     const { data, error } = await sb.functions.invoke('mls-lookup', { body: { mlsNumber } });
-    if (error) throw error;
+    if (error) {
+      // supabase-js puts a generic "non-2xx status code" message on `error`
+      // for any Edge Function error response — the actual {error: "..."}
+      // body we return has to be read back off the raw response ourselves.
+      let message = error.message;
+      if (error.context && typeof error.context.json === 'function') {
+        try {
+          const body = await error.context.json();
+          if (body && body.error) message = body.error;
+        } catch (_e) { /* body wasn't JSON — keep the generic message */ }
+      }
+      throw new Error(message);
+    }
     if (data && data.error) throw new Error(data.error);
     const p = data.data;
     document.getElementById('f_addr').value = p.addr || '';

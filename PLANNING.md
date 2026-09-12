@@ -392,9 +392,23 @@ Resurface these at the start of planning sessions until each is closed.
   Supabase CLI (requires `supabase login` + `supabase link`, which — like
   project creation — needs Scott to do the auth step himself).
 
-- **2026-09-11 — Netlify not yet connected.** The site exists as files in this
-  repo but isn't deployed anywhere yet — no live URL to test against until the
-  repo is pushed to GitHub and connected to Netlify (see "Hosting" decision).
+- **2026-09-11 — Live end-to-end: GitHub -> Netlify -> Supabase confirmed working.**
+  - GitHub repo: `github.com/ScottBird8/PerchQR` (note: capital-letter `PerchQR`,
+    unlike the lowercase `perchqr.com` domain/brand — cosmetic only, doesn't
+    need fixing).
+  - Netlify project `perchqr` (`perchqr.netlify.app`), deploying from that repo,
+    publish directory `site`. **Netlify's "Visitor access" must stay set to
+    Public** — it defaults to Team-only ("Team protection"), which silently
+    blocks every visitor (including QR scanners) behind a Netlify login. Check
+    this after any new Netlify project creation.
+  - Scott's own Auth user + `agents` row created (`id`
+    `72158799-b0f4-47c9-ac2a-45ffe52db1df`, slug `scott-bird`).
+  - Verified live: `perchqr.netlify.app/scott-bird` renders his real homepage
+    from Supabase; `perchqr.netlify.app/app` shows the admin sign-in gate.
+  - Custom domain (`perchqr.com` -> this Netlify site) not yet connected — still
+    on the netlify.app subdomain.
+  - `mls-lookup` Edge Function still not deployed (needs `supabase login` +
+    `supabase functions deploy`, same "needs Scott's own login" constraint).
 
 ### All beta-blocking questions are now closed.
 Open items left are all either pre-launch legal checks (#6), post-beta expansion
