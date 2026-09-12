@@ -115,10 +115,30 @@ Deno.serve(async (req) => {
     }
     const listing = listingJson.D.Results?.[0];
     if (!listing) {
+      // Second-level diagnostic: the filtered query found nothing, so check
+      // what this token can see with NO filter at all — this tells us
+      // whether it's a filter/field-name mismatch (some listings come back,
+      // just not matching our filter) or a broader access issue (nothing
+      // comes back at all).
+      let sample = 'could not run unfiltered check';
+      try {
+        const sampleRes = await fetch(`https://replication.sparkapi.com/v1/listings?_limit=5`, { headers: sparkHeaders });
+        const sampleJson = await sampleRes.json();
+        if (sampleJson?.D?.Success) {
+          const results = sampleJson.D.Results || [];
+          sample = results.length
+            ? `Token CAN see ${results.length} listing(s). Sample ListingId values: ` +
+              results.map((r: any) => JSON.stringify(r.StandardFields?.ListingId)).join(', ')
+            : 'Token sees 0 listings with no filter at all — likely a plan/permission issue, not a filter mismatch.';
+        } else {
+          sample = `Unfiltered check itself failed: ${JSON.stringify(sampleJson?.D?.Message || sampleJson)}`;
+        }
+      } catch (e) { sample = `Unfiltered check threw: ${String((e as Error)?.message || e)}`; }
+
       return json({
         error: `No listing found for MLS #${cleanMls}. Tried filters: "${cleanMls}"` +
           (strippedMls !== cleanMls ? ` and "${strippedMls}"` : '') +
-          `. Spark responded Success with ${listingJson.D.Results?.length ?? 0} results.`,
+          `. Spark responded Success with ${listingJson.D.Results?.length ?? 0} results. ${sample}`,
       }, 404);
     }
     const f = listing.StandardFields || {};
