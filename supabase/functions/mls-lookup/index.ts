@@ -85,12 +85,9 @@ Deno.serve(async (req) => {
 
     const sparkHeaders = { Authorization: `Bearer ${creds.access_token}`, Accept: 'application/json' };
 
-    // TEMP DIAGNOSTIC (2026-09): try the number exactly as typed first, then
-    // — since MLS numbers with a dash (e.g. "26-274631") are sometimes stored
-    // by Spark without it — retry with non-alphanumerics stripped. If both
-    // fail, the error includes exactly what was tried and Spark's raw
-    // response, to figure out what's actually going on rather than guessing.
-    // Remove this expanded diagnostic once the real cause is confirmed.
+    // Try the number exactly as typed first, then — since MLS numbers with a
+    // dash (e.g. "26-274631") are sometimes stored by Spark without it —
+    // retry with non-alphanumerics stripped.
     async function trySparkFilter(idValue: string) {
       const filter = `ListingId Eq '${idValue}'`;
       const res = await fetch(
@@ -98,7 +95,7 @@ Deno.serve(async (req) => {
         { headers: sparkHeaders }
       );
       const body = await res.json();
-      return { res, body, filter };
+      return { res, body };
     }
 
     let attempt = await trySparkFilter(cleanMls);
@@ -106,41 +103,13 @@ Deno.serve(async (req) => {
     if (attempt.body?.D?.Success && !attempt.body.D.Results?.length && strippedMls !== cleanMls) {
       attempt = await trySparkFilter(strippedMls);
     }
-    const { res: listingRes, body: listingJson, filter } = attempt;
+    const { res: listingRes, body: listingJson } = attempt;
 
     if (!listingRes.ok || !listingJson?.D?.Success) {
-      return json({
-        error: `Spark API request failed for filter [${filter}]: ${listingJson?.D?.Message || 'unknown error'} (HTTP ${listingRes.status})`,
-      }, 502);
+      return json({ error: listingJson?.D?.Message || 'Spark API request failed — check your MLS connection is still valid' }, 502);
     }
     const listing = listingJson.D.Results?.[0];
-    if (!listing) {
-      // Second-level diagnostic: the filtered query found nothing, so check
-      // what this token can see with NO filter at all — this tells us
-      // whether it's a filter/field-name mismatch (some listings come back,
-      // just not matching our filter) or a broader access issue (nothing
-      // comes back at all).
-      let sample = 'could not run unfiltered check';
-      try {
-        const sampleRes = await fetch(`https://replication.sparkapi.com/v1/listings?_limit=5`, { headers: sparkHeaders });
-        const sampleJson = await sampleRes.json();
-        if (sampleJson?.D?.Success) {
-          const results = sampleJson.D.Results || [];
-          sample = results.length
-            ? `Token CAN see ${results.length} listing(s). Sample ListingId values: ` +
-              results.map((r: any) => JSON.stringify(r.StandardFields?.ListingId)).join(', ')
-            : 'Token sees 0 listings with no filter at all — likely a plan/permission issue, not a filter mismatch.';
-        } else {
-          sample = `Unfiltered check itself failed: ${JSON.stringify(sampleJson?.D?.Message || sampleJson)}`;
-        }
-      } catch (e) { sample = `Unfiltered check threw: ${String((e as Error)?.message || e)}`; }
-
-      return json({
-        error: `No listing found for MLS #${cleanMls}. Tried filters: "${cleanMls}"` +
-          (strippedMls !== cleanMls ? ` and "${strippedMls}"` : '') +
-          `. Spark responded Success with ${listingJson.D.Results?.length ?? 0} results. ${sample}`,
-      }, 404);
-    }
+    if (!listing) return json({ error: `No listing found for MLS #${cleanMls}` }, 404);
     const f = listing.StandardFields || {};
 
     // Photos: fetch the list, download each, re-upload into our own Storage
