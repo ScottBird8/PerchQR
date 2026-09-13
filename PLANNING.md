@@ -305,6 +305,36 @@ expansion, polished onboarding) until the beta says the product is real.
   block appended to the bottom of `supabase/schema.sql` against the live
   project (SQL Editor) — not yet confirmed run as of this entry.
 
+- **2026-09-13 — Self-serve signup built; owner has full access to every
+  agent's data.** Reverses the earlier "Scott manually onboards each beta
+  agent" scope cut — Scott decided to build real signup now instead.
+  - `is_perchqr_owner()` Postgres function (same hardcoded id as
+    `site_settings`) is now the bypass condition on every agent-scoped RLS
+    policy (agents/properties/testimonials/qr_codes/qr_scans/agent_settings/
+    mls_credentials + both storage buckets). Scott can view and edit any
+    agent's account, including their MLS connection.
+  - `site/signup.html`: name, slug (auto-suggested, live availability check),
+    email, password. Handles both Supabase Auth configurations (email
+    confirmation on or off) — see the code comments for how.
+  - New DB-level guardrails on `agents.slug`: format CHECK + reserved-word
+    CHECK, so the reserved-slugs list from "Tenant URL shape" is now actually
+    enforced, not just documented.
+  - `app.html` gained a **Profile tab** (name/brokerage/phone/contact email/
+    license/address/social links/headshot/logo) — required now that signup
+    doesn't capture this and Scott can't SQL it in for people at scale — and
+    an **owner-only agent switcher** in the header that reassigns the shared
+    `AGENT` variable everything already scopes by (uploads included, since
+    those path by `AGENT.id` too).
+  - **Action needed:** run the updated `supabase/schema.sql` against the live
+    project. **Decision needed:** check Supabase Authentication -> Settings ->
+    "Confirm email" — off gives instant signup for the beta; on still works,
+    just adds an email-confirmation step first.
+  - Landing page's public CTA still points at the `mailto:` beta-request
+    (kept "private beta" framing intact) rather than linking `/signup`
+    directly — Scott can now hand `perchqr.com/signup` straight to anyone
+    he's inviting instead of onboarding them via SQL. Revisit if the beta
+    ever opens up to public self-serve.
+
 ---
 
 ## Open Questions
