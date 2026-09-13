@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up — PerchQR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>
+/* Signup is a PerchQR product page (like the admin), not an agent-branded
+   page — same Fieldstone override technique as app.html: redefine the
+   shared theme's variable NAMES so styles.css's base rules pick up
+   PerchQR's own palette/type without needing their own stylesheet. */
+:root{
+  --bg:#EFF0EB;
+  --panel:#FFFFFF;
+  --maroon:#3B4A5A;
+  --maroon-bright:#4E6178;
+  --maroon-wash:#E3E7E9;
+  --charcoal:#23262B;
+  --charcoal-soft:#585F5C;
+  --line:#DBDDD5;
+  --line-bright:#C7CBC3;
+  --display:'Fraunces', serif;
+  --body:'Karla', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --radius:10px;
+}
+body{background:var(--bg);}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px;box-shadow:0 20px 45px -22px rgba(35,38,43,0.28);}
+.wordmark{font-family:var(--display);font-weight:700;font-size:20px;color:var(--maroon);display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 20px;}
+.wordmark-icon{color:var(--maroon);flex-shrink:0;}
+h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;margin:0 0 22px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);margin-bottom:5px;}
+.field input{width:100%;padding:11px 13px;border:1px solid var(--line-bright);border-radius:8px;font-family:var(--body);font-size:14px;background:#fff;color:var(--charcoal);}
+.slug-preview{font-family:var(--mono);font-size:12px;color:var(--charcoal-soft);margin-top:5px;}
+.slug-preview.ok{color:#2a7a3b;}
+.slug-preview.bad{color:var(--maroon);}
+.field-hint{font-size:11.5px;color:var(--charcoal-soft);margin-top:5px;}
+.btn-block{width:100%;font-family:var(--body);font-weight:600;font-size:14.5px;padding:12px;border-radius:6px;border:none;background:var(--maroon);color:#fff;cursor:pointer;margin-top:8px;}
+.btn-block:hover{background:var(--maroon-bright);}
+.btn-block:disabled{opacity:0.6;cursor:default;}
+.error-msg{color:var(--maroon);font-size:13px;margin-top:12px;text-align:center;}
+.done-msg{text-align:center;}
+.done-msg p{color:var(--charcoal-soft);font-size:14.5px;line-height:1.6;}
+.foot-link{text-align:center;margin-top:18px;font-size:13px;color:var(--charcoal-soft);}
+.foot-link a{color:var(--maroon);font-weight:600;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="wordmark">
+      <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
+      PerchQR
+    </div>
+
+    <div id="formState">
+      <h2>Create your account</h2>
+
+      <div class="field">
+        <label>Full name</label>
+        <input id="su_name" placeholder="Jane Doe" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label>Your page address</label>
+        <input id="su_slug" placeholder="jane-doe">
+        <div class="slug-preview" id="slugPreview">perchqr.com/&hellip;</div>
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input id="su_email" type="email" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="su_password" type="password" autocomplete="new-password">
+        <div class="field-hint">At least 6 characters.</div>
+      </div>
+
+      <button class="btn-block" id="signupBtn">Create account</button>
+      <div class="error-msg hidden" id="signupError"></div>
+      <div class="foot-link">Already have an account? <a href="/app">Sign in</a></div>
+    </div>
+
+    <div id="doneState" class="done-msg hidden">
+      <h2 id="doneHeading">Check your email</h2>
+      <p id="doneText"></p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script>
+const RESERVED_SLUGS = new Set([
+  'app','admin','api','www','mail','cdn','static','assets',
+  'login','signup','signin','signout','logout','account',
+  'billing','dashboard','settings','pricing','about','blog',
+  'help','support','docs','terms','privacy','status','q','s',
+]);
+
+function slugify(s) {
+  return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40);
+}
+function slugFormatOk(s) {
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length >= 3 && s.length <= 40;
+}
+
+const nameEl = document.getElementById('su_name');
+const slugEl = document.getElementById('su_slug');
+const previewEl = document.getElementById('slugPreview');
+let slugTouched = false;
+let slugCheckTimer = null;
+
+nameEl.addEventListener('input', () => {
+  if (!slugTouched) { slugEl.value = slugify(nameEl.value); checkSlug(); }
+});
+slugEl.addEventListener('input', () => {
+  slugTouched = true;
+  slugEl.value = slugEl.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+  checkSlug();
+});
+
+function checkSlug() {
+  clearTimeout(slugCheckTimer);
+  const slug = slugEl.value;
+  if (!slug) { previewEl.textContent = 'perchqr.com/…'; previewEl.className = 'slug-preview'; return; }
+  if (!slugFormatOk(slug)) {
+    previewEl.textContent = 'Use 3+ lowercase letters, numbers, and hyphens only.';
+    previewEl.className = 'slug-preview bad';
+    return;
+  }
+  if (RESERVED_SLUGS.has(slug)) {
+    previewEl.textContent = `perchqr.com/${slug} — that address is reserved.`;
+    previewEl.className = 'slug-preview bad';
+    return;
+  }
+  previewEl.textContent = `perchqr.com/${slug} — checking…`;
+  previewEl.className = 'slug-preview';
+  slugCheckTimer = setTimeout(async () => {
+    if (slugEl.value !== slug) return;
+    const { data } = await sb.from('agents').select('id').eq('slug', slug).maybeSingle();
+    if (slugEl.value !== slug) return;
+    if (data) {
+      previewEl.textContent = `perchqr.com/${slug} — already taken.`;
+      previewEl.className = 'slug-preview bad';
+    } else {
+      previewEl.textContent = `perchqr.com/${slug} — available.`;
+      previewEl.className = 'slug-preview ok';
+    }
+  }, 400);
+}
+
+document.getElementById('signupBtn').addEventListener('click', async () => {
+  const name = nameEl.value.trim();
+  const slug = slugEl.value.trim();
+  const email = document.getElementById('su_email').value.trim();
+  const password = document.getElementById('su_password').value;
+  const errEl = document.getElementById('signupError');
+  errEl.classList.add('hidden');
+
+  if (!name) { showError('Enter your full name'); return; }
+  if (!slugFormatOk(slug)) { showError('Choose a valid page address first'); return; }
+  if (RESERVED_SLUGS.has(slug)) { showError('That page address is reserved — choose another'); return; }
+  if (!email) { showError('Enter your email'); return; }
+  if (!password || password.length < 6) { showError('Password must be at least 6 characters'); return; }
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const { data: existing } = await sb.from('agents').select('id').eq('slug', slug).maybeSingle();
+    if (existing) { showError('That page address was just taken — choose another'); return; }
+
+    const { data, error } = await sb.auth.signUp({
+      email, password,
+      options: {
+        data: { pending_slug: slug, pending_display_name: name },
+        emailRedirectTo: window.location.origin + '/app',
+      },
+    });
+    if (error) throw error;
+
+    if (data.session) {
+      // Confirmation not required (or auto-confirmed) — we have a real
+      // session right now, so create the agents row immediately.
+      const { error: insErr } = await sb.from('agents').insert({
+        id: data.user.id, slug, display_name: name, email,
+      });
+      if (insErr) throw insErr;
+      window.location.href = '/app';
+      return;
+    }
+
+    // Confirmation required — no session yet, so the agents row can't be
+    // created until they confirm and sign in (app.html's checkAuth() does
+    // that from the pending_slug/pending_display_name metadata above).
+    document.getElementById('formState').classList.add('hidden');
+    document.getElementById('doneHeading').textContent = 'Check your email';
+    document.getElementById('doneText').textContent =
+      `We sent a confirmation link to ${email}. Click it, then come back and sign in — your page will be waiting at perchqr.com/${slug}.`;
+    document.getElementById('doneState').classList.remove('hidden');
+  } catch (err) {
+    console.error(err);
+    const msg = err.message || '';
+    if (msg.includes('already registered')) showError('An account with that email already exists.');
+    else if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('unique')) showError('That page address was just taken — go back and choose another.');
+    else showError(msg || 'Something went wrong — try again.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+});
+
+function showError(msg) {
+  const errEl = document.getElementById('signupError');
+  errEl.textContent = msg;
+  errEl.classList.remove('hidden');
+}
+</script>
+</body>
+</html>

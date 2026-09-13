@@ -111,6 +111,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
     <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn-sm primary" id="loginBtn" style="width:100%;">Sign in</button>
     <div class="gate-error hidden" id="loginError"></div>
+    <p style="font-size:13px;color:var(--charcoal-soft);margin-top:16px;">New agent? <a href="/signup" style="color:var(--maroon);font-weight:600;">Create an account</a></p>
   </div>
 </div>
 
@@ -125,17 +126,57 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 <div id="adminApp" class="hidden">
   <div class="admin-header">
     <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR Admin</h1></div>
-    <button class="btn-sm" id="signOutBtn">Sign out</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="agentSwitcherWrap" class="hidden" style="display:flex;align-items:center;gap:8px;">
+        <label style="font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);">Viewing</label>
+        <select id="agentSwitcher" style="font-family:var(--body);font-size:13px;padding:7px 10px;border-radius:6px;border:1px solid var(--line-bright);background:#fff;"></select>
+      </div>
+      <button class="btn-sm" id="signOutBtn">Sign out</button>
+    </div>
   </div>
 
   <div class="admin-wrap">
     <div class="tabs">
+      <button class="tab-btn" data-tab="profile">Profile</button>
       <button class="tab-btn active" data-tab="properties">Properties</button>
       <button class="tab-btn" data-tab="mls">Connect MLS</button>
       <button class="tab-btn" data-tab="testimonials">Testimonials</button>
       <button class="tab-btn" data-tab="homepage">Home Page</button>
       <button class="tab-btn" data-tab="qr">QR Codes</button>
       <button class="tab-btn hidden" data-tab="sitesettings" id="siteSettingsTabBtn">Landing Page Video</button>
+    </div>
+
+    <div class="tab-panel" id="tab-profile">
+      <div class="overlay-card" style="max-width:640px;padding:24px;">
+        <h2 style="font-size:16px;">Your profile</h2>
+        <p class="field-hint" style="margin-bottom:16px;">Shown on your public page's header and contact section. Only name is required — fill in the rest whenever you're ready.</p>
+
+        <div class="form-grid">
+          <div class="field"><label>Full name *</label><input id="pf_display_name"></div>
+          <div class="field"><label>Brokerage</label><input id="pf_brokerage_name"></div>
+          <div class="field"><label>Phone (digits only)</label><input id="pf_phone" placeholder="4355551234"></div>
+          <div class="field"><label>Public contact email</label><input id="pf_email"></div>
+          <div class="field"><label>License number</label><input id="pf_license_number"></div>
+          <div class="field"><label>Office address</label><input id="pf_address_line"></div>
+          <div class="field"><label>Google Business link (optional)</label><input id="pf_google_url"></div>
+          <div class="field"><label>Facebook Page link (optional)</label><input id="pf_facebook_url"></div>
+
+          <div class="field full">
+            <label>Headshot photo</label>
+            <input type="file" id="pf_headshot_file" accept="image/*">
+            <div id="pfHeadshotPreview" class="thumb-strip"></div>
+          </div>
+          <div class="field full">
+            <label>Logo</label>
+            <input type="file" id="pf_logo_file" accept="image/*">
+            <div id="pfLogoPreview" class="thumb-strip"></div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button class="btn-sm primary" id="profileSaveBtn">Save changes</button>
+        </div>
+      </div>
     </div>
 
     <div class="tab-panel active" id="tab-properties">
@@ -389,18 +430,34 @@ function randSuffix() { return Math.random().toString(36).slice(2, 6); }
 
 /* ============================================================
    Auth — sign in, then load THIS user's `agents` row. Every query
-   below is scoped by AGENT.id, and RLS backs that up server-side.
+   below is scoped by AGENT.id (backed up server-side by RLS), which is
+   normally the same as the logged-in user — except for the owner, who
+   can switch AGENT to view/edit any agent's data (see the agent
+   switcher below). AGENT_SELF always stays the real logged-in identity.
    ============================================================ */
 const gate = document.getElementById('gate');
 const notAnAgent = document.getElementById('notAnAgent');
 const adminApp = document.getElementById('adminApp');
 let AGENT = null;
+let AGENT_SELF = null;
 
-// PerchQR-the-company settings (the perchqr.com landing page) aren't
-// per-agent, so there's no real "owner" role system yet — just check
-// against Scott's own agent id. Revisit with real admin roles if this
-// ever needs more than one privileged owner.
+// PerchQR-the-company settings (the perchqr.com landing page, and full
+// read/write access to every agent's data) aren't per-agent, so there's no
+// real "owner" role system yet — just check against Scott's own agent id.
+// Revisit with real admin roles if this ever needs more than one privileged
+// owner. Mirrors the same id used in supabase/schema.sql's
+// is_perchqr_owner() — keep both in sync if this ever changes.
 const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
+
+function loadAgentScopedData() {
+  loadProfile();
+  loadProperties();
+  loadMlsStatus();
+  loadQrCodes();
+  loadQrScans();
+  loadTestimonials();
+  loadHomeSettings();
+}
 
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
@@ -410,30 +467,74 @@ async function checkAuth() {
     adminApp.classList.add('hidden');
     return;
   }
-  const { data: agent, error } = await sb.from('agents').select('*').eq('id', session.user.id).maybeSingle();
-  if (error || !agent) {
+  let { data: agent, error } = await sb.from('agents').select('*').eq('id', session.user.id).maybeSingle();
+
+  // Self-serve signup fallback: signup.html stashes the chosen slug/name on
+  // the auth user itself (user_metadata) at signup time. If email
+  // confirmation is enabled on this project, the agents row couldn't be
+  // created then (no session yet to satisfy the insert policy) — so create
+  // it now, on the first login after confirming.
+  if (!agent && !error && session.user.user_metadata && session.user.user_metadata.pending_slug) {
+    const meta = session.user.user_metadata;
+    const { data: created, error: createErr } = await sb.from('agents').insert({
+      id: session.user.id,
+      slug: meta.pending_slug,
+      display_name: meta.pending_display_name,
+      email: session.user.email,
+    }).select().maybeSingle();
+    if (createErr) { error = createErr; } else { agent = created; }
+  }
+
+  if (!agent) {
     gate.classList.add('hidden');
     notAnAgent.classList.remove('hidden');
     adminApp.classList.add('hidden');
     if (error) console.error(error);
     return;
   }
+  AGENT_SELF = agent;
   AGENT = agent;
   gate.classList.add('hidden');
   notAnAgent.classList.add('hidden');
   adminApp.classList.remove('hidden');
   document.getElementById('adminTitle').textContent = `${agent.display_name} — Admin`;
-  loadProperties();
-  loadMlsStatus();
-  loadQrCodes();
-  loadQrScans();
-  loadTestimonials();
-  loadHomeSettings();
-  if (agent.id === PERCHQR_OWNER_ID) {
+  loadAgentScopedData();
+  if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
     loadLandingSettings();
+    setupAgentSwitcher();
   }
 }
+
+/* ============================================================
+   Agent switcher — owner-only. Lets Scott view/edit any agent's data
+   (support, moderation, filling in something for someone mid-beta).
+   Reassigning AGENT is all that's needed: every load/save function
+   already scopes by AGENT.id, and storage uploads already path by
+   AGENT.id too, so switching naturally redirects both.
+   ============================================================ */
+async function setupAgentSwitcher() {
+  const wrap = document.getElementById('agentSwitcherWrap');
+  const sel = document.getElementById('agentSwitcher');
+  const { data: allAgents, error } = await sb.from('agents').select('id, slug, display_name').order('display_name');
+  if (error) { console.error(error); return; }
+  sel.innerHTML = (allAgents || []).map(a =>
+    `<option value="${a.id}"${a.id === AGENT.id ? ' selected' : ''}>${a.id === AGENT_SELF.id ? 'You — ' : ''}${Perch.esc(a.display_name)} (${Perch.esc(a.slug)})</option>`
+  ).join('');
+  wrap.classList.remove('hidden');
+}
+
+document.getElementById('agentSwitcher').addEventListener('change', async (e) => {
+  const id = e.target.value;
+  if (id === AGENT.id) return;
+  const { data: chosen, error } = await sb.from('agents').select('*').eq('id', id).maybeSingle();
+  if (error || !chosen) { toast('Could not load that agent'); console.error(error); return; }
+  AGENT = chosen;
+  const viewingOther = AGENT.id !== AGENT_SELF.id;
+  document.getElementById('adminTitle').textContent = `${AGENT.display_name} — Admin${viewingOther ? ' (viewing as owner)' : ''}`;
+  loadAgentScopedData();
+  toast(viewingOther ? `Now viewing ${AGENT.display_name}'s account` : 'Back to your own account');
+});
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const email = document.getElementById('loginEmail').value.trim();
@@ -474,6 +575,80 @@ async function uploadFile(bucket, propId, kind, file) {
   if (error) throw error;
   return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
+
+/* ============================================================
+   Profile
+   ============================================================ */
+let pfHeadshotFile = null, pfHeadshotExistingUrl = null;
+let pfLogoFile = null, pfLogoExistingUrl = null;
+
+async function loadProfile() {
+  const val = (id, v) => { document.getElementById(id).value = v || ''; };
+  val('pf_display_name', AGENT.display_name);
+  val('pf_brokerage_name', AGENT.brokerage_name);
+  val('pf_phone', AGENT.phone);
+  val('pf_email', AGENT.email);
+  val('pf_license_number', AGENT.license_number);
+  val('pf_address_line', AGENT.address_line);
+  val('pf_google_url', AGENT.google_url);
+  val('pf_facebook_url', AGENT.facebook_url);
+  pfHeadshotFile = null; pfHeadshotExistingUrl = AGENT.headshot_url || null;
+  pfLogoFile = null; pfLogoExistingUrl = AGENT.logo_url || null;
+  renderPfPreview('pfHeadshotPreview', pfHeadshotFile, pfHeadshotExistingUrl);
+  renderPfPreview('pfLogoPreview', pfLogoFile, pfLogoExistingUrl);
+}
+
+function renderPfPreview(elId, file, existingUrl) {
+  const src = file ? URL.createObjectURL(file) : existingUrl;
+  document.getElementById(elId).innerHTML = src ? `<div class="thumb-chip"><img src="${src}"></div>` : '';
+}
+
+document.getElementById('pf_headshot_file').addEventListener('change', (e) => {
+  pfHeadshotFile = e.target.files[0] || null;
+  renderPfPreview('pfHeadshotPreview', pfHeadshotFile, pfHeadshotExistingUrl);
+});
+document.getElementById('pf_logo_file').addEventListener('change', (e) => {
+  pfLogoFile = e.target.files[0] || null;
+  renderPfPreview('pfLogoPreview', pfLogoFile, pfLogoExistingUrl);
+});
+
+document.getElementById('profileSaveBtn').addEventListener('click', async () => {
+  const val = id => document.getElementById(id).value.trim();
+  const display_name = val('pf_display_name');
+  if (!display_name) { toast('Enter your full name'); return; }
+  const saveBtn = document.getElementById('profileSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    let headshot_url = pfHeadshotExistingUrl;
+    if (pfHeadshotFile) headshot_url = await uploadFile('property-photos', 'profile', 'headshot', pfHeadshotFile);
+    let logo_url = pfLogoExistingUrl;
+    if (pfLogoFile) logo_url = await uploadFile('property-photos', 'profile', 'logo', pfLogoFile);
+
+    const row = {
+      display_name,
+      brokerage_name: val('pf_brokerage_name') || null,
+      phone: val('pf_phone') || null,
+      email: val('pf_email') || null,
+      license_number: val('pf_license_number') || null,
+      address_line: val('pf_address_line') || null,
+      google_url: val('pf_google_url') || null,
+      facebook_url: val('pf_facebook_url') || null,
+      headshot_url, logo_url,
+    };
+    const { data: updated, error } = await sb.from('agents').update(row).eq('id', AGENT.id).select().maybeSingle();
+    if (error) throw error;
+    AGENT = updated;
+    if (AGENT.id === AGENT_SELF.id) AGENT_SELF = updated;
+    document.getElementById('adminTitle').textContent = `${AGENT.display_name} — Admin${AGENT.id !== AGENT_SELF.id ? ' (viewing as owner)' : ''}`;
+    toast('Profile updated');
+    await loadProfile();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+  }
+});
 
 /* ============================================================
    Properties: list + quick status

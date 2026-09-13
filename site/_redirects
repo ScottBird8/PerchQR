@@ -18,11 +18,15 @@
 # Admin panel.
 /app             /app.html            200
 
+# Self-serve signup.
+/signup          /signup.html         200
+
 # TODO: the other reserved words in PLANNING.md's "Tenant URL shape" list
-# (admin, api, www, login, signup, …) don't have real pages yet, so they're
-# not routed here — but they're still blocked from being CLAIMED as a slug at
-# signup time (once self-serve signup exists). If a page is ever built for one
-# of them, add its explicit rule here, above the catch-all below.
+# (admin, api, www, login, signin, …) don't have real pages yet, so they're
+# not routed here — but they're still blocked from being CLAIMED as a slug
+# (enforced in supabase/schema.sql's agents_slug_not_reserved constraint, not
+# just client-side). If a page is ever built for one of them, add its
+# explicit rule here, above the catch-all below.
 
 # Per-agent homepage — MUST stay last, since it matches any single path
 # segment that isn't a real file and isn't matched by a rule above.

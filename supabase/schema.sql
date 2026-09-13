@@ -47,6 +47,17 @@ create trigger agents_set_updated_at
   before update on public.agents
   for each row execute function public.set_updated_at();
 
+-- Central owner check, used everywhere an agent-scoped policy needs a
+-- PerchQR-the-company bypass (Scott can see/manage every agent's data —
+-- support, moderation, helping someone mid-beta). Hardcoded to one id since
+-- there's no real admin-roles table yet; swap the body for a role lookup if
+-- PerchQR ever needs more than one privileged owner. `security definer` so
+-- it can be called from any policy regardless of the caller's own grants.
+create or replace function public.is_perchqr_owner()
+returns boolean language sql stable security definer as $$
+  select auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df'::uuid;
+$$;
+
 alter table public.agents enable row level security;
 
 -- Public read: agent profile fields are the same info a realtor already
@@ -59,17 +70,42 @@ create policy "agents_public_read"
   to anon, authenticated
   using (true);
 
--- Agents can only edit their own row.
+-- Agents can edit their own row; Scott can edit any agent's row.
 drop policy if exists "agents_self_write" on public.agents;
 create policy "agents_self_write"
   on public.agents for update
   to authenticated
-  using (id = auth.uid())
-  with check (id = auth.uid());
+  using (id = auth.uid() or public.is_perchqr_owner())
+  with check (id = auth.uid() or public.is_perchqr_owner());
 
--- No public/self INSERT policy on purpose: for the beta, Scott creates each
--- agent's row directly (service role / Studio) after they sign up in Supabase
--- Auth — no self-serve signup flow yet (see PLANNING.md "scope cut").
+-- Self-serve signup: a newly authenticated user may create their OWN agents
+-- row (id must match their own auth id — they can't create one for anyone
+-- else). Format/reserved-word enforcement lives in the CHECK constraints
+-- below, not here, so it holds regardless of which client makes the request.
+drop policy if exists "agents_self_insert" on public.agents;
+create policy "agents_self_insert"
+  on public.agents for insert
+  to authenticated
+  with check (id = auth.uid() or public.is_perchqr_owner());
+
+-- Slug format: lowercase letters/digits, single hyphens between words, no
+-- leading/trailing hyphen, 3-40 chars. Matches the app-level rule in
+-- PLANNING.md's "Tenant URL shape" — enforced here too since a self-serve
+-- signup form is no longer the only way a row could be written.
+alter table public.agents drop constraint if exists agents_slug_format;
+alter table public.agents add constraint agents_slug_format
+  check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and length(slug) between 3 and 40);
+
+-- Reserved words a slug can never claim — see PLANNING.md's reserved-slugs
+-- list. Grow this list in lockstep with any new top-level route.
+alter table public.agents drop constraint if exists agents_slug_not_reserved;
+alter table public.agents add constraint agents_slug_not_reserved
+  check (slug not in (
+    'app','admin','api','www','mail','cdn','static','assets',
+    'login','signup','signin','signout','logout','account',
+    'billing','dashboard','settings','pricing','about','blog',
+    'help','support','docs','terms','privacy','status','q','s'
+  ));
 
 -- ============================================================
 -- 2. mls_credentials — kept OUT of `agents` and locked down hard.
@@ -95,8 +131,8 @@ drop policy if exists "mls_credentials_owner_only" on public.mls_credentials;
 create policy "mls_credentials_owner_only"
   on public.mls_credentials for all
   to authenticated
-  using (agent_id = auth.uid())
-  with check (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner())
+  with check (agent_id = auth.uid() or public.is_perchqr_owner());
 -- No policy at all for `anon` — completely inaccessible to the public site.
 -- The MLS-lookup Edge Function reads any agent's token via the service_role
 -- key (which bypasses RLS), after verifying the caller's own auth session.
@@ -160,8 +196,8 @@ drop policy if exists "properties_agent_write" on public.properties;
 create policy "properties_agent_write"
   on public.properties for all
   to authenticated
-  using (agent_id = auth.uid())
-  with check (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner())
+  with check (agent_id = auth.uid() or public.is_perchqr_owner());
 
 -- ============================================================
 -- 4. qr_codes table — admin-only. QR images encode a stable redirector
@@ -185,8 +221,8 @@ drop policy if exists "qr_codes_agent_only" on public.qr_codes;
 create policy "qr_codes_agent_only"
   on public.qr_codes for all
   to authenticated
-  using (agent_id = auth.uid())
-  with check (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner())
+  with check (agent_id = auth.uid() or public.is_perchqr_owner());
 -- No anon policy: the redirector page resolves `/q/<id>` server-side
 -- (service_role or a public RPC limited to id+url), never a raw table read.
 
@@ -222,11 +258,11 @@ create policy "property_media_agent_write"
   to authenticated
   using (
     bucket_id in ('property-photos', 'property-videos')
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_perchqr_owner())
   )
   with check (
     bucket_id in ('property-photos', 'property-videos')
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_perchqr_owner())
   );
 
 drop policy if exists "qr_codes_bucket_agent_only" on storage.objects;
@@ -235,14 +271,15 @@ create policy "qr_codes_bucket_agent_only"
   to authenticated
   using (
     bucket_id = 'qr-codes'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_perchqr_owner())
   )
   with check (
     bucket_id = 'qr-codes'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_perchqr_owner())
   );
--- Admin upload code must prefix every Storage path with `${auth.uid()}/...`
--- for these policies to work — e.g. `${agentId}/${propId}/hero-....jpg`.
+-- Admin upload code must prefix every Storage path with the TARGET agent's
+-- id (not necessarily the caller's own, now that the owner can act on any
+-- agent's behalf) — e.g. `${agentId}/${propId}/hero-....jpg`.
 
 -- ============================================================
 -- 6. testimonials — per-agent, rotates on their homepage
@@ -271,8 +308,8 @@ drop policy if exists "testimonials_agent_write" on public.testimonials;
 create policy "testimonials_agent_write"
   on public.testimonials for all
   to authenticated
-  using (agent_id = auth.uid())
-  with check (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner())
+  with check (agent_id = auth.uid() or public.is_perchqr_owner());
 
 -- ============================================================
 -- 7. agent_settings — one row per agent (replaces the single-tenant
@@ -298,8 +335,8 @@ drop policy if exists "agent_settings_agent_write" on public.agent_settings;
 create policy "agent_settings_agent_write"
   on public.agent_settings for all
   to authenticated
-  using (agent_id = auth.uid())
-  with check (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner())
+  with check (agent_id = auth.uid() or public.is_perchqr_owner());
 
 -- ============================================================
 -- 8. qr_scans — analytics only. No notification webhook in v1 (the
@@ -334,13 +371,13 @@ drop policy if exists "qr_scans_agent_read" on public.qr_scans;
 create policy "qr_scans_agent_read"
   on public.qr_scans for select
   to authenticated
-  using (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner());
 
 drop policy if exists "qr_scans_agent_delete" on public.qr_scans;
 create policy "qr_scans_agent_delete"
   on public.qr_scans for delete
   to authenticated
-  using (agent_id = auth.uid());
+  using (agent_id = auth.uid() or public.is_perchqr_owner());
 
 -- ============================================================
 -- 9. site_settings — PerchQR's own COMPANY-wide settings (not
@@ -371,5 +408,5 @@ drop policy if exists "site_settings_owner_write" on public.site_settings;
 create policy "site_settings_owner_write"
   on public.site_settings for update
   to authenticated
-  using (auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df')
-  with check (auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df');
+  using (public.is_perchqr_owner())
+  with check (public.is_perchqr_owner());
