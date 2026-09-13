@@ -6,16 +6,38 @@
 <title>PerchQR Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/styles.css">
 <style>
+/* The admin panel is PerchQR's own product surface, not an agent-branded
+   page — it should look like PerchQR (Fieldstone), not like the shared
+   agent-site theme it happens to reuse component styles from. Every rule
+   below still references the theme's variable NAMES (--maroon, --charcoal,
+   etc.); redefining them here reskins the whole page without touching
+   styles.css, which must stay agent-themed for actual tenant pages. */
+:root{
+  --bg:#EFF0EB;
+  --panel:#FFFFFF;
+  --maroon:#3B4A5A;
+  --maroon-bright:#4E6178;
+  --maroon-wash:#E3E7E9;
+  --charcoal:#23262B;
+  --charcoal-soft:#585F5C;
+  --line:#DBDDD5;
+  --line-bright:#C7CBC3;
+  --display:'Fraunces', serif;
+  --body:'Karla', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --radius:10px;
+}
 body{background:var(--bg);}
 .hidden{display:none!important;}
 
 /* ---- sign-in gate ---- */
 .gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
 .gate-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:0 20px 45px -22px rgba(54,54,54,0.28);}
-.gate-card .wordmark{font-family:var(--display);font-weight:700;font-size:22px;color:var(--maroon);margin:0 0 20px;}
+.gate-card .wordmark{font-family:var(--display);font-weight:700;font-size:22px;color:var(--maroon);margin:0 0 20px;display:flex;align-items:center;justify-content:center;gap:9px;}
+.wordmark-icon{color:var(--maroon);flex-shrink:0;}
 .gate-card h2{font-family:var(--display);margin:0 0 18px;}
 .gate-card input{width:100%;padding:11px 14px;border:1px solid var(--line-bright);border-radius:10px;font-family:var(--body);font-size:14px;margin-bottom:10px;}
 .gate-card button{width:100%;margin-top:6px;}
@@ -27,13 +49,13 @@ body{background:var(--bg);}
 .admin-header h1{font-family:var(--display);font-size:17px;margin:0;}
 .admin-wrap{max-width:1100px;margin:0 auto;padding:24px;}
 .tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-.tab-btn{font-family:var(--display);font-weight:600;font-size:14px;padding:10px 16px;border:none;background:none;color:var(--charcoal-soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+.tab-btn{font-family:var(--body);font-weight:600;font-size:14px;padding:10px 16px;border:none;background:none;color:var(--charcoal-soft);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
 .tab-btn.active{color:var(--maroon);border-bottom-color:var(--maroon);}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
 
 .panel-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
-.btn-sm{font-family:var(--display);font-weight:600;font-size:13px;padding:9px 16px;border-radius:100px;border:1px solid var(--line-bright);background:#fff;color:var(--charcoal);cursor:pointer;}
+.btn-sm{font-family:var(--body);font-weight:600;font-size:13px;padding:9px 16px;border-radius:6px;border:1px solid var(--line-bright);background:#fff;color:var(--charcoal);cursor:pointer;}
 .btn-sm:hover{border-color:var(--maroon);color:var(--maroon);}
 .btn-sm.primary{background:var(--maroon);color:#fff;border-color:var(--maroon);}
 .btn-sm.primary:hover{background:var(--maroon-bright);}
@@ -83,7 +105,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="gate" class="gate">
   <div class="gate-card">
-    <div class="wordmark">PerchQR</div>
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
     <h2>Admin sign in</h2>
     <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
     <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
@@ -94,7 +116,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="notAnAgent" class="gate hidden">
   <div class="gate-card">
-    <div class="wordmark">PerchQR</div>
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
     <p>You're signed in, but there's no PerchQR agent profile set up for this account yet. Ask Scott to add you.</p>
     <button class="btn-sm" id="notAgentSignOutBtn" style="width:100%;">Sign out</button>
   </div>
@@ -102,7 +124,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="adminApp" class="hidden">
   <div class="admin-header">
-    <div class="brand"><h1 id="adminTitle">PerchQR Admin</h1></div>
+    <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR Admin</h1></div>
     <button class="btn-sm" id="signOutBtn">Sign out</button>
   </div>
 
@@ -113,7 +135,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <button class="tab-btn" data-tab="testimonials">Testimonials</button>
       <button class="tab-btn" data-tab="homepage">Home Page</button>
       <button class="tab-btn" data-tab="qr">QR Codes</button>
-      <button class="tab-btn hidden" data-tab="sitesettings" id="siteSettingsTabBtn">perchqr.com</button>
+      <button class="tab-btn hidden" data-tab="sitesettings" id="siteSettingsTabBtn">Landing Page Video</button>
     </div>
 
     <div class="tab-panel active" id="tab-properties">
@@ -168,6 +190,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <label>Welcome video</label>
           <input type="file" id="homeVideoFile" accept="video/*">
           <div id="homeVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
+          <video id="homeVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
         </div>
 
         <div class="form-actions" style="justify-content:flex-start;">
@@ -197,6 +220,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <label>Intro video</label>
           <input type="file" id="landingVideoFile" accept="video/*">
           <div id="landingVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
+          <video id="landingVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
         </div>
 
         <div class="form-actions" style="justify-content:flex-start;">
@@ -933,8 +957,12 @@ let homeVideoFile = null;
 async function loadHomeSettings() {
   const { data, error } = await sb.from('agent_settings').select('home_video_url').eq('agent_id', AGENT.id).maybeSingle();
   const statusEl = document.getElementById('homeVideoStatus');
+  const previewEl = document.getElementById('homeVideoPreview');
   if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
-  statusEl.textContent = (data && data.home_video_url) ? 'A video is currently set.' : 'No video uploaded yet.';
+  const url = data && data.home_video_url;
+  statusEl.textContent = url ? 'Currently set — preview below.' : 'No video uploaded yet.';
+  previewEl.classList.toggle('hidden', !url);
+  if (url) previewEl.src = url;
 }
 
 document.getElementById('homeVideoFile').addEventListener('change', (e) => {
@@ -971,8 +999,12 @@ let landingVideoFile = null;
 async function loadLandingSettings() {
   const { data, error } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
   const statusEl = document.getElementById('landingVideoStatus');
+  const previewEl = document.getElementById('landingVideoPreview');
   if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
-  statusEl.textContent = (data && data.landing_video_url) ? 'A video is currently set.' : 'No video uploaded yet.';
+  const url = data && data.landing_video_url;
+  statusEl.textContent = url ? 'Currently set — preview below.' : 'No video uploaded yet.';
+  previewEl.classList.toggle('hidden', !url);
+  if (url) previewEl.src = url;
 }
 
 document.getElementById('landingVideoFile').addEventListener('change', (e) => {
