@@ -15,8 +15,13 @@
 # Per-agent listing detail page: /<slug>/listing?id=<propertyId>
 /:slug/listing   /listing.html        200
 
-# Admin panel.
+# Admin panel — /app is the generic entry point (works for anyone who signs
+# in, regardless of slug); /<slug>/access is the same page reached by a
+# personalized, memorable link. app.html reads the slug out of the URL for
+# the owner's benefit (auto-selects that agent in the switcher); a regular
+# agent's own login already shows their own data either way.
 /app             /app.html            200
+/:slug/access    /app.html            200
 
 # Self-serve signup.
 /signup          /signup.html         200

@@ -451,6 +451,12 @@ let AGENT_SELF = null;
 // is_perchqr_owner() — keep both in sync if this ever changes.
 const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
 
+// Reached via either "/app" (generic entry point) or "/<slug>/access" (a
+// personalized link — see _redirects) — both rewrite to this same file, so
+// the slug (if any) has to be read from the URL the browser actually shows.
+const urlSegments = window.location.pathname.split('/').filter(Boolean);
+const urlSlug = urlSegments[1] === 'access' ? urlSegments[0] : null;
+
 function loadAgentScopedData() {
   loadProfile();
   loadProperties();
@@ -496,10 +502,20 @@ async function checkAuth() {
   }
   AGENT_SELF = agent;
   AGENT = agent;
+
+  // Owner following a personalized "/<slug>/access" link for someone else's
+  // account: switch to that agent before the first data load, so it's right
+  // from the start rather than loading self data and immediately reloading.
+  if (agent.id === PERCHQR_OWNER_ID && urlSlug && urlSlug !== agent.slug) {
+    const { data: viewed } = await sb.from('agents').select('*').eq('slug', urlSlug).maybeSingle();
+    if (viewed) AGENT = viewed;
+  }
+
   gate.classList.add('hidden');
   notAnAgent.classList.add('hidden');
   adminApp.classList.remove('hidden');
-  document.getElementById('adminTitle').textContent = `${agent.display_name} — User Access`;
+  document.getElementById('adminTitle').textContent =
+    `${AGENT.display_name} — User Access${AGENT.id !== AGENT_SELF.id ? ' (viewing as owner)' : ''}`;
   loadAgentScopedData();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
