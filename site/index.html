@@ -27,7 +27,7 @@
   const slug = segments[0] || null;
 
   if (!slug) {
-    document.title = 'PerchQR — Your listings deserve their own site';
+    document.title = 'PerchQR — Let buyers meet you before they call';
     const beta = 'mailto:bird.scott@gmail.com?subject=PerchQR%20beta%20access';
     // QR-corner-mark logo (liked from the "Signal" direction), recolored
     // to Fieldstone's slate via currentColor — kept even though the rest
@@ -38,7 +38,7 @@
       <rect x="3" y="14" width="7" height="7" rx="1"/>
       <path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/>
     </svg>`;
-    const iconSite = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 9h18"/></svg>`;
+    const iconVideo = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M10 9l6 3-6 3z" fill="currentColor" stroke="none"/></svg>`;
     const iconBolt = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>`;
     const iconQr = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`;
 
@@ -54,8 +54,8 @@
   <section class="landing-hero">
     <div class="landing-hero-inner">
       <span class="landing-eyebrow">Private beta</span>
-      <h1>Your listings deserve <em>their own site.</em></h1>
-      <p>PerchQR gives every agent a branded property site, a QR code for the yard sign, and scan tracking — pull a listing straight from your MLS in seconds.</p>
+      <h1>Let buyers <em>meet you</em> before they call.</h1>
+      <p>Every listing gets its own branded page with a personal video introduction — not just a price sheet. Pulled from your MLS number, printed as one QR code that never needs reprinting.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="${beta}">Request beta access</a>
         <a class="btn btn-ghost" href="/scott-bird">See a live example &rarr;</a>
@@ -77,7 +77,7 @@
       <div class="landing-step">
         <div class="landing-step-num">02</div>
         <h3>Add a listing</h3>
-        <p>Enter the MLS number and the photos, price, and details fill themselves in.</p>
+        <p>Enter the MLS number, add a quick video hello if you want one, and the rest fills itself in.</p>
       </div>
       <div class="landing-step">
         <div class="landing-step-num">03</div>
@@ -90,9 +90,14 @@
   <section class="landing-benefits">
     <div class="landing-benefits-inner">
       <div class="landing-benefit">
-        <div class="icon">${iconSite}</div>
-        <h3>Your own branded site</h3>
-        <p>Every agent gets a page with their own name, brand, and listings — not a shared template lost in a directory.</p>
+        <div class="icon">${iconVideo}</div>
+        <h3>A video intro, not just a price sheet</h3>
+        <p>Add a short video to any listing — a personal hello, a walkthrough, why this house — so a curbside visitor meets you before they ever dial a number.</p>
+      </div>
+      <div class="landing-benefit">
+        <div class="icon">${iconQr}</div>
+        <h3>One code that never goes stale</h3>
+        <p>The QR points at your live page, not a fixed link. Price changes, status flips, you swap the video — the same printed sign still works. No reprints.</p>
       </div>
       <div class="landing-benefit">
         <div class="icon">${iconBolt}</div>
@@ -100,16 +105,11 @@
         <p>Enter an MLS number and the price, photos, and details pull straight from your board's feed.</p>
         <span class="ref">e.g. MLS #26-274631</span>
       </div>
-      <div class="landing-benefit">
-        <div class="icon">${iconQr}</div>
-        <h3>Scan tracking</h3>
-        <p>Every yard-sign scan is logged, so you know exactly which sign is actually working.</p>
-      </div>
     </div>
   </section>
 
   <section class="landing-cta-band">
-    <h2>Ready to give your listings a home of their own?</h2>
+    <h2>Ready to put a face on your next yard sign?</h2>
     <a class="btn btn-primary" href="${beta}">Request beta access</a>
   </section>
 
