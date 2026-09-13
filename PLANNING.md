@@ -392,6 +392,33 @@ Resurface these at the start of planning sessions until each is closed.
   Supabase CLI (requires `supabase login` + `supabase link`, which — like
   project creation — needs Scott to do the auth step himself).
 
+- **2026-09-11 — MLS lookup end-to-end confirmed working; two real bugs found and fixed.**
+  1. **Client-side bug:** `sb.functions.invoke()` puts a generic "non-2xx
+     status code" message on `error` for ANY Edge Function error response —
+     the actual `{error: "..."}` body has to be read off `error.context`
+     (the raw Response). Without this fix, every failure mode (not connected,
+     no listing found, Spark failure) showed the same unhelpful generic
+     message. Fixed in `app.html`'s MLS lookup handler.
+  2. **Operator error, not a code bug:** the token saved in Connect MLS was
+     Spark's generic developer sandbox/demo token (auto-issued at developer
+     registration, before any real MLS approval) — NOT the real Washington
+     County BOR token from the earlier Datamart approval. Symptom was
+     deceptive: real API calls succeeded and returned real-looking data (an
+     unfiltered query returned 5 listings), just from Spark's nationwide demo
+     dataset (one sample was in Great Falls, MT) rather than actual Washington
+     County listings. **Lesson for future MLS connections:** verify a newly
+     connected MLS by checking that a returned listing's *city* actually
+     matches the expected board, not just that the API call succeeds.
+  - `mls-lookup` also now retries with dashes stripped from the MLS number
+    (Spark doesn't always store them), kept as a permanent improvement.
+  - **Deployment reminder:** pushing to GitHub only redeploys the Netlify
+    static site — Supabase Edge Functions need a **separate manual redeploy**
+    every time `supabase/functions/mls-lookup/index.ts` changes (via the
+    Supabase dashboard's function editor, copy-paste, since no CLI/GitHub
+    Actions link exists yet for this).
+  - First real property successfully added via the admin panel using MLS
+    #26-274631 (Washington County).
+
 - **2026-09-11 — Live end-to-end: GitHub -> Netlify -> Supabase confirmed working.**
   - GitHub repo: `github.com/ScottBird8/PerchQR` (note: capital-letter `PerchQR`,
     unlike the lowercase `perchqr.com` domain/brand — cosmetic only, doesn't
@@ -405,8 +432,13 @@ Resurface these at the start of planning sessions until each is closed.
     `72158799-b0f4-47c9-ac2a-45ffe52db1df`, slug `scott-bird`).
   - Verified live: `perchqr.netlify.app/scott-bird` renders his real homepage
     from Supabase; `perchqr.netlify.app/app` shows the admin sign-in gate.
-  - Custom domain (`perchqr.com` -> this Netlify site) not yet connected — still
-    on the netlify.app subdomain.
+  - **Custom domain connected.** `perchqr.com` (A record -> `75.2.60.5`) and
+    `www.perchqr.com` (CNAME -> `perchqr.netlify.app`) added in GoDaddy DNS and
+    in Netlify's Domain management. Confirmed working directly against
+    Netlify's IP (HTTP 200, valid SSL) — just waiting on DNS propagation to
+    finish on some resolvers (Google's 8.8.8.8 already correct; Scott's local
+    ISP resolver was still stale as of this check). No further action needed,
+    just time.
   - `mls-lookup` Edge Function still not deployed (needs `supabase login` +
     `supabase functions deploy`, same "needs Scott's own login" constraint).
 

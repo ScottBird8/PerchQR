@@ -412,6 +412,24 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
   .fact-grid{grid-template-columns:1fr;}
   nav.site-nav{display:none;}
 }
+/* ---- perchqr.com root landing page (not a tenant page) ---- */
+.landing{max-width:1000px;margin:0 auto;padding:0 28px;}
+.landing-header{display:flex;align-items:center;justify-content:space-between;padding:24px 0;}
+.landing-wordmark{font-family:var(--display);font-weight:700;font-size:20px;color:var(--maroon);}
+.landing-hero{padding:60px 0 50px;max-width:640px;}
+.landing-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:var(--maroon);background:var(--maroon-wash);border:1px solid var(--maroon);display:inline-block;padding:5px 14px;border-radius:100px;margin-bottom:18px;}
+.landing-hero h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,4.5vw,50px);line-height:1.08;margin:0 0 18px;color:var(--charcoal);}
+.landing-hero h1 span{color:var(--maroon);}
+.landing-hero p{color:var(--charcoal-soft);font-size:17px;line-height:1.6;max-width:52ch;margin:0 0 28px;}
+.landing-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding:20px 0 60px;border-top:1px solid var(--line);margin-top:10px;}
+.landing-step{padding-top:28px;}
+.landing-step-num{width:32px;height:32px;border-radius:50%;background:var(--maroon);color:#fff;font-family:var(--display);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.landing-step h3{font-family:var(--display);font-size:16px;margin:0 0 8px;}
+.landing-step p{color:var(--charcoal-soft);font-size:14px;line-height:1.55;margin:0;}
+@media (max-width:760px){
+  .landing-steps{grid-template-columns:1fr;}
+}
+
 @media (prefers-reduced-motion: reduce){
   *{animation-duration:0.01ms!important;transition-duration:0.01ms!important;scroll-behavior:auto!important;}
 }

@@ -27,7 +27,47 @@
   const slug = segments[0] || null;
 
   if (!slug) {
-    app.innerHTML = '<div class="state-msg">This is PerchQR. Visit an agent\'s own link — e.g. perchqr.com/&lt;agent-name&gt; — to see their site.</div>';
+    document.title = 'PerchQR — Your listings deserve their own site';
+    const beta = 'mailto:bird.scott@gmail.com?subject=PerchQR%20beta%20access';
+    app.innerHTML = `<div class="landing">
+  <header class="landing-header">
+    <span class="landing-wordmark">PerchQR</span>
+    <a class="btn btn-ghost" href="${beta}">Request beta access</a>
+  </header>
+
+  <section class="landing-hero">
+    <span class="landing-eyebrow">Private beta</span>
+    <h1>Your listings deserve <span>their own site.</span></h1>
+    <p>PerchQR gives every agent a branded property site, a QR code for the yard sign, and scan tracking — pull a listing straight from your MLS in seconds.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="${beta}">Request beta access</a>
+      <a class="btn btn-ghost" href="/scott-bird">See a live example &rarr;</a>
+    </div>
+  </section>
+
+  <section class="landing-steps">
+    <div class="landing-step">
+      <div class="landing-step-num">1</div>
+      <h3>Connect your MLS</h3>
+      <p>Link your free Spark access token once — takes about five minutes.</p>
+    </div>
+    <div class="landing-step">
+      <div class="landing-step-num">2</div>
+      <h3>Add a listing</h3>
+      <p>Enter the MLS number and the photos, price, and details fill themselves in.</p>
+    </div>
+    <div class="landing-step">
+      <div class="landing-step-num">3</div>
+      <h3>Print your QR code</h3>
+      <p>Put it on the sign. Every scan lands on your own branded page — and you can see who's scanning.</p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span>&copy; ${new Date().getFullYear()} PerchQR. Free during the private beta.</span>
+    <span></span>
+  </footer>
+</div>`;
     return;
   }
 
