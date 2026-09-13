@@ -457,7 +457,21 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
 .landing-eyebrow{font-family:var(--pq-mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--pq-cedar);background:var(--pq-cedar-soft);border:1px solid var(--pq-cedar);display:inline-block;padding:5px 12px;border-radius:3px;margin-bottom:20px;}
 
 .landing-hero{max-width:1080px;margin:0 auto;padding:44px 28px 56px;border-bottom:1px solid var(--pq-line);}
+.landing-hero-grid{display:grid;grid-template-columns:1.3fr 0.7fr;gap:32px;align-items:stretch;}
+.landing-hero-grid.no-video{grid-template-columns:1fr;}
 .landing-hero-inner{max-width:620px;}
+/* Recolor the shared floating-video component (built for the agent-site
+   theme, hence the var(--maroon)/var(--radius) references) to Fieldstone's
+   palette when it's used on the landing page. */
+.landing .hero-video-wrap{border-color:var(--pq-line);box-shadow:0 20px 45px -22px rgba(35,38,43,0.3);border-radius:8px;}
+.landing .hero-video-wrap.small{border-radius:8px;}
+.landing .video-tag{border-radius:4px;}
+.landing .video-tag .dot{background:var(--pq-cedar);}
+.landing .play-btn{color:var(--pq-slate);}
+@media (max-width:940px){
+  .landing-hero-grid{grid-template-columns:1fr;}
+  .landing .hero-video-wrap{max-width:220px;margin:0;}
+}
 .landing-hero h1{font-family:var(--pq-display);font-weight:600;font-size:clamp(32px,4.3vw,50px);line-height:1.1;margin:0 0 18px;text-wrap:balance;color:var(--pq-ink);}
 .landing-hero h1 em{font-style:italic;color:var(--pq-cedar);}
 .landing-hero p{color:var(--pq-sub);font-size:16.5px;line-height:1.6;max-width:50ch;margin:0 0 28px;}

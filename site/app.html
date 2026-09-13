@@ -113,6 +113,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <button class="tab-btn" data-tab="testimonials">Testimonials</button>
       <button class="tab-btn" data-tab="homepage">Home Page</button>
       <button class="tab-btn" data-tab="qr">QR Codes</button>
+      <button class="tab-btn hidden" data-tab="sitesettings" id="siteSettingsTabBtn">perchqr.com</button>
     </div>
 
     <div class="tab-panel active" id="tab-properties">
@@ -185,6 +186,23 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <h2 style="font-size:16px;margin:28px 0 10px;">Recent scans</h2>
       <p class="field-hint" style="margin-bottom:12px;">Every time someone scans one of your QR codes, it's logged here.</p>
       <div id="qrScanList"><div class="state-msg-inline">Loading&hellip;</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-sitesettings">
+      <div class="overlay-card" style="max-width:560px;padding:24px;">
+        <h2 style="font-size:16px;">perchqr.com landing page</h2>
+        <p class="field-hint" style="margin-bottom:16px;">Only visible to you — this is the company site, not an agent page. Optional intro video shown at the top of perchqr.com itself.</p>
+
+        <div class="field" style="margin-bottom:8px;">
+          <label>Intro video</label>
+          <input type="file" id="landingVideoFile" accept="video/*">
+          <div id="landingVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
+        </div>
+
+        <div class="form-actions" style="justify-content:flex-start;">
+          <button class="btn-sm primary" id="landingVideoSaveBtn">Save changes</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -354,6 +372,12 @@ const notAnAgent = document.getElementById('notAnAgent');
 const adminApp = document.getElementById('adminApp');
 let AGENT = null;
 
+// PerchQR-the-company settings (the perchqr.com landing page) aren't
+// per-agent, so there's no real "owner" role system yet — just check
+// against Scott's own agent id. Revisit with real admin roles if this
+// ever needs more than one privileged owner.
+const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
+
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
@@ -381,6 +405,10 @@ async function checkAuth() {
   loadQrScans();
   loadTestimonials();
   loadHomeSettings();
+  if (agent.id === PERCHQR_OWNER_ID) {
+    document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
+    loadLandingSettings();
+  }
 }
 
 document.getElementById('loginBtn').addEventListener('click', async () => {
@@ -927,6 +955,44 @@ document.getElementById('homeVideoSaveBtn').addEventListener('click', async () =
     homeVideoFile = null;
     document.getElementById('homeVideoFile').value = '';
     await loadHomeSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Save failed — check your connection and try again.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+  }
+});
+
+/* ============================================================
+   perchqr.com landing page settings (owner-only — see PERCHQR_OWNER_ID)
+   ============================================================ */
+let landingVideoFile = null;
+
+async function loadLandingSettings() {
+  const { data, error } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
+  const statusEl = document.getElementById('landingVideoStatus');
+  if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
+  statusEl.textContent = (data && data.landing_video_url) ? 'A video is currently set.' : 'No video uploaded yet.';
+}
+
+document.getElementById('landingVideoFile').addEventListener('change', (e) => {
+  landingVideoFile = e.target.files[0] || null;
+  const statusEl = document.getElementById('landingVideoStatus');
+  if (landingVideoFile) statusEl.textContent = `Selected: ${landingVideoFile.name} (${(landingVideoFile.size / 1024 / 1024).toFixed(1)} MB) — click Save to upload.`;
+});
+
+document.getElementById('landingVideoSaveBtn').addEventListener('click', async () => {
+  const saveBtn = document.getElementById('landingVideoSaveBtn');
+  if (!landingVideoFile) { toast('Choose a video file first'); return; }
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  try {
+    const url = await uploadFile('property-videos', 'site', 'landing-intro', landingVideoFile);
+    const { error } = await sb.from('site_settings').update({ landing_video_url: url }).eq('id', 1);
+    if (error) throw error;
+    toast('Landing page video updated');
+    landingVideoFile = null;
+    document.getElementById('landingVideoFile').value = '';
+    await loadLandingSettings();
   } catch (err) {
     console.error(err);
     toast('Save failed — check your connection and try again.');

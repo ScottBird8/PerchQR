@@ -29,6 +29,8 @@
   if (!slug) {
     document.title = 'PerchQR — Let buyers meet you before they call';
     const beta = 'mailto:bird.scott@gmail.com?subject=PerchQR%20beta%20access';
+    const { data: siteSettings } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
+    const landingVideoUrl = siteSettings && siteSettings.landing_video_url;
     // QR-corner-mark logo (liked from the "Signal" direction), recolored
     // to Fieldstone's slate via currentColor — kept even though the rest
     // of Signal's palette/type wasn't chosen.
@@ -52,14 +54,26 @@
   </header>
 
   <section class="landing-hero">
-    <div class="landing-hero-inner">
-      <span class="landing-eyebrow">Private beta</span>
-      <h1>Let buyers <em>meet you</em> before they call.</h1>
-      <p>Every listing gets its own branded page with a personal video introduction — not just a price sheet. Pulled from your MLS number, printed as one QR code that never needs reprinting.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="${beta}">Request beta access</a>
-        <a class="btn btn-ghost" href="/scott-bird">See a live example &rarr;</a>
+    <div class="landing-hero-grid${landingVideoUrl ? '' : ' no-video'}">
+      <div class="landing-hero-inner">
+        <span class="landing-eyebrow">Private beta</span>
+        <h1>Let buyers <em>meet you</em> before they call.</h1>
+        <p>Every listing gets its own branded page with a personal video introduction — not just a price sheet. Pulled from your MLS number, printed as one QR code that never needs reprinting.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="${beta}">Request beta access</a>
+          <a class="btn btn-ghost" href="/scott-bird">See a live example &rarr;</a>
+        </div>
       </div>
+      ${landingVideoUrl ? `<div class="hero-video-wrap" id="heroVideoWrap">
+        <video id="welcomeVideo" playsinline preload="metadata">
+          <source src="${landingVideoUrl}" type="video/mp4">
+        </video>
+        <div class="video-tag"><span class="dot"></span>Welcome</div>
+        <div class="play-overlay" id="playOverlay">
+          <div class="play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="replay-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></div>
+      </div>` : ''}
     </div>
   </section>
 
@@ -118,6 +132,7 @@
     <span>&copy; ${new Date().getFullYear()} PerchQR. Free during the private beta.</span>
   </footer>
 </div>`;
+    if (landingVideoUrl) Perch.initHomeVideo();
     return;
   }
 

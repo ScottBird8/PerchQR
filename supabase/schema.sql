@@ -341,3 +341,35 @@ create policy "qr_scans_agent_delete"
   on public.qr_scans for delete
   to authenticated
   using (agent_id = auth.uid());
+
+-- ============================================================
+-- 9. site_settings — PerchQR's own COMPANY-wide settings (not
+--    per-agent, not per-tenant). Currently just the perchqr.com
+--    landing page's intro video. Singleton row (id = 1).
+--
+--    Write access is hardcoded to Scott's own agent id — there's no
+--    admin-roles system yet, and one is overkill for a single-owner
+--    beta. Revisit with a real roles table if PerchQR ever needs more
+--    than one privileged owner.
+-- ============================================================
+create table if not exists public.site_settings (
+  id                 int primary key default 1,
+  landing_video_url  text,
+  constraint site_settings_singleton check (id = 1)
+);
+insert into public.site_settings (id) values (1) on conflict (id) do nothing;
+
+alter table public.site_settings enable row level security;
+
+drop policy if exists "site_settings_public_read" on public.site_settings;
+create policy "site_settings_public_read"
+  on public.site_settings for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "site_settings_owner_write" on public.site_settings;
+create policy "site_settings_owner_write"
+  on public.site_settings for update
+  to authenticated
+  using (auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df')
+  with check (auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df');
