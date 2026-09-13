@@ -29,13 +29,14 @@
   if (!slug) {
     document.title = 'PerchQR — Your listings deserve their own site';
     const beta = 'mailto:bird.scott@gmail.com?subject=PerchQR%20beta%20access';
-    const logo = `<svg class="landing-logo" width="26" height="26" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="2" y="24" width="26" height="2.5" rx="1.25" fill="currentColor" opacity="0.3"/>
-      <path d="M4 22.5 L1 25.5 L7 24.7 Z" fill="currentColor"/>
-      <ellipse cx="13.5" cy="16" rx="8.2" ry="7" fill="currentColor"/>
-      <circle cx="21" cy="10.5" r="4.3" fill="currentColor"/>
-      <path d="M24.8 10 L29 11 L24.8 12.3 Z" fill="currentColor"/>
-      <circle cx="22.3" cy="9.6" r="1" fill="var(--pq-surface)"/>
+    // QR-corner-mark logo (liked from the "Signal" direction), recolored
+    // to Fieldstone's slate via currentColor — kept even though the rest
+    // of Signal's palette/type wasn't chosen.
+    const logo = `<svg class="landing-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1"/>
+      <rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/>
+      <path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/>
     </svg>`;
     const iconSite = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 9h18"/></svg>`;
     const iconBolt = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>`;
