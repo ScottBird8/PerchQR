@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PerchQR Administrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>
+/* Owner-only gate, deliberately unlisted (no link to this page appears
+   anywhere on the public site or in /app) and separate from the shared
+   agent sign-in at /app. Signing in here still authenticates against the
+   same Supabase Auth user pool as everywhere else — there is no second
+   credential system — but this page checks the signed-in user's id
+   against PERCHQR_OWNER_ID before granting entry, and immediately signs
+   out and rejects anyone else's account, even a valid agent login. */
+:root{
+  --bg:#EFF0EB;
+  --panel:#FFFFFF;
+  --maroon:#3B4A5A;
+  --maroon-bright:#4E6178;
+  --maroon-wash:#E3E7E9;
+  --charcoal:#23262B;
+  --charcoal-soft:#585F5C;
+  --line:#DBDDD5;
+  --line-bright:#C7CBC3;
+  --display:'Fraunces', serif;
+  --body:'Karla', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+  --radius:10px;
+}
+body{background:var(--bg);}
+.gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.gate-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:32px;text-align:center;box-shadow:0 20px 45px -22px rgba(35,38,43,0.28);}
+.wordmark{font-family:var(--display);font-weight:700;font-size:20px;color:var(--maroon);display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 6px;}
+.wordmark-icon{color:var(--maroon);flex-shrink:0;}
+.eyebrow{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.08em;color:var(--charcoal-soft);margin:0 0 20px;}
+h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 18px;}
+input{width:100%;padding:11px 14px;border:1px solid var(--line-bright);border-radius:8px;font-family:var(--body);font-size:14px;margin-bottom:10px;background:#fff;color:var(--charcoal);}
+button{width:100%;margin-top:6px;font-family:var(--body);font-weight:600;font-size:14.5px;padding:12px;border-radius:6px;border:none;background:var(--maroon);color:#fff;cursor:pointer;}
+button:hover{background:var(--maroon-bright);}
+button:disabled{opacity:0.6;cursor:default;}
+.gate-error{color:var(--maroon);font-size:13px;margin-top:12px;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="gate">
+  <div class="gate-card">
+    <div class="wordmark">
+      <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
+      PerchQR
+    </div>
+    <div class="eyebrow">Administrator</div>
+    <h2>Sign in</h2>
+    <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
+    <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn">Sign in</button>
+    <div class="gate-error hidden" id="loginError"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script>
+// Mirrors the same id used in supabase/schema.sql's is_perchqr_owner() and
+// app.html's PERCHQR_OWNER_ID — keep all three in sync if this ever changes.
+const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
+
+async function attemptLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  errEl.classList.add('hidden');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    if (data.user.id !== PERCHQR_OWNER_ID) {
+      await sb.auth.signOut();
+      throw new Error('This sign-in is for the PerchQR administrator only.');
+    }
+    window.location.href = '/app';
+  } catch (err) {
+    errEl.textContent = err.message || 'Sign-in failed.';
+    errEl.classList.remove('hidden');
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+document.getElementById('loginBtn').addEventListener('click', attemptLogin);
+document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+// If already signed in as the owner (e.g. this tab was left open), skip
+// straight through instead of asking for credentials again.
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user.id === PERCHQR_OWNER_ID) window.location.href = '/app';
+})();
+</script>
+</body>
+</html>

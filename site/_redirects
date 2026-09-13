@@ -23,6 +23,11 @@
 /app             /app.html            200
 /:slug/access    /app.html            200
 
+# Administrator-only gate — deliberately not linked anywhere on the public
+# site. Signs in against the same Supabase Auth pool as everyone else, but
+# rejects any account that isn't PERCHQR_OWNER_ID before it can reach /app.
+/admin           /admin.html          200
+
 # Self-serve signup.
 /signup          /signup.html         200
 
