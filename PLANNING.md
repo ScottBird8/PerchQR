@@ -335,6 +335,30 @@ expansion, polished onboarding) until the beta says the product is real.
     he's inviting instead of onboarding them via SQL. Revisit if the beta
     ever opens up to public self-serve.
 
+- **2026-09-13 — Three distinct sign-in entry points, plus admin/user
+  terminology and video cleanup.**
+  - **`/admin`** — new, unlisted, owner-only gate. Authenticates against the
+    same Supabase Auth pool as everywhere else (no second credential system),
+    but checks the signed-in user's id against `PERCHQR_OWNER_ID` and
+    immediately signs out + rejects anyone else before they reach anything.
+    Forwards to `/app` on success.
+  - **`/app`** — generic sign-in, works for any agent (including the owner).
+  - **`/<slug>/access`** — an agent's personal, memorable link to the same
+    underlying page. The address bar now auto-syncs to this form on every
+    successful sign-in and every agent-switcher change (via `replaceState`,
+    no reload) regardless of which of the three doors was used to get in.
+  - Renamed every visible "Admin" label in `app.html` to "User Access" (title,
+    sign-in heading, header title in all states) — internal ids/classes left
+    alone since they're not user-facing.
+  - Added a "Remove video" button (Home Page tab + Landing Page Video tab),
+    shown only when one's set — previously the only way to change a video was
+    to overwrite it, with no way to take one down.
+  - Added a "Log in" link to the `perchqr.com` landing nav (`/app`), kept
+    visible on mobile unlike the "How it works" anchor.
+  - Clarified for Scott: `/app` being publicly reachable was never a security
+    gap — it's a login form, not a data view; RLS is what actually protects
+    data, same as any normal login page (gmail.com, etc.) being public.
+
 ---
 
 ## Open Questions
