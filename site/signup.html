@@ -129,6 +129,17 @@ slugEl.addEventListener('input', () => {
   checkSlug();
 });
 
+// Tries base-2, base-3, ... up to base-20 and returns the first one not
+// already taken (or null if even that many are somehow all in use).
+async function findAvailableSlug(base) {
+  for (let n = 2; n <= 20; n++) {
+    const candidate = `${base}-${n}`.slice(0, 40);
+    const { data } = await sb.from('agents').select('id').eq('slug', candidate).maybeSingle();
+    if (!data) return candidate;
+  }
+  return null;
+}
+
 function checkSlug() {
   clearTimeout(slugCheckTimer);
   const slug = slugEl.value;
@@ -150,8 +161,18 @@ function checkSlug() {
     const { data } = await sb.from('agents').select('id').eq('slug', slug).maybeSingle();
     if (slugEl.value !== slug) return;
     if (data) {
-      previewEl.textContent = `perchqr.com/${slug} — already taken.`;
+      const alt = await findAvailableSlug(slug);
+      if (slugEl.value !== slug) return;
+      previewEl.innerHTML = `perchqr.com/${slug} — already taken.` +
+        (alt ? ` <a href="#" id="slugAltLink" style="color:var(--maroon);font-weight:600;">Try ${alt} instead &rarr;</a>` : '');
       previewEl.className = 'slug-preview bad';
+      const altLink = document.getElementById('slugAltLink');
+      if (altLink) altLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        slugTouched = true;
+        slugEl.value = alt;
+        checkSlug();
+      });
     } else {
       previewEl.textContent = `perchqr.com/${slug} — available.`;
       previewEl.className = 'slug-preview ok';
