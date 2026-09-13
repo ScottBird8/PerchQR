@@ -282,6 +282,29 @@ expansion, polished onboarding) until the beta says the product is real.
   - Custom domains later: `custom_domain` column, Host-header match, certs via
     host's SaaS-domain feature.
 
+- **2026-09-12 — Chose "Fieldstone" as PerchQR's brand identity, added a QR
+  logo, and rewrote landing copy around real value props.** Explored 3
+  directions in an artifact (PerchQR Identity Studies) — slate/cedar palette,
+  Fraunces/Karla/JetBrains Mono type, square mono step numbers, hairline-
+  divided benefits grid. Kept the QR-corner-mark logo from a different
+  direction ("Signal") instead of Fieldstone's original bird mark. Landing
+  copy now leads with the video-introduction feature (the real, built
+  differentiator) instead of a generic "your own site" pitch, and reframes
+  the QR-durability point honestly: it doesn't reduce how many signs an agent
+  buys, it means a printed sign never needs reprinting since the code points
+  at a live page, not a fixed link. Dropped the unproven "converts more
+  leads" claim — the beta is what tests that.
+
+- **2026-09-12 — perchqr.com landing page can now show an intro video.**
+  New `site_settings` singleton table (company-wide, not per-agent/tenant) —
+  write access hardcoded to Scott's agent id via RLS (no real admin-roles
+  system yet; revisit if that's ever needed). Upload it from the new
+  "perchqr.com" tab in `/app` (hidden from every other agent). Reuses the
+  same floating/shrink video component the agent homepage already has,
+  recolored to Fieldstone. **Action needed:** run the new `site_settings`
+  block appended to the bottom of `supabase/schema.sql` against the live
+  project (SQL Editor) — not yet confirmed run as of this entry.
+
 ---
 
 ## Open Questions
