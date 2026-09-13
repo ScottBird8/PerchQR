@@ -440,6 +440,7 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
   font-family:var(--pq-body);
 }
 .landing a{color:inherit;}
+.landing .btn{font-family:var(--pq-body);border-radius:6px;}
 .landing .btn-primary{background:var(--pq-slate);color:#fff;}
 .landing .btn-primary:hover{background:var(--pq-slate-bright);}
 .landing .btn-ghost{border-color:var(--pq-line);color:var(--pq-ink);background:var(--pq-surface);}
