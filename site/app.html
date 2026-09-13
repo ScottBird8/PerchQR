@@ -457,6 +457,18 @@ const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
 const urlSegments = window.location.pathname.split('/').filter(Boolean);
 const urlSlug = urlSegments[1] === 'access' ? urlSegments[0] : null;
 
+// Keeps the address bar in sync with whichever agent's data is currently
+// showing (AGENT — not necessarily AGENT_SELF, once the owner has switched)
+// — however you actually arrived here: /app, /admin, or someone else's
+// /<slug>/access link. Uses replaceState, not a real navigation, so it
+// doesn't reload the page or lose the session.
+function goToPersonalizedUrl() {
+  const targetPath = `/${AGENT.slug}/access`;
+  if (window.location.pathname !== targetPath) {
+    history.replaceState(null, '', targetPath);
+  }
+}
+
 function loadAgentScopedData() {
   loadProfile();
   loadProperties();
@@ -511,6 +523,8 @@ async function checkAuth() {
     if (viewed) AGENT = viewed;
   }
 
+  goToPersonalizedUrl();
+
   gate.classList.add('hidden');
   notAnAgent.classList.add('hidden');
   adminApp.classList.remove('hidden');
@@ -550,6 +564,7 @@ document.getElementById('agentSwitcher').addEventListener('change', async (e) =>
   AGENT = chosen;
   const viewingOther = AGENT.id !== AGENT_SELF.id;
   document.getElementById('adminTitle').textContent = `${AGENT.display_name} — User Access${viewingOther ? ' (viewing as owner)' : ''}`;
+  goToPersonalizedUrl();
   loadAgentScopedData();
   toast(viewingOther ? `Now viewing ${AGENT.display_name}'s account` : 'Back to your own account');
 });
