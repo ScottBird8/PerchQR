@@ -505,7 +505,7 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
 @media (max-width:760px){
   .landing-steps{grid-template-columns:1fr;}
   .landing-benefits-inner{grid-template-columns:1fr;}
-  .landing-nav a:not(.btn){display:none;}
+  .landing-nav a:not(.btn):not(.landing-nav-login){display:none;}
 }
 
 @media (prefers-reduced-motion: reduce){
