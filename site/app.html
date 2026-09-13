@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerchQR Admin</title>
+<title>PerchQR User Access</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -106,7 +106,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 <div id="gate" class="gate">
   <div class="gate-card">
     <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
-    <h2>Admin sign in</h2>
+    <h2>Sign in</h2>
     <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
     <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn-sm primary" id="loginBtn" style="width:100%;">Sign in</button>
@@ -125,7 +125,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="adminApp" class="hidden">
   <div class="admin-header">
-    <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR Admin</h1></div>
+    <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR User Access</h1></div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div id="agentSwitcherWrap" class="hidden" style="display:flex;align-items:center;gap:8px;">
         <label style="font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);">Viewing</label>
@@ -236,6 +236,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
         <div class="form-actions" style="justify-content:flex-start;">
           <button class="btn-sm primary" id="homeVideoSaveBtn">Save changes</button>
+          <button class="btn-sm danger hidden" id="homeVideoRemoveBtn">Remove video</button>
         </div>
       </div>
     </div>
@@ -266,6 +267,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
         <div class="form-actions" style="justify-content:flex-start;">
           <button class="btn-sm primary" id="landingVideoSaveBtn">Save changes</button>
+          <button class="btn-sm danger hidden" id="landingVideoRemoveBtn">Remove video</button>
         </div>
       </div>
     </div>
@@ -497,7 +499,7 @@ async function checkAuth() {
   gate.classList.add('hidden');
   notAnAgent.classList.add('hidden');
   adminApp.classList.remove('hidden');
-  document.getElementById('adminTitle').textContent = `${agent.display_name} — Admin`;
+  document.getElementById('adminTitle').textContent = `${agent.display_name} — User Access`;
   loadAgentScopedData();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
@@ -531,7 +533,7 @@ document.getElementById('agentSwitcher').addEventListener('change', async (e) =>
   if (error || !chosen) { toast('Could not load that agent'); console.error(error); return; }
   AGENT = chosen;
   const viewingOther = AGENT.id !== AGENT_SELF.id;
-  document.getElementById('adminTitle').textContent = `${AGENT.display_name} — Admin${viewingOther ? ' (viewing as owner)' : ''}`;
+  document.getElementById('adminTitle').textContent = `${AGENT.display_name} — User Access${viewingOther ? ' (viewing as owner)' : ''}`;
   loadAgentScopedData();
   toast(viewingOther ? `Now viewing ${AGENT.display_name}'s account` : 'Back to your own account');
 });
@@ -639,7 +641,7 @@ document.getElementById('profileSaveBtn').addEventListener('click', async () => 
     if (error) throw error;
     AGENT = updated;
     if (AGENT.id === AGENT_SELF.id) AGENT_SELF = updated;
-    document.getElementById('adminTitle').textContent = `${AGENT.display_name} — Admin${AGENT.id !== AGENT_SELF.id ? ' (viewing as owner)' : ''}`;
+    document.getElementById('adminTitle').textContent = `${AGENT.display_name} — User Access${AGENT.id !== AGENT_SELF.id ? ' (viewing as owner)' : ''}`;
     toast('Profile updated');
     await loadProfile();
   } catch (err) {
@@ -1133,12 +1135,33 @@ async function loadHomeSettings() {
   const { data, error } = await sb.from('agent_settings').select('home_video_url').eq('agent_id', AGENT.id).maybeSingle();
   const statusEl = document.getElementById('homeVideoStatus');
   const previewEl = document.getElementById('homeVideoPreview');
+  const removeBtn = document.getElementById('homeVideoRemoveBtn');
   if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
   const url = data && data.home_video_url;
   statusEl.textContent = url ? 'Currently set — preview below.' : 'No video uploaded yet.';
   previewEl.classList.toggle('hidden', !url);
+  removeBtn.classList.toggle('hidden', !url);
   if (url) previewEl.src = url;
 }
+
+document.getElementById('homeVideoRemoveBtn').addEventListener('click', async () => {
+  if (!confirm('Remove the welcome video from your homepage?')) return;
+  const removeBtn = document.getElementById('homeVideoRemoveBtn');
+  removeBtn.disabled = true;
+  try {
+    const { error } = await sb.from('agent_settings').update({ home_video_url: null }).eq('agent_id', AGENT.id);
+    if (error) throw error;
+    homeVideoFile = null;
+    document.getElementById('homeVideoFile').value = '';
+    toast('Video removed');
+    await loadHomeSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Could not remove the video — try again.');
+  } finally {
+    removeBtn.disabled = false;
+  }
+});
 
 document.getElementById('homeVideoFile').addEventListener('change', (e) => {
   homeVideoFile = e.target.files[0] || null;
@@ -1175,12 +1198,33 @@ async function loadLandingSettings() {
   const { data, error } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
   const statusEl = document.getElementById('landingVideoStatus');
   const previewEl = document.getElementById('landingVideoPreview');
+  const removeBtn = document.getElementById('landingVideoRemoveBtn');
   if (error) { statusEl.textContent = 'Could not load current settings.'; console.error(error); return; }
   const url = data && data.landing_video_url;
   statusEl.textContent = url ? 'Currently set — preview below.' : 'No video uploaded yet.';
   previewEl.classList.toggle('hidden', !url);
+  removeBtn.classList.toggle('hidden', !url);
   if (url) previewEl.src = url;
 }
+
+document.getElementById('landingVideoRemoveBtn').addEventListener('click', async () => {
+  if (!confirm('Remove the intro video from perchqr.com?')) return;
+  const removeBtn = document.getElementById('landingVideoRemoveBtn');
+  removeBtn.disabled = true;
+  try {
+    const { error } = await sb.from('site_settings').update({ landing_video_url: null }).eq('id', 1);
+    if (error) throw error;
+    landingVideoFile = null;
+    document.getElementById('landingVideoFile').value = '';
+    toast('Video removed');
+    await loadLandingSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Could not remove the video — try again.');
+  } finally {
+    removeBtn.disabled = false;
+  }
+});
 
 document.getElementById('landingVideoFile').addEventListener('change', (e) => {
   landingVideoFile = e.target.files[0] || null;
