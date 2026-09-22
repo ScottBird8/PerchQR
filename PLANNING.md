@@ -359,6 +359,22 @@ expansion, polished onboarding) until the beta says the product is real.
     gap — it's a login form, not a data view; RLS is what actually protects
     data, same as any normal login page (gmail.com, etc.) being public.
 
+- **2026-09-22 — Clarified: the $50/mo Spark fee was never per-agent.** Scott's
+  actual goal was avoiding agents personally paying $50 each — already true
+  under the current per-agent-token model (Spark's own FAQ: "$50/mo for each
+  MLS you can access... multiple API keys for one MLS will incur only one
+  $50/mo charge" — it's a developer-account, per-MLS fee, never multiplied per
+  agent; the Own Data plan itself was free/"No MLS Charges" anyway). Real
+  remaining goal: reduce the friction of each agent generating/pasting their
+  own token. Evidence suggests Scott's Spark developer account is tied to his
+  own Flexmls identity (`stg.sbird`) — his approval auto-populated that
+  identity without him specifying it, implying he likely can't request "Own
+  Data" access on another agent's behalf through his own account. **Email
+  drafted (not yet sent) to Washington County BOR/FBS asking directly whether
+  PerchQR can request access on an agent's behalf, or whether each agent must
+  self-serve under their own Flexmls login** — holding until a response comes
+  back before changing anything.
+
 ---
 
 ## Open Questions
