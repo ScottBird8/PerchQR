@@ -375,6 +375,31 @@ expansion, polished onboarding) until the beta says the product is real.
   self-serve under their own Flexmls login** — holding until a response comes
   back before changing anything.
 
+- **2026-10-07 — MLS/FBS replied with three setup options; Option 3 (single
+  OIDC key) chosen.** Their summary of the choices:
+  1. *Board-wide data plan, filtered on PerchQR's end* — one credential, ~$50/mo,
+     needs explicit MLS approval, and likely carries IDX-style compliance for
+     the whole board's data. Rejected: costs money and walks back the deliberate
+     "no IDX" scope decision.
+  2. *"A Broker or Agent's Own Data" per agent* — free, what's already built;
+     each agent needs their own key plus agent and MLS approval. Kept as the
+     fallback.
+  3. *Single OIDC key; each agent clicks a link on PerchQR and approves a
+     consent screen after linking their Flexmls account* — free for agent's own
+     data, no email approval, no separate Spark account for the agent.
+     **Chosen.** Replaces the paste-a-token step with a one-click "Connect your
+     Flexmls account." Cost is build effort: OAuth/OIDC authorization redirect,
+     a callback Edge Function, and storing/refreshing per-agent access tokens
+     (replacing the single static token in `mls_credentials`).
+  - Some per-agent consent is unavoidable under every option (Spark's
+    two-party authorization); Option 3 just shrinks it to one click on PerchQR.
+  - **Follow-up email drafted** (not yet sent) asking how to request the OIDC
+    key, what registration needs (redirect URLs, privacy/terms links), cost and
+    timeline, scope confirmation (consenting agent's own listings only), token
+    lifetimes/rate limits, and whether one key covers other Spark boards later.
+    Holding the build until the key's requirements are known.
+  - Client ID/secret, once issued, go in Supabase secrets, never the repo.
+
 ---
 
 ## Open Questions
