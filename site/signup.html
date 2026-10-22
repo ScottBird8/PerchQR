@@ -76,6 +76,12 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
       </div>
 
       <div class="field">
+        <label>Phone</label>
+        <input id="su_phone" type="tel" autocomplete="tel">
+        <div class="field-hint">Shown on your page so buyers can call or text you.</div>
+      </div>
+
+      <div class="field">
         <label>Email</label>
         <input id="su_email" type="email" autocomplete="email">
       </div>
@@ -185,6 +191,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   const name = nameEl.value.trim();
   const slug = slugEl.value.trim();
   const email = document.getElementById('su_email').value.trim();
+  const phone = document.getElementById('su_phone').value.replace(/\D/g, '');
   const password = document.getElementById('su_password').value;
   const errEl = document.getElementById('signupError');
   errEl.classList.add('hidden');
@@ -192,6 +199,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   if (!name) { showError('Enter your full name'); return; }
   if (!slugFormatOk(slug)) { showError('Choose a valid page address first'); return; }
   if (RESERVED_SLUGS.has(slug)) { showError('That page address is reserved — choose another'); return; }
+  if (phone.length < 10) { showError('Enter a 10-digit phone number'); return; }
   if (!email) { showError('Enter your email'); return; }
   if (!password || password.length < 6) { showError('Password must be at least 6 characters'); return; }
 
@@ -204,7 +212,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
     const { data, error } = await sb.auth.signUp({
       email, password,
       options: {
-        data: { pending_slug: slug, pending_display_name: name },
+        data: { pending_slug: slug, pending_display_name: name, pending_phone: phone },
         emailRedirectTo: window.location.origin + '/app',
       },
     });
@@ -214,7 +222,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
       // Confirmation not required (or auto-confirmed) — we have a real
       // session right now, so create the agents row immediately.
       const { error: insErr } = await sb.from('agents').insert({
-        id: data.user.id, slug, display_name: name, email,
+        id: data.user.id, slug, display_name: name, email, phone,
       });
       if (insErr) throw insErr;
       window.location.href = `/${slug}/access`;

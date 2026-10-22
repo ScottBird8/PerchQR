@@ -502,21 +502,6 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
 .landing-footer{max-width:1080px;margin:0 auto;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:var(--pq-mono);font-size:11px;color:var(--pq-sub);}
 .landing-footer .landing-wordmark.small{font-size:13px;color:var(--pq-ink);}
 
-/* Beta-access request modal */
-.landing .hidden{display:none!important;}
-.request-overlay{position:fixed;inset:0;background:rgba(35,38,43,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .15s;}
-.request-overlay.open{opacity:1;pointer-events:auto;}
-.request-card{position:relative;width:100%;max-width:400px;background:var(--pq-surface);border:1px solid var(--pq-line);border-radius:10px;padding:30px;box-shadow:0 24px 60px -24px rgba(35,38,43,0.45);}
-.request-card h2{font-family:var(--pq-display);font-weight:600;font-size:22px;margin:0 0 6px;color:var(--pq-ink);}
-.request-sub{color:var(--pq-sub);font-size:14px;line-height:1.55;margin:0 0 18px;}
-.request-label{display:block;font-family:var(--pq-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--pq-sub);margin:0 0 5px;}
-.request-card input{width:100%;padding:11px 13px;border:1px solid var(--pq-line);border-radius:8px;font-family:var(--pq-body);font-size:14px;background:#fff;color:var(--pq-ink);margin-bottom:14px;}
-.request-card input:focus{outline:2px solid var(--pq-slate);outline-offset:1px;}
-.request-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0;}
-.request-submit{width:100%;justify-content:center;margin-top:4px;text-decoration:none;}
-.request-close{position:absolute;top:10px;right:14px;background:none;border:none;font-size:26px;line-height:1;color:var(--pq-sub);cursor:pointer;}
-.request-close:hover{color:var(--pq-ink);}
-.request-error{color:var(--pq-cedar);font-size:13px;margin-top:12px;text-align:center;}
 
 @media (max-width:760px){
   .landing-steps{grid-template-columns:1fr;}

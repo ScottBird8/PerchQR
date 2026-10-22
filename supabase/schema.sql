@@ -410,36 +410,3 @@ create policy "site_settings_owner_write"
   to authenticated
   using (public.is_perchqr_owner())
   with check (public.is_perchqr_owner());
-
--- ============================================================
--- 10. beta_requests — leads from the perchqr.com "Request beta access"
---     form. Anyone (anon) can submit one; only the owner can read or
---     delete them. Length checks bound what an anonymous insert can write.
--- ============================================================
-create table if not exists public.beta_requests (
-  id          uuid primary key default gen_random_uuid(),
-  name        text not null check (char_length(name) between 1 and 120),
-  phone       text not null check (char_length(phone) between 7 and 40),
-  email       text not null check (char_length(email) between 5 and 200),
-  created_at  timestamptz not null default now()
-);
-
-alter table public.beta_requests enable row level security;
-
-drop policy if exists "beta_requests_public_insert" on public.beta_requests;
-create policy "beta_requests_public_insert"
-  on public.beta_requests for insert
-  to anon, authenticated
-  with check (true);
-
-drop policy if exists "beta_requests_owner_read" on public.beta_requests;
-create policy "beta_requests_owner_read"
-  on public.beta_requests for select
-  to authenticated
-  using (public.is_perchqr_owner());
-
-drop policy if exists "beta_requests_owner_delete" on public.beta_requests;
-create policy "beta_requests_owner_delete"
-  on public.beta_requests for delete
-  to authenticated
-  using (public.is_perchqr_owner());
