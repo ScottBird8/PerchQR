@@ -147,6 +147,7 @@
   }
 
   document.title = `${agent.display_name} | ${agent.brokerage_name || 'Listings'}`;
+  Perch.applyBrand(agent);
 
   const [{ data: properties, error }, { data: testimonials }, { data: settings }] = await Promise.all([
     sb.from('properties').select('*').eq('agent_id', agent.id).neq('status', 'Sold').order('created_at', { ascending: true }),

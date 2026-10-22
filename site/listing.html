@@ -57,6 +57,7 @@
   }
 
   document.title = `${p.full_addr} | ${p.price} | ${agent.brokerage_name || agent.display_name}`;
+  Perch.applyBrand(agent);
 
   const qf = [];
   if (p.beds) qf.push(`<div class="qf"><div class="num">${esc(p.beds)}</div><div class="lbl">Bedrooms</div></div>`);

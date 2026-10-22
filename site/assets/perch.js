@@ -366,11 +366,53 @@ const Perch = (function () {
     try { await sb.from('qr_scans').insert(row); } catch (e) { console.error(e); }
   }
 
+  // ---- Per-agent brand color --------------------------------------------
+  // An agent picks ONE color (agents.brand_color); the rest of the palette is
+  // derived from it. The site's theme variables --maroon / --maroon-bright /
+  // --maroon-wash are just the primary / hover / tint roles under legacy
+  // names, so overriding them on :root rethemes every existing rule.
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  }
+  function luminance(r, g, b) {
+    const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  }
+  function mixWithWhite(rgb, t) { return rgb.map(v => v + (255 - v) * t); }
+
+  // Returns { primary, bright, wash } as hex strings, or null for an invalid
+  // color. The primary is darkened as needed so white button text always
+  // meets 4.5:1 contrast, however light a color the agent picked.
+  function brandPalette(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return null;
+    let rgb = hexToRgb(hex);
+    for (let i = 0; i < 30 && 1.05 / (luminance(...rgb) + 0.05) < 4.5; i++) rgb = rgb.map(v => v * 0.93);
+    return {
+      primary: rgbToHex(...rgb),
+      bright: rgbToHex(...mixWithWhite(rgb, 0.16)),
+      wash: rgbToHex(...mixWithWhite(rgb, 0.92)),
+    };
+  }
+
+  function applyBrand(agent) {
+    const pal = brandPalette(agent && agent.brand_color);
+    if (!pal) return;
+    const root = document.documentElement.style;
+    root.setProperty('--maroon', pal.primary);
+    root.setProperty('--maroon-bright', pal.bright);
+    root.setProperty('--maroon-wash', pal.wash);
+  }
+
   return {
     esc, TYPE_LABEL, formatPhone,
     renderHeader, wireHeader, renderFooter, renderContact,
     initHomeVideo, initPropertyVideo, initMatterport, initGallery,
     renderFacts, renderRooms, renderOtherListings, renderTestimonialCard,
     recordQrScan,
+    brandPalette, applyBrand,
   };
 })();

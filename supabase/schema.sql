@@ -58,6 +58,15 @@ returns boolean language sql stable security definer as $$
   select auth.uid() = '72158799-b0f4-47c9-ac2a-45ffe52db1df'::uuid;
 $$;
 
+-- Agent's chosen website color (one hex value, e.g. '#1F6FEB'); the public
+-- pages derive their hover/tint shades from it. Null = the default theme.
+-- Added after the table's first release, hence ALTER rather than only the
+-- create-table above.
+alter table public.agents add column if not exists brand_color text;
+alter table public.agents drop constraint if exists agents_brand_color_format;
+alter table public.agents add constraint agents_brand_color_format
+  check (brand_color is null or brand_color ~ '^#[0-9a-fA-F]{6}$');
+
 alter table public.agents enable row level security;
 
 -- Public read: agent profile fields are the same info a realtor already

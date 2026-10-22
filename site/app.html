@@ -163,6 +163,18 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <div class="field"><label>Facebook Page link (optional)</label><input id="pf_facebook_url"></div>
 
           <div class="field full">
+            <label>Website color</label>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <input type="color" id="pf_brand_color" value="#7A1B10" aria-label="Website color" style="width:56px;height:40px;padding:2px;cursor:pointer;">
+              <input id="pf_brand_hex" placeholder="#7A1B10" maxlength="7" aria-label="Color hex code" style="width:112px;font-family:var(--mono);">
+              <button type="button" class="btn-sm" id="pfBrandFromLogo">Pick from my logo</button>
+              <button type="button" class="btn-sm" id="pfBrandReset">Reset to default</button>
+            </div>
+            <div class="field-hint">Used for buttons, links and highlights across your public pages. Very light colors are darkened slightly so button text stays readable.</div>
+            <div id="pfBrandPreview" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"></div>
+          </div>
+
+          <div class="field full">
             <label>Headshot photo</label>
             <input type="file" id="pf_headshot_file" accept="image/*">
             <div id="pfHeadshotPreview" class="thumb-strip"></div>
@@ -627,11 +639,91 @@ async function loadProfile() {
   val('pf_address_line', AGENT.address_line);
   val('pf_google_url', AGENT.google_url);
   val('pf_facebook_url', AGENT.facebook_url);
+  setBrandColor(AGENT.brand_color || null);
   pfHeadshotFile = null; pfHeadshotExistingUrl = AGENT.headshot_url || null;
   pfLogoFile = null; pfLogoExistingUrl = AGENT.logo_url || null;
   renderPfPreview('pfHeadshotPreview', pfHeadshotFile, pfHeadshotExistingUrl);
   renderPfPreview('pfLogoPreview', pfLogoFile, pfLogoExistingUrl);
 }
+
+/* ---- Website color --------------------------------------------------
+   pfBrandColor is the saved value: a '#rrggbb' string, or null for the
+   default theme. The preview uses the same Perch.brandPalette() the public
+   pages use, so what they see here is what their page will show. */
+const DEFAULT_BRAND = '#7A1B10';
+let pfBrandColor = null;
+
+function setBrandColor(hexOrNull) {
+  pfBrandColor = hexOrNull ? hexOrNull.toLowerCase() : null;
+  const shown = pfBrandColor || DEFAULT_BRAND.toLowerCase();
+  document.getElementById('pf_brand_color').value = shown;
+  document.getElementById('pf_brand_hex').value = pfBrandColor || '';
+  const pal = Perch.brandPalette(shown);
+  document.getElementById('pfBrandPreview').innerHTML = `
+    <span style="background:${pal.primary};color:#fff;padding:9px 18px;border-radius:100px;font-weight:600;font-size:13px;">Call (435) 555-0123</span>
+    <span style="background:${pal.wash};color:${pal.primary};border:1px solid ${pal.primary};padding:5px 12px;border-radius:100px;font-family:var(--mono);font-size:11px;text-transform:uppercase;">Active</span>
+    <span style="color:${pal.primary};font-weight:600;font-size:13px;">${pfBrandColor ? 'Your color' : 'Default color'}</span>`;
+}
+
+document.getElementById('pf_brand_color').addEventListener('input', (e) => setBrandColor(e.target.value));
+document.getElementById('pf_brand_hex').addEventListener('input', (e) => {
+  let v = e.target.value.trim();
+  if (v && !v.startsWith('#')) v = '#' + v;
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) setBrandColor(v);
+});
+document.getElementById('pfBrandReset').addEventListener('click', () => setBrandColor(null));
+
+// Reads the most common clearly-colored pixels from the logo (ignoring
+// white, near-black and gray, which are background/text rather than brand).
+function extractDominantColor(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const size = 64;
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        const px = ctx.getImageData(0, 0, size, size).data;
+        const buckets = {};
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
+          if (a < 200) continue;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          if (max > 235 && min > 220) continue;
+          if (max < 40) continue;
+          if ((max - min) / max < 0.25) continue;
+          const key = (r >> 4) + ',' + (g >> 4) + ',' + (b >> 4);
+          const e = buckets[key] || (buckets[key] = { n: 0, r: 0, g: 0, b: 0 });
+          e.n++; e.r += r; e.g += g; e.b += b;
+        }
+        let best = null;
+        for (const k in buckets) if (!best || buckets[k].n > best.n) best = buckets[k];
+        if (!best) return resolve(null);
+        const hex = '#' + [best.r, best.g, best.b].map(v => Math.round(v / best.n).toString(16).padStart(2, '0')).join('');
+        resolve(hex);
+      } catch (err) { reject(err); }
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+document.getElementById('pfBrandFromLogo').addEventListener('click', async () => {
+  const src = pfLogoFile ? URL.createObjectURL(pfLogoFile) : pfLogoExistingUrl;
+  if (!src) { toast('Upload your logo first, then try again'); return; }
+  try {
+    const hex = await extractDominantColor(src);
+    if (!hex) { toast("Couldn't find a distinct color in that logo — pick one manually"); return; }
+    setBrandColor(hex);
+    toast('Color picked from your logo — adjust it if you like');
+  } catch (err) {
+    console.error(err);
+    toast("Couldn't read the logo — pick a color manually");
+  }
+});
 
 function renderPfPreview(elId, file, existingUrl) {
   const src = file ? URL.createObjectURL(file) : existingUrl;
@@ -668,6 +760,7 @@ document.getElementById('profileSaveBtn').addEventListener('click', async () => 
       address_line: val('pf_address_line') || null,
       google_url: val('pf_google_url') || null,
       facebook_url: val('pf_facebook_url') || null,
+      brand_color: pfBrandColor,
       headshot_url, logo_url,
     };
     const { data: updated, error } = await sb.from('agents').update(row).eq('id', AGENT.id).select().maybeSingle();

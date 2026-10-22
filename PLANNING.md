@@ -412,6 +412,20 @@ expansion, polished onboarding) until the beta says the product is real.
   new-agent onboarding experience with a test account for Scott's wife;
   findings to be logged here.
 
+- **2026-10-22 — Per-agent website color.** Reverses the earlier "per-agent
+  branding out of scope for the beta" note — Scott asked for it. Profile tab
+  has a color picker + hex box, a **Pick from my logo** button (samples the
+  most common clearly-colored pixels from the uploaded logo, ignoring
+  white/black/gray), and Reset. One color per agent (`agents.brand_color`,
+  CHECKed as `#rrggbb`, null = default theme); `Perch.brandPalette()` derives
+  hover and tint shades and darkens very light picks so white button text keeps
+  4.5:1 contrast. `Perch.applyBrand(agent)` overrides `--maroon` /
+  `--maroon-bright` / `--maroon-wash` on `:root` for the agent's homepage and
+  listing pages (the theme's legacy variable names are just primary/hover/tint
+  roles). Not applied to `/app` itself, which stays PerchQR-branded. Fonts and
+  layout remain shared. **Action needed:** run the new `brand_color` ALTER in
+  `supabase/schema.sql` — Profile saves fail until the column exists.
+
 ---
 
 ## Open Questions
