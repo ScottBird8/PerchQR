@@ -145,6 +145,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <button class="tab-btn" data-tab="homepage">Home Page</button>
       <button class="tab-btn" data-tab="qr">QR Codes</button>
       <button class="tab-btn hidden" data-tab="sitesettings" id="siteSettingsTabBtn">Landing Page Video</button>
+      <button class="tab-btn hidden" data-tab="betarequests" id="betaRequestsTabBtn">Beta Requests</button>
     </div>
 
     <div class="tab-panel" id="tab-profile">
@@ -252,6 +253,14 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <h2 style="font-size:16px;margin:28px 0 10px;">Recent scans</h2>
       <p class="field-hint" style="margin-bottom:12px;">Every time someone scans one of your QR codes, it's logged here.</p>
       <div id="qrScanList"><div class="state-msg-inline">Loading&hellip;</div></div>
+    </div>
+
+    <div class="tab-panel" id="tab-betarequests">
+      <div class="panel-toolbar">
+        <div class="field-hint" style="margin:0;">People who filled out "Request beta access" on perchqr.com. Only visible to you.</div>
+        <button class="btn-sm" id="betaRequestsRefreshBtn">Refresh</button>
+      </div>
+      <div id="betaRequestList"><div class="state-msg-inline">Loading&hellip;</div></div>
     </div>
 
     <div class="tab-panel" id="tab-sitesettings">
@@ -534,7 +543,9 @@ async function checkAuth() {
   loadAgentScopedData();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
+    document.getElementById('betaRequestsTabBtn').classList.remove('hidden');
     loadLandingSettings();
+    loadBetaRequests();
     setupAgentSwitcher();
   }
 }
@@ -1220,6 +1231,34 @@ document.getElementById('homeVideoSaveBtn').addEventListener('click', async () =
     saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
   }
 });
+
+/* ============================================================
+   Beta requests (owner-only) — leads from the landing page form
+   ============================================================ */
+async function loadBetaRequests() {
+  const listEl = document.getElementById('betaRequestList');
+  const { data, error } = await sb.from('beta_requests').select('*').order('created_at', { ascending: false });
+  if (error) { listEl.innerHTML = '<div class="state-msg-inline">Could not load requests.</div>'; console.error(error); return; }
+  if (!data.length) { listEl.innerHTML = '<div class="state-msg-inline">No requests yet.</div>'; return; }
+  listEl.innerHTML = data.map(r => `<div class="list-row">
+      <div class="row-main">
+        <div class="row-addr">${Perch.esc(r.name)}</div>
+        <div class="row-meta">${Perch.esc(r.phone)} &middot; ${Perch.esc(r.email)}</div>
+        <div class="row-badges">${new Date(r.created_at).toLocaleString()}</div>
+      </div>
+      <div class="row-actions">
+        <a class="btn-sm" href="mailto:${Perch.esc(r.email)}">Email</a>
+        <button class="btn-sm danger" data-delete-request="${r.id}">Delete</button>
+      </div>
+    </div>`).join('');
+  listEl.querySelectorAll('[data-delete-request]').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Delete this request?')) return;
+    const { error: delErr } = await sb.from('beta_requests').delete().eq('id', btn.dataset.deleteRequest);
+    if (delErr) { toast('Delete failed'); console.error(delErr); return; }
+    loadBetaRequests();
+  }));
+}
+document.getElementById('betaRequestsRefreshBtn').addEventListener('click', loadBetaRequests);
 
 /* ============================================================
    perchqr.com landing page settings (owner-only — see PERCHQR_OWNER_ID)

@@ -400,6 +400,17 @@ expansion, polished onboarding) until the beta says the product is real.
     Holding the build until the key's requirements are known.
   - Client ID/secret, once issued, go in Supabase secrets, never the repo.
 
+- **2026-10-22 — "Request beta access" is now a form, not a mailto.** Landing
+  page CTAs (nav, hero, closing band) open a modal collecting name, phone and
+  email into a new `beta_requests` table (anon insert only; owner-only
+  read/delete; length CHECKs; honeypot field against bots). On submit the
+  person gets a "Create your account" button to `/signup` with name and email
+  prefilled — so in practice signup is open to anyone who fills the form; add
+  an approval step if that ever needs gating. Owner sees requests in a new
+  "Beta Requests" tab in `/app`. **Action needed:** run the new section 10 of
+  `supabase/schema.sql`. Started a walkthrough of the new-agent onboarding
+  experience using a test account for Scott's wife; findings to be logged here.
+
 ---
 
 ## Open Questions

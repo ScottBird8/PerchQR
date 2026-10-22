@@ -245,6 +245,16 @@ function showError(msg) {
   errEl.textContent = msg;
   errEl.classList.remove('hidden');
 }
+
+// Coming from the landing page's "Request beta access" form: it passes the
+// name and email along so they don't have to be typed twice.
+(function prefillFromRequest() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get('name');
+  const email = params.get('email');
+  if (name) { nameEl.value = name; nameEl.dispatchEvent(new Event('input')); }
+  if (email) document.getElementById('su_email').value = email;
+})();
 </script>
 </body>
 </html>

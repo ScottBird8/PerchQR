@@ -29,7 +29,6 @@
 
   if (!slug) {
     document.title = 'PerchQR — Let buyers meet you before they call';
-    const beta = 'mailto:bird.scott@gmail.com?subject=PerchQR%20beta%20access';
     const { data: siteSettings } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
     const landingVideoUrl = siteSettings && siteSettings.landing_video_url;
     // QR-corner-mark logo (liked from the "Signal" direction), recolored
@@ -51,7 +50,7 @@
     <nav class="landing-nav">
       <a href="#how-it-works">How it works</a>
       <a href="/app" class="landing-nav-login">Log in</a>
-      <a class="btn btn-primary" href="${beta}">Request beta access</a>
+      <a class="btn btn-primary" href="#request" data-open-request>Request beta access</a>
     </nav>
   </header>
 
@@ -62,7 +61,7 @@
         <h1>Let buyers <em>meet you</em> before they call.</h1>
         <p>Every listing gets its own branded page with a personal video introduction — not just a price sheet. Pulled from your MLS number, printed as one QR code that never needs reprinting.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="${beta}">Request beta access</a>
+          <a class="btn btn-primary" href="#request" data-open-request>Request beta access</a>
           <a class="btn btn-ghost" href="/scott-bird">See a live example &rarr;</a>
         </div>
       </div>
@@ -126,14 +125,71 @@
 
   <section class="landing-cta-band">
     <h2>Ready to put a face on your next yard sign?</h2>
-    <a class="btn btn-primary" href="${beta}">Request beta access</a>
+    <a class="btn btn-primary" href="#request" data-open-request>Request beta access</a>
   </section>
 
   <footer class="landing-footer">
     <span class="landing-wordmark small">PerchQR</span>
     <span>&copy; ${new Date().getFullYear()} PerchQR. Free during the private beta.</span>
   </footer>
+
+  <div class="request-overlay" id="requestOverlay" aria-hidden="true">
+    <div class="request-card" role="dialog" aria-labelledby="requestTitle">
+      <button class="request-close" id="requestClose" type="button" aria-label="Close">&times;</button>
+      <div id="requestFormState">
+        <h2 id="requestTitle">Request beta access</h2>
+        <p class="request-sub">Tell us how to reach you, then create your account.</p>
+        <label class="request-label">Full name</label>
+        <input id="rq_name" autocomplete="name">
+        <label class="request-label">Phone</label>
+        <input id="rq_phone" type="tel" autocomplete="tel">
+        <label class="request-label">Email</label>
+        <input id="rq_email" type="email" autocomplete="email">
+        <input id="rq_website" class="request-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn btn-primary request-submit" id="requestSubmit" type="button">Request access</button>
+        <div class="request-error hidden" id="requestError"></div>
+      </div>
+      <div id="requestDoneState" class="hidden">
+        <h2>You're on the list</h2>
+        <p class="request-sub">Thanks, <span id="rqDoneName"></span>. Create your account now and you can start building your page right away.</p>
+        <a class="btn btn-primary request-submit" id="rqSignupLink" href="/signup">Create your account &rarr;</a>
+      </div>
+    </div>
+  </div>
 </div>`;
+
+    const overlay = document.getElementById('requestOverlay');
+    const openRequest = () => { overlay.classList.add('open'); overlay.setAttribute('aria-hidden', 'false'); document.getElementById('rq_name').focus(); };
+    const closeRequest = () => { overlay.classList.remove('open'); overlay.setAttribute('aria-hidden', 'true'); };
+    document.querySelectorAll('[data-open-request]').forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); openRequest(); }));
+    document.getElementById('requestClose').addEventListener('click', closeRequest);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeRequest(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeRequest(); });
+
+    document.getElementById('requestSubmit').addEventListener('click', async () => {
+      const name = document.getElementById('rq_name').value.trim();
+      const phone = document.getElementById('rq_phone').value.trim();
+      const email = document.getElementById('rq_email').value.trim();
+      const errEl = document.getElementById('requestError');
+      const btn = document.getElementById('requestSubmit');
+      errEl.classList.add('hidden');
+      const fail = (m) => { errEl.textContent = m; errEl.classList.remove('hidden'); };
+      if (!name) return fail('Enter your full name.');
+      if (phone.replace(/\D/g, '').length < 7) return fail('Enter a phone number we can reach you at.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Enter a valid email address.');
+      // Honeypot: real people never see this field; bots fill it. Pretend success.
+      const botTripped = !!document.getElementById('rq_website').value;
+      btn.disabled = true; btn.textContent = 'Sending…';
+      if (!botTripped) {
+        const { error } = await sb.from('beta_requests').insert({ name, phone, email });
+        if (error) { console.error(error); btn.disabled = false; btn.textContent = 'Request access'; return fail('Something went wrong. Please try again.'); }
+      }
+      document.getElementById('rqDoneName').textContent = name.split(' ')[0];
+      document.getElementById('rqSignupLink').href = `/signup?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+      document.getElementById('requestFormState').classList.add('hidden');
+      document.getElementById('requestDoneState').classList.remove('hidden');
+    });
+
     if (landingVideoUrl) Perch.initHomeVideo();
     return;
   }
