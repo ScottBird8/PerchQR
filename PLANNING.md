@@ -441,6 +441,16 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-10-23 — Nearest-listing smart-match restored on QR scans.** Reverses the
+  2026-09 port-time cut. `q.html`: a code whose destination is not a specific
+  listing page (e.g. the agent homepage) waits up to 8s for the visitor's
+  location (high accuracy), finds the agent's nearest property with coordinates,
+  and redirects to its listing if within 200 m; no permission, timeout, or no
+  nearby listing falls back to the code's own destination. Codes pointing at
+  a specific listing never reroute. Scan is still logged with coordinates.
+  Landing video script may now claim "one code, nearest listing" — only for
+  visitors who allow location.
+
 - **2026-10-23 — Flexmls/Spark (FBS developer support) replied on the OIDC key.**
   (The reply came from FBS developer support, not the MLS itself.) They need
   (1) the **Redirect URI(s)** — one URI per key, up to three keys per product

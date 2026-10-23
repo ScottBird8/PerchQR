@@ -44,24 +44,60 @@
     return;
   }
 
-  // Best-effort geolocation on the scan event, never blocking the redirect —
-  // no "nearest listing" matching in v1 (see PLANNING.md), just attaching
-  // coordinates to the log entry when the visitor happens to grant them fast.
+  // "Nearest listing" smart-match: a code that points at the agent's homepage
+  // (anything that isn't one specific listing) sends visitors who share their
+  // location to the closest listing, if they're standing near one. Codes that
+  // point at a specific listing always go there. No location, or nowhere near
+  // a listing -> the code's own destination, as before.
+  const NEARBY_METERS = 200;
+  let smartMatch = false;
+  try { smartMatch = !/\/listing\/?$/.test(new URL(qr.url, window.location.origin).pathname); } catch (e) { /* bad url: plain redirect */ }
+
+  // Geolocation never blocks the redirect for long. Smart-match codes wait
+  // long enough for the visitor to answer the browser's permission prompt;
+  // plain codes only take coordinates if they arrive almost instantly.
+  const waitMs = smartMatch ? 8000 : 1200;
+  if (smartMatch) msg.textContent = 'Finding the listing nearest you…';
   let coords = null;
   try {
     coords = await new Promise((resolve) => {
       if (!navigator.geolocation) return resolve(null);
-      const timer = setTimeout(() => resolve(null), 1200);
+      const timer = setTimeout(() => resolve(null), waitMs);
       navigator.geolocation.getCurrentPosition(
         (pos) => { clearTimeout(timer); resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
         () => { clearTimeout(timer); resolve(null); },
-        { timeout: 1200 }
+        { timeout: waitMs, enableHighAccuracy: smartMatch }
       );
     });
   } catch (e) { /* not fatal */ }
 
+  let destination = qr.url;
+  if (smartMatch && coords) {
+    try {
+      const [{ data: props }, { data: agent }] = await Promise.all([
+        sb.from('properties').select('id, lat, lng').eq('agent_id', qr.agent_id).not('lat', 'is', null).not('lng', 'is', null),
+        sb.from('agents').select('slug').eq('id', qr.agent_id).maybeSingle(),
+      ]);
+      let nearest = null, nearestDist = Infinity;
+      (props || []).forEach(p => {
+        const d = distanceMeters(coords.lat, coords.lng, Number(p.lat), Number(p.lng));
+        if (d < nearestDist) { nearestDist = d; nearest = p; }
+      });
+      if (nearest && agent && nearestDist <= NEARBY_METERS) {
+        destination = `/${agent.slug}/listing?id=${encodeURIComponent(nearest.id)}`;
+      }
+    } catch (e) { console.error(e); /* fall back to the code's own destination */ }
+  }
+
   await Perch.recordQrScan(qr.agent_id, qr.id, coords);
-  window.location.replace(qr.url);
+  window.location.replace(destination);
+
+  function distanceMeters(lat1, lon1, lat2, lon2) {
+    const toRad = d => d * Math.PI / 180;
+    const a = Math.sin(toRad(lat2 - lat1) / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(toRad(lon2 - lon1) / 2) ** 2;
+    return 2 * 6371000 * Math.asin(Math.sqrt(a));
+  }
 })();
 </script>
 </body>
