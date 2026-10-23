@@ -1899,6 +1899,10 @@ async function downloadSavedQr(id, kind) {
   if (!q || !q.image_url) return;
   const suffix = { big: '.png', yard: '-yard.png', svg: '.svg' }[kind];
   const fileLabel = { big: `${QR_SIZES.sign4x4.file}.png`, yard: `${QR_SIZES.yard.file}.png`, svg: 'svg' }[kind];
+  // Open the tab right now, inside the click, so popup blockers allow it; the
+  // file is loaded into it once fetched. The app page itself never navigates.
+  const win = window.open('', '_blank');
+  if (win) win.document.title = 'Loading QR code…';
   try {
     let url = q.image_url;
     if (kind !== 'big') {
@@ -1912,9 +1916,13 @@ async function downloadSavedQr(id, kind) {
     const res = await fetch(url);
     if (!res.ok) throw new Error('fetch failed');
     const base = `perchqr-${slugify(q.label)}`;
-    downloadBlob(await res.blob(), kind === 'svg' ? `${base}.svg` : `${base}-${fileLabel}`);
+    const raw = await res.blob();
+    const blob = new Blob([raw], { type: kind === 'svg' ? 'image/svg+xml' : 'image/png' });
+    if (win) win.location.href = URL.createObjectURL(blob);
+    else downloadBlob(blob, kind === 'svg' ? `${base}.svg` : `${base}-${fileLabel}`); // popup blocked
   } catch (err) {
     console.error(err);
+    if (win) win.close();
     toast(kind === 'big' ? 'Download failed — try again.' : 'That size was not saved for this older code — create a new one to get it.');
   }
 }
