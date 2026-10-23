@@ -411,6 +411,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
     <button class="btn-sm primary" id="qrGenerateBtn" style="width:100%;">Generate preview</button>
     <div id="qrResultWrap" style="display:none;flex-direction:column;align-items:center;gap:14px;margin-top:16px;">
       <div id="qrCodeContainer"></div>
+      <div id="qrPrintHint" class="field-hint" style="align-self:stretch;line-height:1.6;"></div>
     </div>
     <div class="form-actions">
       <button class="btn-sm" id="qrFormCancelBtn">Cancel</button>
@@ -1604,10 +1605,13 @@ function renderQrList() {
         <div class="row-meta">${Perch.esc(q.url)}</div>
       </div>
       <div class="row-actions">
-        ${q.image_url ? `<a class="btn-sm" href="${Perch.esc(q.image_url)}" download="perchqr-${slugify(q.label)}.png">Download</a>` : ''}
+        ${q.image_url ? `<button class="btn-sm" data-dl-qr="${q.id}" data-kind="big" title="Print-ready PNG for a 4×4 ft sign">4×4 ft</button>
+        <button class="btn-sm" data-dl-qr="${q.id}" data-kind="yard" title="Print-ready PNG for an 18×24 in yard sign">18×24 in</button>
+        <button class="btn-sm" data-dl-qr="${q.id}" data-kind="svg" title="Vector file — sharp at any size">SVG</button>` : ''}
         <button class="btn-sm danger" data-delete-qr="${q.id}">Delete</button>
       </div>
     </div>`).join('');
+  listEl.querySelectorAll('[data-dl-qr]').forEach(btn => btn.addEventListener('click', () => downloadSavedQr(btn.dataset.dlQr, btn.dataset.kind)));
   listEl.querySelectorAll('[data-delete-qr]').forEach(btn => btn.addEventListener('click', () => deleteQr(btn.dataset.deleteQr)));
 }
 
@@ -1690,8 +1694,91 @@ function loadImage(src) {
 }
 
 let previewedUrl = null;
-let previewCanvas = null;
+let previewBuilt = null;
 let previewedId = null;
+
+// Print sizes. The code itself is identical at every size — what differs is
+// how many pixels the PNG needs to stay sharp at the printed width (about
+// 150 dpi for big banners, 300 dpi for small signs). "Width" includes the
+// white margin around the code.
+const QR_SIZES = {
+  sign4x4: { label: '4×4 ft sign', file: '4x4ft-sign', targetPx: 4500, printIn: 30 },
+  yard:    { label: '18×24 in yard sign', file: '18x24in-sign', targetPx: 3600, printIn: 12 },
+};
+const QR_DARK = '#1a1a1a';
+
+// Builds the code from the QR's module grid (qrcodejs is used only to
+// compute it), not from its own small canvas: every module is an exact
+// whole-pixel square, with the 4-module white "quiet zone" scanners need.
+// render(targetPx) draws a PNG at a given size; svg is the vector version,
+// which prints sharp at any size.
+function buildQr(text, logo) {
+  const holder = document.createElement('div');
+  const qr = new QRCode(holder, { text, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
+  const model = qr._oQRCode;
+  const count = model.getModuleCount();
+  const quiet = 4;
+  const total = count + quiet * 2;
+
+  // Optional center logo on a white backing. 26% of the code's width keeps
+  // well inside what the highest error-correction level can lose.
+  const lg = logo ? (() => {
+    const box = count * 0.26;
+    const pad = count * 0.02;
+    const bx = (total - box) / 2 - pad;
+    const fit = Math.min(box / logo.img.naturalWidth, box / logo.img.naturalHeight);
+    const lw = logo.img.naturalWidth * fit, lh = logo.img.naturalHeight * fit;
+    return { bx, bw: box + pad * 2, lx: (total - lw) / 2, ly: (total - lh) / 2, lw, lh };
+  })() : null;
+
+  // Dark modules as runs per row — shared by the canvas and the SVG path.
+  const runs = [];
+  let path = '';
+  for (let r = 0; r < count; r++) {
+    let c = 0;
+    while (c < count) {
+      if (!model.isDark(r, c)) { c++; continue; }
+      const start = c;
+      while (c < count && model.isDark(r, c)) c++;
+      runs.push([start + quiet, r + quiet, c - start]);
+      path += `M${start + quiet} ${r + quiet}h${c - start}v1h-${c - start}z`;
+    }
+  }
+
+  function render(targetPx) {
+    const scale = Math.ceil(targetPx / total);
+    const px = total * scale;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = px;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, px, px);
+    ctx.fillStyle = QR_DARK;
+    runs.forEach(([x, y, w]) => ctx.fillRect(x * scale, y * scale, w * scale, scale));
+    if (lg) {
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, lg.bx * scale, lg.bx * scale, lg.bw * scale, lg.bw * scale, scale * 1.2);
+      ctx.fill();
+      ctx.drawImage(logo.img, lg.lx * scale, lg.ly * scale, lg.lw * scale, lg.lh * scale);
+    }
+    return { canvas, px };
+  }
+
+  const logoSvg = lg
+    ? `<rect x="${lg.bx}" y="${lg.bx}" width="${lg.bw}" height="${lg.bw}" rx="1.2" fill="#ffffff"/>` +
+      `<image href="${logo.dataUrl}" x="${lg.lx}" y="${lg.ly}" width="${lg.lw}" height="${lg.lh}" preserveAspectRatio="xMidYMid meet"/>`
+    : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" width="${total * 20}" height="${total * 20}" shape-rendering="crispEdges">` +
+    `<rect width="${total}" height="${total}" fill="#ffffff"/><path d="${path}" fill="${QR_DARK}"/>${logoSvg}</svg>`;
+  return { render, svg };
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = reject; fr.readAsDataURL(file); });
+}
+function canvasToPng(canvas) {
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
 
 function openQrForm() {
   document.getElementById('qr_label').value = '';
@@ -1699,8 +1786,9 @@ function openQrForm() {
   document.getElementById('qr_logo').value = '';
   document.getElementById('qrResultWrap').style.display = 'none';
   document.getElementById('qrCodeContainer').innerHTML = '';
+  document.getElementById('qrPrintHint').textContent = '';
   document.getElementById('qrSaveBtn').classList.add('hidden');
-  previewedUrl = null; previewCanvas = null; previewedId = null;
+  previewedUrl = null; previewBuilt = null; previewedId = null;
   qrFormOverlay.classList.add('open');
 }
 document.getElementById('qrNewBtn').addEventListener('click', openQrForm);
@@ -1721,57 +1809,79 @@ document.getElementById('qrGenerateBtn').addEventListener('click', async () => {
   const qrId = crypto.randomUUID();
   const trackedUrl = window.location.origin + '/q/' + qrId;
 
+  let logo = null;
+  const logoFile = document.getElementById('qr_logo').files[0];
+  if (logoFile) {
+    const dataUrl = await readFileAsDataUrl(logoFile);
+    logo = { dataUrl, img: await loadImage(dataUrl) };
+  }
+  const built = buildQr(trackedUrl, logo);
+
+  const preview = built.render(QR_SIZES.sign4x4.targetPx).canvas;
+  preview.style.cssText = 'width:240px;height:240px;border:1px solid var(--line);border-radius:6px;';
   const container = document.getElementById('qrCodeContainer');
   container.innerHTML = '';
-  new QRCode(container, { text: trackedUrl, width: 240, height: 240, colorDark: '#363636', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-  await new Promise(r => setTimeout(r, 60)); // qrcodejs renders async
-
-  const qrCanvas = container.querySelector('canvas');
-  const qrImg = container.querySelector('img');
-  const logoFile = document.getElementById('qr_logo').files[0];
-  if (qrCanvas && logoFile) {
-    const logoImg = await loadImage(URL.createObjectURL(logoFile));
-    const ctx = qrCanvas.getContext('2d');
-    const size = qrCanvas.width;
-    const logoSize = Math.round(size * 0.30);
-    const cx = (size - logoSize) / 2, cy = (size - logoSize) / 2, pad = 6;
-    ctx.fillStyle = '#ffffff';
-    roundRect(ctx, cx - pad, cy - pad, logoSize + pad * 2, logoSize + pad * 2, 10);
-    ctx.fill();
-    ctx.drawImage(logoImg, cx, cy, logoSize, logoSize);
-    if (qrImg) qrImg.src = qrCanvas.toDataURL('image/png');
-  }
+  container.appendChild(preview);
+  document.getElementById('qrPrintHint').innerHTML =
+    `Saving gives you three print files:<br>` +
+    `&bull; <strong>4×4 ft sign</strong> &mdash; ${QR_SIZES.sign4x4.targetPx}px PNG, print the code about ${QR_SIZES.sign4x4.printIn}" wide<br>` +
+    `&bull; <strong>18×24 in yard sign</strong> &mdash; ${QR_SIZES.yard.targetPx}px PNG, print about ${QR_SIZES.yard.printIn}" wide<br>` +
+    `&bull; <strong>SVG</strong> &mdash; sharp at any size; best to hand your sign printer`;
 
   previewedUrl = url;
-  previewCanvas = qrCanvas;
+  previewBuilt = built;
   previewedId = qrId;
   document.getElementById('qrResultWrap').style.display = 'flex';
   document.getElementById('qrSaveBtn').classList.remove('hidden');
 });
 
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 document.getElementById('qrSaveBtn').addEventListener('click', async () => {
   const label = document.getElementById('qr_label').value.trim();
   const url = document.getElementById('qr_url').value.trim();
-  if (!label || !url || !previewedUrl || !previewCanvas) { toast('Preview the code before saving'); return; }
+  if (!label || !url || !previewedUrl || !previewBuilt) { toast('Preview the code before saving'); return; }
   const saveBtn = document.getElementById('qrSaveBtn');
   saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
   try {
-    const blob = await new Promise(resolve => previewCanvas.toBlob(resolve, 'image/png'));
-    const path = `${AGENT.id}/qrcodes/${slugify(label)}-${randSuffix()}.png`;
-    const { error: upErr } = await sb.storage.from('qr-codes').upload(path, blob, { contentType: 'image/png' });
+    const bigBlob = await canvasToPng(previewBuilt.render(QR_SIZES.sign4x4.targetPx).canvas);
+    const yardBlob = await canvasToPng(previewBuilt.render(QR_SIZES.yard.targetPx).canvas);
+    const svgBlob = new Blob([previewBuilt.svg], { type: 'image/svg+xml' });
+    const base = `${AGENT.id}/qrcodes/${slugify(label)}-${randSuffix()}`;
+    const store = sb.storage.from('qr-codes');
+
+    // The 4x4 PNG is the "main" image (its signed URL is what the database
+    // keeps); the yard-sign PNG and the SVG sit beside it with the same
+    // base name, so the list can find them again without new columns.
+    const { error: upErr } = await store.upload(base + '.png', bigBlob, { contentType: 'image/png' });
     if (upErr) throw upErr;
-    const { data: signed, error: signErr } = await sb.storage.from('qr-codes').createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+    const extras = [
+      [base + '-yard.png', yardBlob, 'image/png'],
+      [base + '.svg', svgBlob, 'image/svg+xml'],
+    ];
+    for (const [p, blob, type] of extras) {
+      const { error } = await store.upload(p, blob, { contentType: type });
+      if (error) console.error('Extra file upload failed (main PNG saved fine):', p, error);
+    }
+    const { data: signed, error: signErr } = await store.createSignedUrl(base + '.png', 60 * 60 * 24 * 365 * 10);
     if (signErr) throw signErr;
     const { error: dbErr } = await sb.from('qr_codes').insert({ id: previewedId, agent_id: AGENT.id, label, url, image_url: signed.signedUrl });
     if (dbErr) throw dbErr;
 
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `perchqr-${slugify(label)}.png`;
-    a.click();
+    const name = `perchqr-${slugify(label)}`;
+    downloadBlob(bigBlob, `${name}-${QR_SIZES.sign4x4.file}.png`);
+    setTimeout(() => downloadBlob(yardBlob, `${name}-${QR_SIZES.yard.file}.png`), 500);
+    setTimeout(() => downloadBlob(svgBlob, `${name}.svg`), 1000);
 
     qrFormOverlay.classList.remove('open');
-    toast('QR code saved and downloaded');
+    toast('QR code saved — downloading the 4×4 ft, 18×24 in, and SVG files');
     await loadQrCodes();
   } catch (err) {
     console.error(err);
@@ -1780,6 +1890,34 @@ document.getElementById('qrSaveBtn').addEventListener('click', async () => {
     saveBtn.disabled = false; saveBtn.textContent = 'Save & download';
   }
 });
+
+// Saved codes: fetch the file and hand it to the browser as a real download
+// (a plain <a download> is ignored for files on another domain). `kind` is
+// 'big' (4x4 PNG), 'yard' (18x24 PNG) or 'svg'.
+async function downloadSavedQr(id, kind) {
+  const q = QR_CODES.find(x => x.id === id);
+  if (!q || !q.image_url) return;
+  const suffix = { big: '.png', yard: '-yard.png', svg: '.svg' }[kind];
+  const fileLabel = { big: `${QR_SIZES.sign4x4.file}.png`, yard: `${QR_SIZES.yard.file}.png`, svg: 'svg' }[kind];
+  try {
+    let url = q.image_url;
+    if (kind !== 'big') {
+      const m = q.image_url.match(/\/sign\/qr-codes\/([^?]+)/);
+      if (!m) throw new Error('no path');
+      const path = decodeURIComponent(m[1]).replace(/\.png$/, suffix);
+      const { data, error } = await sb.storage.from('qr-codes').createSignedUrl(path, 300);
+      if (error || !data) throw error || new Error('missing file');
+      url = data.signedUrl;
+    }
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch failed');
+    const base = `perchqr-${slugify(q.label)}`;
+    downloadBlob(await res.blob(), kind === 'svg' ? `${base}.svg` : `${base}-${fileLabel}`);
+  } catch (err) {
+    console.error(err);
+    toast(kind === 'big' ? 'Download failed — try again.' : 'That size was not saved for this older code — create a new one to get it.');
+  }
+}
 </script>
 </body>
 </html>

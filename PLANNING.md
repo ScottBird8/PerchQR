@@ -426,6 +426,21 @@ expansion, polished onboarding) until the beta says the product is real.
   layout remain shared. **Action needed:** run the new `brand_color` ALTER in
   `supabase/schema.sql` — Profile saves fail until the column exists.
 
+- **2026-10-22 — Print-ready QR codes, two sign sizes.** The old 240px QR was
+  fine on screen but would blur on a 4×4 ft sign. QR creation now builds the
+  code from the QR's module grid (qrcodejs only computes it): whole-pixel
+  modules, 4-module white quiet zone, error correction H, center logo at 26%.
+  Each save produces three files in the private `qr-codes` bucket, same base
+  path: **4×4 ft sign** PNG (~4500px, print the code ≈30" wide), **18×24 in
+  yard sign** PNG (~3600px, print ≈12" wide), and a **vector SVG** (sharp at any
+  size; best to hand a sign printer). No schema change — `qr_codes.image_url`
+  still points at the 4×4 PNG, and the yard PNG / SVG are found by swapping the
+  file suffix. The list shows 4×4 ft / 18×24 in / SVG buttons per code. Codes
+  saved before this change only have the old small PNG (the new buttons say so
+  for those); the printed QR still points at `/q/<id>`, so re-creating a code
+  gives a new id — regenerate only for codes not yet printed. Rule of thumb
+  surfaced to agents: scanning distance ≈ 10× the code's printed width.
+
 ---
 
 ## Open Questions
