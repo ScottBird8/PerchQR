@@ -44,14 +44,26 @@
     return;
   }
 
-  // "Nearest listing" smart-match: a code that points at the agent's homepage
-  // (anything that isn't one specific listing) sends visitors who share their
-  // location to the closest listing, if they're standing near one. Codes that
-  // point at a specific listing always go there. No location, or nowhere near
-  // a listing -> the code's own destination, as before.
-  const NEARBY_METERS = 200;
+  // The agent's own landing page (perchqr.com/<slug>) is where a code falls
+  // back to — never the perchqr.com marketing homepage. A code saved with
+  // just the site root is treated as "my landing page".
+  const { data: agent } = await sb.from('agents').select('slug').eq('id', qr.agent_id).maybeSingle();
+  let destination = qr.url;
+  try {
+    const u = new URL(qr.url, window.location.origin);
+    if (agent && u.origin === window.location.origin && (u.pathname === '/' || u.pathname === '')) {
+      destination = '/' + agent.slug;
+    }
+  } catch (e) { /* bad url: plain redirect */ }
+
+  // "Nearest listing" smart-match: a code that points at the agent's landing
+  // page (anything that isn't one specific listing) sends visitors who share
+  // their location to a listing only if they're standing within 100 ft of it.
+  // Codes that point at a specific listing always go there. No location, or
+  // not within 100 ft of a listing -> the code's own destination.
+  const NEARBY_METERS = 30.48; // 100 feet
   let smartMatch = false;
-  try { smartMatch = !/\/listing\/?$/.test(new URL(qr.url, window.location.origin).pathname); } catch (e) { /* bad url: plain redirect */ }
+  try { smartMatch = !/\/listing\/?$/.test(new URL(destination, window.location.origin).pathname); } catch (e) { /* plain redirect */ }
 
   // Geolocation never blocks the redirect for long. Smart-match codes wait
   // long enough for the visitor to answer the browser's permission prompt;
@@ -71,22 +83,27 @@
     });
   } catch (e) { /* not fatal */ }
 
-  let destination = qr.url;
-  if (smartMatch && coords) {
-    try {
-      const [{ data: props }, { data: agent }] = await Promise.all([
-        sb.from('properties').select('id, lat, lng').eq('agent_id', qr.agent_id).not('lat', 'is', null).not('lng', 'is', null),
-        sb.from('agents').select('slug').eq('id', qr.agent_id).maybeSingle(),
-      ]);
-      let nearest = null, nearestDist = Infinity;
-      (props || []).forEach(p => {
-        const d = distanceMeters(coords.lat, coords.lng, Number(p.lat), Number(p.lng));
-        if (d < nearestDist) { nearestDist = d; nearest = p; }
-      });
-      if (nearest && agent && nearestDist <= NEARBY_METERS) {
-        destination = `/${agent.slug}/listing?id=${encodeURIComponent(nearest.id)}`;
-      }
-    } catch (e) { console.error(e); /* fall back to the code's own destination */ }
+  if (smartMatch) {
+    // The visitor's coordinates are used only to check for a listing within
+    // 100 ft, and are kept on the scan log only when one was found — a scan
+    // from anywhere else records no location at all.
+    let matched = false;
+    if (coords && agent) {
+      try {
+        const { data: props } = await sb.from('properties').select('id, lat, lng')
+          .eq('agent_id', qr.agent_id).not('lat', 'is', null).not('lng', 'is', null);
+        let nearest = null, nearestDist = Infinity;
+        (props || []).forEach(p => {
+          const d = distanceMeters(coords.lat, coords.lng, Number(p.lat), Number(p.lng));
+          if (d < nearestDist) { nearestDist = d; nearest = p; }
+        });
+        if (nearest && nearestDist <= NEARBY_METERS) {
+          destination = `/${agent.slug}/listing?id=${encodeURIComponent(nearest.id)}`;
+          matched = true;
+        }
+      } catch (e) { console.error(e); /* fall back to the landing page */ }
+    }
+    if (!matched) coords = null;
   }
 
   await Perch.recordQrScan(qr.agent_id, qr.id, coords);

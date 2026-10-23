@@ -445,8 +445,11 @@ expansion, polished onboarding) until the beta says the product is real.
   2026-09 port-time cut. `q.html`: a code whose destination is not a specific
   listing page (e.g. the agent homepage) waits up to 8s for the visitor's
   location (high accuracy), finds the agent's nearest property with coordinates,
-  and redirects to its listing if within 200 m; no permission, timeout, or no
-  nearby listing falls back to the code's own destination. Codes pointing at
+  and redirects to its listing if within 100 ft (30.48 m; tightened from 200 m);
+  scan coordinates are saved only when that match happens. No permission, timeout, or no
+  listing within 100 ft falls back to the code's destination, which is always the
+  agent's own landing page (perchqr.com/<slug>) — a bare perchqr.com is rewritten
+  to it in both the QR form and `q.html`. Codes pointing at
   a specific listing never reroute. Scan is still logged with coordinates.
   Landing video script may now claim "one code, nearest listing" — only for
   visitors who allow location.
