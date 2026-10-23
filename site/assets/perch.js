@@ -140,8 +140,10 @@ const Perch = (function () {
 
   // Homepage welcome video: click-to-play. Shrinks to a fixed top-right box
   // 5s after starting, or immediately on click-to-skip/pause. Only called
-  // when the agent has actually configured a home_video_url.
-  function initHomeVideo() {
+  // when the agent has actually configured a home_video_url. With
+  // { keepSize: true } (the perchqr.com landing page) it never shrinks:
+  // clicking just plays / pauses it in place.
+  function initHomeVideo(opts = {}) {
     const wrap = document.getElementById('heroVideoWrap');
     const video = document.getElementById('welcomeVideo');
     const overlay = document.getElementById('playOverlay');
@@ -149,7 +151,10 @@ const Perch = (function () {
     let minimizeTimer = null;
 
     function setPaused(isPaused) { wrap.classList.toggle('is-paused', isPaused); }
-    function floatMinimized() { wrap.classList.add('small', 'floating'); clearTimeout(minimizeTimer); }
+    function floatMinimized() {
+      clearTimeout(minimizeTimer);
+      if (!opts.keepSize) wrap.classList.add('small', 'floating');
+    }
     function expand() { wrap.classList.remove('small', 'floating'); }
     function playFull() {
       expand();

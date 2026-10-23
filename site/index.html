@@ -132,7 +132,7 @@
     <span>&copy; ${new Date().getFullYear()} PerchQR. Free during the private beta.</span>
   </footer>
 </div>`;
-    if (landingVideoUrl) Perch.initHomeVideo();
+    if (landingVideoUrl) Perch.initHomeVideo({ keepSize: true });
     return;
   }
 

@@ -441,6 +441,27 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-10-23 — Flexmls/Spark (FBS developer support) replied on the OIDC key.**
+  (The reply came from FBS developer support, not the MLS itself.) They need
+  (1) the **Redirect URI(s)** — one URI per key, up to three keys per product
+  (Development / Staging / Production) — and (2) which of Scott's two Spark
+  Developer accounts to tie the key to (**ScottBird17** or **ScottBird8**;
+  permanent). Docs: sparkplatform.com/docs/authentication/openid_connect_authentication
+  — authorize `sparkplatform.com/openid/authorize`, token
+  `sparkplatform.com/openid/token`; code exchange needs the client secret, so it
+  must run server-side; access tokens last 24h, refresh tokens rotate on each
+  refresh; HTTPS required for OIDC requests (redirect URI https "encouraged").
+  - **Planned redirect URI:** `https://perchqr.com/oauth/spark/callback` — a
+    static page on our own domain that reads `code`/`state` and posts them,
+    with the agent's Supabase session, to an Edge Function that does the token
+    exchange and stores the tokens. (Avoids registering the `supabase.co`
+    domain and avoids disabling JWT verification on the function.)
+  - **Account choice:** use the one *not* behind utahrealestate.us, so the
+    production site's credentials stay isolated (per the 2026-09-09 decision).
+    Which of the two that is isn't recorded anywhere in the repo — Scott to
+    confirm in the Spark dashboard.
+  - Client ID/secret go in Supabase secrets, never the repo.
+
 ---
 
 ## Open Questions
