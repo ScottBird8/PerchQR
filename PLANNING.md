@@ -441,6 +441,21 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-10-23 — Landing page video script finalized** (~35 sec, no presenter
+  name so any agent could say it; deliberately no conversion/results claims
+  while the beta is unvalidated; location line says "standing at" because the
+  match radius is 100 ft):
+  > Welcome to PerchQR, and thank you for stopping by. We turn your MLS listing
+  > into a beautiful listing page, where you introduce yourself and the property
+  > in a short personal video, so buyers get to know you before they ever call.
+  > Put one QR code on every sign. When a buyer scans it and shares their
+  > location, they go straight to the home they're standing at. The code never
+  > changes, so you never reprint your signs for each new listing, saving you
+  > real money. We're in beta, so click Create account and try it.
+
+  Upload via `/app` → Landing Page Video (owner-only). Film vertical; the
+  landing box crops top/bottom (4:5 over a 9:16 video).
+
 - **2026-10-23 — Nearest-listing smart-match restored on QR scans.** Reverses the
   2026-09 port-time cut. `q.html`: a code whose destination is not a specific
   listing page (e.g. the agent homepage) waits up to 8s for the visitor's
