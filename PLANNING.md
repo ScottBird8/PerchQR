@@ -558,8 +558,17 @@ expansion, polished onboarding) until the beta says the product is real.
     domain and avoids disabling JWT verification on the function.)
   - **Account choice:** use the one *not* behind utahrealestate.us, so the
     production site's credentials stay isolated (per the 2026-09-09 decision).
-    Which of the two that is isn't recorded anywhere in the repo — Scott to
-    confirm in the Spark dashboard.
+    Which of the two that is wasn't recorded in the repo — **found in Scott's
+    email (2026-11-03): `ScottBird17` is the PerchQR account.** Spark's welcome
+    emails show `ScottBird8` created 2026-09-04, with the Iron County BOR IDX
+    plan (utahrealestate.us's feed) approved ~2.5 hours later; `ScottBird17`
+    created 2026-09-11, with the Washington County "Own Data" plan approved
+    ~77 minutes later (the PerchQR setup). The approval emails don't name the
+    requesting account, so this is by timing + the 2026-09-11 plan — confirm by
+    logging in. **Caveat:** on 2026-10-23 Scott couldn't log in to
+    `ScottBird17` (password reset wasn't taking; FBS support suggested another
+    browser / disabling password managers); no resolution in email yet. He
+    needs to be able to log in to the account that will own the OIDC key.
   - Client ID/secret go in Supabase secrets, never the repo.
 
 ---
