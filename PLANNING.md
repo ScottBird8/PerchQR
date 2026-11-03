@@ -569,6 +569,13 @@ expansion, polished onboarding) until the beta says the product is real.
     `ScottBird17` (password reset wasn't taking; FBS support suggested another
     browser / disabling password managers); no resolution in email yet. He
     needs to be able to log in to the account that will own the OIDC key.
+    **Update 2026-11-03:** Scott can now log in to `ScottBird17`, and replied to
+    James with the Production redirect URI, the account choice, and the
+    photos/virtual-tour permission question. **Connecting agents to the MLS
+    (OIDC) is the top priority — waiting on FBS's answer before building.**
+    Meanwhile Kendall Clements (first outside agent) has no MLS connection;
+    options for him are the manual token steps (developer account → Datamart
+    Own Data plan → paste token in Connect MLS) or manual property entry.
   - Client ID/secret go in Supabase secrets, never the repo.
 
 ---
