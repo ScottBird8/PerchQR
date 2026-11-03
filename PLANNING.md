@@ -441,6 +441,18 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-03 — MLS question added to signup.** Optional "Your MLS" dropdown on
+  `/signup` (Washington County BOR, Iron County BOR, "Other" → type it in);
+  **no state field** (Scott's call — add later if needed). Stored as
+  `agents.mls_name` (schema.sql section 11, run once). It's saved in a separate
+  step after the account is created, so it can never block signup; the
+  email-confirmation fallback in `app.html` carries it via `pending_mls`
+  metadata. It pre-fills the Connect MLS tab's MLS name and shows on the admin
+  profile page. Purpose: know which MLSs agents come from (expansion demand),
+  support, and prefill. The name alone can't identify an MLS or its Spark
+  availability — the OIDC flow identifies the MLS from the agent's own Flexmls
+  account. Known boards live in the `KNOWN_MLS` list in `signup.html`.
+
 - **2026-11-03 — Account management system (tiers, statuses, archive, audit
   log).** Built from Scott's written spec; framework only — **no tier pricing,
   features, or limits are defined or enforced anywhere.** Restore point before

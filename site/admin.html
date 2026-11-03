@@ -414,6 +414,7 @@ async function openProfile(id) {
       <div class="info-grid">
         <div><div class="k">Email</div><div class="v">${esc(a.email || '—')}</div></div>
         <div><div class="k">Phone</div><div class="v">${esc(a.phone || '—')}</div></div>
+        <div><div class="k">MLS</div><div class="v">${esc(a.mls_name || '—')}</div></div>
         <div><div class="k">Brokerage</div><div class="v">${esc(a.brokerage_name || '—')}</div></div>
         <div><div class="k">License</div><div class="v">${esc(a.license_number || '—')}</div></div>
         <div><div class="k">Date created</div><div class="v">${esc(fmtDateTime(a.created_at))}</div></div>

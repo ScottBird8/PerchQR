@@ -528,7 +528,13 @@ async function checkAuth() {
       email: session.user.email,
       phone: meta.pending_phone || null,
     }).select().maybeSingle();
-    if (createErr) { error = createErr; } else { agent = created; }
+    if (createErr) { error = createErr; } else {
+      agent = created;
+      if (meta.pending_mls) { // optional signup answer — never blocks account creation
+        const { error: mlsErr } = await sb.from('agents').update({ mls_name: meta.pending_mls }).eq('id', agent.id);
+        if (mlsErr) console.error(mlsErr); else agent.mls_name = meta.pending_mls;
+      }
+    }
   }
 
   if (!agent) {
@@ -1156,6 +1162,8 @@ async function loadMlsStatus() {
   } else {
     statusEl.className = 'mls-status disconnected';
     statusEl.textContent = 'Not connected yet — the MLS lookup on the Add Property form needs this first.';
+    // Pre-fill the MLS they named at signup, if any.
+    if (AGENT.mls_name && !document.getElementById('mls_name').value) document.getElementById('mls_name').value = AGENT.mls_name;
   }
 }
 

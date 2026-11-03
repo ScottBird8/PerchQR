@@ -804,3 +804,11 @@ create policy "qr_codes_bucket_agent_only"
     and (((storage.foldername(name))[1] = auth.uid()::text and public.account_allows_access(auth.uid()))
          or public.is_perchqr_owner())
   );
+
+-- ============================================================
+-- 11. MLS the agent named at signup (optional, free text from a short
+--     dropdown + "Other"). Informational: demand tracking, support, and
+--     pre-filling the Connect MLS tab. Agents can edit their own row, so
+--     no extra policy is needed.
+-- ============================================================
+alter table public.agents add column if not exists mls_name text;

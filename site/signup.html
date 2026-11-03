@@ -37,7 +37,7 @@ body{background:var(--bg);}
 h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;margin:0 0 22px;}
 .field{margin-bottom:14px;}
 .field label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);margin-bottom:5px;}
-.field input{width:100%;padding:11px 13px;border:1px solid var(--line-bright);border-radius:8px;font-family:var(--body);font-size:14px;background:#fff;color:var(--charcoal);}
+.field input,.field select{width:100%;padding:11px 13px;border:1px solid var(--line-bright);border-radius:8px;font-family:var(--body);font-size:14px;background:#fff;color:var(--charcoal);}
 .slug-preview{font-family:var(--mono);font-size:12px;color:var(--charcoal-soft);margin-top:5px;}
 .slug-preview.ok{color:#2a7a3b;}
 .slug-preview.bad{color:var(--maroon);}
@@ -82,6 +82,15 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
       </div>
 
       <div class="field">
+        <label>Your MLS (optional)</label>
+        <select id="su_mls">
+          <option value="">Choose your MLS&hellip;</option>
+        </select>
+        <input id="su_mls_other" class="hidden" placeholder="Type the name of your MLS" style="margin-top:8px;">
+        <div class="field-hint">Helps us set up your listing import. You can skip this for now.</div>
+      </div>
+
+      <div class="field">
         <label>Email</label>
         <input id="su_email" type="email" autocomplete="email">
       </div>
@@ -113,6 +122,25 @@ const RESERVED_SLUGS = new Set([
   'billing','dashboard','settings','pricing','about','blog',
   'help','support','docs','terms','privacy','status','q','s',
 ]);
+
+// MLS boards we already know about; anything else is typed under "Other".
+// Just a list of names — add a board here when agents from it sign up.
+const KNOWN_MLS = [
+  'Washington County Board of REALTORS',
+  'Iron County Board of REALTORS',
+];
+const mlsSelectEl = document.getElementById('su_mls');
+const mlsOtherEl = document.getElementById('su_mls_other');
+KNOWN_MLS.forEach(n => mlsSelectEl.add(new Option(n, n)));
+mlsSelectEl.add(new Option('Other (type it in)', '__other'));
+mlsSelectEl.addEventListener('change', () => {
+  mlsOtherEl.classList.toggle('hidden', mlsSelectEl.value !== '__other');
+  if (mlsSelectEl.value === '__other') mlsOtherEl.focus();
+});
+function chosenMls() {
+  if (mlsSelectEl.value === '__other') return mlsOtherEl.value.trim() || null;
+  return mlsSelectEl.value || null;
+}
 
 function slugify(s) {
   return (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40);
@@ -193,6 +221,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   const email = document.getElementById('su_email').value.trim();
   const phone = document.getElementById('su_phone').value.replace(/\D/g, '');
   const password = document.getElementById('su_password').value;
+  const mls = chosenMls();
   const errEl = document.getElementById('signupError');
   errEl.classList.add('hidden');
 
@@ -212,7 +241,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
     const { data, error } = await sb.auth.signUp({
       email, password,
       options: {
-        data: { pending_slug: slug, pending_display_name: name, pending_phone: phone },
+        data: { pending_slug: slug, pending_display_name: name, pending_phone: phone, pending_mls: mls },
         emailRedirectTo: window.location.origin + '/app',
       },
     });
@@ -225,6 +254,12 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
         id: data.user.id, slug, display_name: name, email, phone,
       });
       if (insErr) throw insErr;
+      // The MLS is optional extra info — saved separately so a problem with
+      // it can never stop the account from being created.
+      if (mls) {
+        const { error: mlsErr } = await sb.from('agents').update({ mls_name: mls }).eq('id', data.user.id);
+        if (mlsErr) console.error(mlsErr);
+      }
       window.location.href = `/${slug}/access`;
       return;
     }
