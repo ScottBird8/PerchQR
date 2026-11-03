@@ -132,6 +132,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <label style="font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);">Viewing</label>
         <select id="agentSwitcher" style="font-family:var(--body);font-size:13px;padding:7px 10px;border-radius:6px;border:1px solid var(--line-bright);background:#fff;"></select>
       </div>
+      <a class="btn-sm hidden" id="adminLinkBtn" href="/admin">Admin</a>
       <button class="btn-sm" id="signOutBtn">Sign out</button>
     </div>
   </div>
@@ -548,6 +549,7 @@ async function checkAuth() {
   loadAgentScopedData();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('siteSettingsTabBtn').classList.remove('hidden');
+    document.getElementById('adminLinkBtn').classList.remove('hidden'); // owner-only link back to /admin
     loadLandingSettings();
     setupAgentSwitcher();
   }
