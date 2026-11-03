@@ -505,6 +505,11 @@ expansion, polished onboarding) until the beta says the product is real.
     Restore to Active, page-address change, listings, notes, history. A separate
     "Subscription tiers" tab edits tier names/descriptions/active flag and adds
     tiers.
+  - **Tested 2026-11-03 (Scott, live):** confirmation pop-up + Cancel makes no
+    change, real changes saved and appear in History, archive → search → restore
+    — all worked. Also verified from the public API: migrated accounts show
+    Beta / Active / beta tester and the new tables, history and admin RPC are
+    closed to signed-out callers.
   - **Undo:** code → revert commits back to tag `restore-point-2026-11-03`. The
     new tables/columns can stay harmlessly if code is reverted (the old app
     ignores them), but the new write policies and agents trigger would remain —
