@@ -1149,6 +1149,11 @@ document.getElementById('propertySaveBtn').addEventListener('click', async () =>
    Connect MLS
    ============================================================ */
 async function loadMlsStatus() {
+  // Start from a blank form every time. When the owner switches between
+  // agents, the previous agent's values would otherwise stay in these inputs
+  // (the loader below only fills them for agents that HAVE a connection).
+  ['mls_name', 'mls_flexmls_username', 'mls_access_token', 'mls_api_feed_id'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('mls_access_token').placeholder = 'Paste the token from Spark Datamart';
   const { data, error } = await sb.from('mls_credentials').select('mls_name, flexmls_username, api_feed_id, connected_at').eq('agent_id', AGENT.id).maybeSingle();
   const statusEl = document.getElementById('mlsStatus');
   if (error) { console.error(error); return; }
