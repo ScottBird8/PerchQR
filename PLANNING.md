@@ -580,6 +580,17 @@ Resurface these at the start of planning sessions until each is closed.
    9/35/36/42, Utah business-name registry. Grab `@perchqr` socials.
 
 ### Product / architecture
+**OPEN (2026-11-03) — MLS autofill doesn't bring in photos or the Matterport
+tour.** Scott's Own Data token returns listing details but the photos call
+(`/v1/listings/{id}/photos`) fails with "You do not have permission to perform
+the requested action" (Spark/FBS side, likely a data-plan/key permission); the
+virtual-tour lookup returned no Matterport link (its errors are swallowed, so
+it could be the same permission or simply no tour on that listing). Photos and
+the tour are added by hand for now. **Next step:** ask FBS (James Richards)
+to enable photo + virtual-tour access on the key and on the future OIDC key —
+question drafted for the OIDC thread. Once granted, re-test with MLS #26-270282
+(note: that number is shared by two listings; the lookup now prefers the Active
+one and warns). Consider surfacing tour errors in the "Heads up" note too.
 7. ~~Billing model~~ — **DECIDED: none for the beta** (free / Stripe Payment Link).
    Real billing at launch decision — see log.
 8. ~~MLS access~~ — **RESOLVED for the beta:** per-agent credentials, confirmed
