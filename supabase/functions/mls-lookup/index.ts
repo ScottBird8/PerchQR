@@ -119,44 +119,85 @@ Deno.serve(async (req) => {
     if (!listingRes.ok || !listingJson?.D?.Success) {
       return json({ error: listingJson?.D?.Message || 'Spark API request failed — check your MLS connection is still valid' }, 502);
     }
-    const listing = listingJson.D.Results?.[0];
-    if (!listing) return json({ error: `No listing found for MLS #${cleanMls}` }, 404);
+    const results: any[] = listingJson.D.Results || [];
+    if (!results.length) return json({ error: `No listing found for MLS #${cleanMls}` }, 404);
+    // If more than one listing shares this number, prefer an Active one and
+    // tell the agent so they can double-check it's the right property.
+    const isActive = (r: any) => /^(active|coming)/i.test(r?.StandardFields?.StandardStatus || r?.StandardFields?.MlsStatus || '');
+    const listing = results.find(isActive) || results[0];
     const f = listing.StandardFields || {};
+
+    // Anything the agent should know about (things that didn't come through)
+    // goes back as `notes` and is shown next to the Fetch button.
+    const notes: string[] = [];
+    if (results.length > 1) {
+      notes.push(`${results.length} listings share this MLS number — pulled ${f.UnparsedFirstLineAddress || 'the first one'}. Check it's the right property.`);
+    }
 
     // Photos: fetch the list, download each, re-upload into our own Storage
     // under this agent's own folder (matches the storage.objects RLS policy:
     // first path segment must equal the uploader's auth.uid()).
     let heroUrl: string | null = null;
     const galleryUrls: string[] = [];
+    let photoCount = 0;
+    let photoFailures = 0;
+    let photoProblem = '';
     try {
       const photosRes = await fetch(
         `https://replication.sparkapi.com/v1/listings/${listing.Id}/photos`,
         { headers: sparkHeaders }
       );
       const photosJson = await photosRes.json();
+      if (!photosRes.ok || photosJson?.D?.Success === false) {
+        photoProblem = photosJson?.D?.Message || `Spark returned HTTP ${photosRes.status}`;
+      }
       const allPhotos = photosJson?.D?.Results || [];
+      photoCount = allPhotos.length;
       const primary = allPhotos.find((p: any) => p.Primary);
       const rest = allPhotos.filter((p: any) => !p.Primary).slice(0, 10);
       const photos = primary ? [primary, ...rest] : allPhotos.slice(0, 11);
       for (const p of photos) {
         const srcUrl = p.Uri1600 || p.UriLarge || p.Uri1024 || p.Uri800;
-        if (!srcUrl) continue;
+        if (!srcUrl) { photoFailures++; continue; }
         try {
           const imgRes = await fetch(srcUrl);
-          if (!imgRes.ok) continue;
+          if (!imgRes.ok) { photoFailures++; if (!photoProblem) photoProblem = `photo download returned HTTP ${imgRes.status}`; continue; }
           const imgBuf = new Uint8Array(await imgRes.arrayBuffer());
           const path = `${agentId}/mls-import/${cleanMls}/${p.Id}.jpg`;
           const { error: upErr } = await admin.storage
             .from('property-photos')
             .upload(path, imgBuf, { contentType: 'image/jpeg', upsert: true });
-          if (upErr) continue;
+          if (upErr) { photoFailures++; if (!photoProblem) photoProblem = `saving a photo failed: ${upErr.message}`; continue; }
           const { data: pub } = admin.storage.from('property-photos').getPublicUrl(path);
           if (p.Primary) heroUrl = pub.publicUrl;
           else galleryUrls.push(pub.publicUrl);
-        } catch (_e) { /* skip this photo, keep going */ }
+        } catch (e) { photoFailures++; if (!photoProblem) photoProblem = String((e as Error)?.message || e); }
       }
-    } catch (_e) { /* no photos available - not fatal */ }
+    } catch (e) { photoProblem = String((e as Error)?.message || e); }
     if (!heroUrl && galleryUrls.length) heroUrl = galleryUrls.shift()!;
+    if (!heroUrl && !galleryUrls.length) {
+      if (photoProblem) notes.push(`Photos could not be pulled (${photoProblem}).`);
+      else if (photoCount === 0) notes.push('The MLS returned no photos for this listing — add them manually.');
+    } else if (photoFailures) {
+      notes.push(`${photoFailures} photo${photoFailures === 1 ? '' : 's'} could not be saved${photoProblem ? ` (${photoProblem})` : ''}.`);
+    }
+
+    // Virtual tour: the listing record's own tour fields first, then Spark's
+    // virtual-tours list. Only a Matterport link fills the Matterport field.
+    const tourUrls: string[] = [];
+    for (const u of [f.VirtualTourURLUnbranded, f.VirtualTourURLBranded]) if (u) tourUrls.push(String(u));
+    try {
+      const toursRes = await fetch(
+        `https://replication.sparkapi.com/v1/listings/${listing.Id}/virtualtours`,
+        { headers: sparkHeaders }
+      );
+      const toursJson = await toursRes.json();
+      for (const t of toursJson?.D?.Results || []) if (t?.Uri) tourUrls.push(String(t.Uri));
+    } catch (_e) { /* no tour list available - not fatal */ }
+    const matterportUrl = tourUrls.find((u) => /matterport\.com/i.test(u)) || '';
+    if (!matterportUrl && tourUrls.length) {
+      notes.push(`The MLS lists a virtual tour (${tourUrls[0]}) but it isn't a Matterport link, so it wasn't filled in.`);
+    }
 
     const rooms = Object.entries(f.RoomType || {})
       .filter(([, v]) => v === true)
@@ -198,6 +239,8 @@ Deno.serve(async (req) => {
         lng: f.Longitude ?? null,
         hero_photo_url: heroUrl,
         gallery_photo_urls: galleryUrls,
+        matterport_url: matterportUrl,
+        notes,
       },
     });
   } catch (err) {

@@ -1035,10 +1035,12 @@ document.getElementById('mlsLookupBtn').addEventListener('click', async () => {
     if (p.lat != null) document.getElementById('f_lat').value = p.lat;
     if (p.lng != null) document.getElementById('f_lng').value = p.lng;
     if (p.lat != null && p.lng != null) showCoordsNote(`Pulled from MLS. <a href="${mapLink(p.lat, p.lng)}" target="_blank" rel="noopener">Check on map &rarr;</a>`);
+    if (p.matterport_url) document.getElementById('f_matterport_url').value = p.matterport_url;
     heroExistingUrl = p.hero_photo_url || null;
     galleryFiles = (p.gallery_photo_urls || []).map(url => ({ url }));
     renderHeroPreview(); renderGalleryPreview();
-    statusEl.textContent = 'Pulled in — review every field below before saving.';
+    statusEl.textContent = 'Pulled in — review every field below before saving.' +
+      (p.notes && p.notes.length ? ' Heads up: ' + p.notes.join(' ') : '');
     toast('Listing pulled in from MLS');
   } catch (err) {
     console.error(err);
