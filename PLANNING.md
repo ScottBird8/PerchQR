@@ -441,6 +441,21 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-03 — Admin console + page-address changes.** First outside signup
+  (Kendall Clements) ended up at `/551n1400e` and wanted `/kendall`. `admin.html`
+  (perchqr.com/admin, owner-only, still unlisted) no longer just forwards to
+  `/app`: after the owner signs in it shows an **Agents** list (name, contact,
+  join date, page address) with **Change page address** per agent — same
+  format/reserved/availability checks as signup, a confirm step, then
+  `agents.slug` is updated and any of that agent's `qr_codes.url` destinations
+  on the old slug are rewritten to the new one (QR images encode `/q/<id>`, so
+  printed signs are unaffected). A "User dashboard" button still goes to `/app`.
+  No schema change — the existing owner RLS on `agents`/`qr_codes` covers it.
+  The old address simply 404s after a change (no redirect/slug history kept —
+  add one if agents start sharing links before settling on a name). Signup's
+  label is now "Set up your URL name (web page address)". Agents still can't
+  change their own slug.
+
 - **2026-10-23 — Landing page video script finalized** (~35 sec, no presenter
   name so any agent could say it; deliberately no conversion/results claims
   while the beta is unvalidated; location line says "standing at" because the
