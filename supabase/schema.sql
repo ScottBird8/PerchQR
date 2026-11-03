@@ -419,3 +419,388 @@ create policy "site_settings_owner_write"
   to authenticated
   using (public.is_perchqr_owner())
   with check (public.is_perchqr_owner());
+
+-- ============================================================
+-- 10. Account management — subscription tiers, account statuses,
+--     beta-tester flag, permanent audit history.
+--
+--     Framework only: NOTHING here decides pricing, features, or limits for
+--     any tier. Tiers and statuses are rows (stable text ids, editable
+--     display names), not hard-coded enums, so they can be renamed/extended
+--     later without touching user accounts. Accounts are never deleted by
+--     the admin tooling — "Archived" is a status, and every record stays.
+--
+--     Legacy note: agents.subscription_status (above) predates this and mixed
+--     tier and status together. It is left untouched and unused.
+-- ============================================================
+
+-- 10a. Subscription tiers (configuration, separate from accounts).
+create table if not exists public.subscription_tiers (
+  id                  text primary key check (id ~ '^[a-z0-9_]+$'),  -- stable key; never shown, never changes
+  name                text not null,                                   -- display name, editable
+  description         text,
+  price_monthly_cents integer check (price_monthly_cents is null or price_monthly_cents >= 0),
+  price_annual_cents  integer check (price_annual_cents is null or price_annual_cents >= 0),
+  features            jsonb not null default '{}'::jsonb,   -- future: which features this tier unlocks
+  limits              jsonb not null default '{}'::jsonb,   -- future: listing caps, usage limits, trial rules...
+  sort_order          integer not null default 100,
+  is_active           boolean not null default true,        -- inactive = can't be newly assigned; never deleted
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+
+drop trigger if exists subscription_tiers_set_updated_at on public.subscription_tiers;
+create trigger subscription_tiers_set_updated_at
+  before update on public.subscription_tiers
+  for each row execute function public.set_updated_at();
+
+insert into public.subscription_tiers (id, name, sort_order) values
+  ('beta',   'Beta',   10),
+  ('free',   'Free',   20),
+  ('tier_1', 'Tier 1', 30),
+  ('tier_2', 'Tier 2', 40),
+  ('tier_3', 'Tier 3', 50)
+on conflict (id) do nothing;
+
+alter table public.subscription_tiers enable row level security;
+
+drop policy if exists "subscription_tiers_read" on public.subscription_tiers;
+create policy "subscription_tiers_read"
+  on public.subscription_tiers for select
+  to authenticated
+  using (true);
+
+drop policy if exists "subscription_tiers_owner_insert" on public.subscription_tiers;
+create policy "subscription_tiers_owner_insert"
+  on public.subscription_tiers for insert
+  to authenticated
+  with check (public.is_perchqr_owner());
+
+drop policy if exists "subscription_tiers_owner_update" on public.subscription_tiers;
+create policy "subscription_tiers_owner_update"
+  on public.subscription_tiers for update
+  to authenticated
+  using (public.is_perchqr_owner())
+  with check (public.is_perchqr_owner());
+-- No delete policy: tiers are deactivated, never deleted.
+
+-- 10b. Account statuses. `allows_access` is the single switch that decides
+--      whether an account may use its dashboard / write its data; change it
+--      per status here when the operating rules for paused/canceled/pending
+--      are defined. (Pending = awaiting activation, so no access yet; new
+--      self-serve signups are created Active — see site_settings below.)
+create table if not exists public.account_statuses (
+  id            text primary key check (id ~ '^[a-z0-9_]+$'),
+  name          text not null,
+  description   text,
+  allows_access boolean not null default false,
+  sort_order    integer not null default 100
+);
+
+insert into public.account_statuses (id, name, description, allows_access, sort_order) values
+  ('active',    'Active',    'Account is active and authorized to use its assigned features.', true,  10),
+  ('pending',   'Pending',   'Account has been created but is awaiting activation or approval.', false, 20),
+  ('paused',    'Paused',    'Account has been temporarily paused. Account information is retained.', false, 30),
+  ('suspended', 'Suspended', 'Account has been restricted by an administrator.', false, 40),
+  ('canceled',  'Canceled',  'Subscription or account service has been canceled, but all information remains accessible to administrators.', false, 50),
+  ('archived',  'Archived',  'Removed from the normal active user list but permanently accessible to administrators.', false, 60)
+on conflict (id) do nothing;
+
+alter table public.account_statuses enable row level security;
+
+drop policy if exists "account_statuses_read" on public.account_statuses;
+create policy "account_statuses_read"
+  on public.account_statuses for select
+  to authenticated
+  using (true);
+
+drop policy if exists "account_statuses_owner_update" on public.account_statuses;
+create policy "account_statuses_owner_update"
+  on public.account_statuses for update
+  to authenticated
+  using (public.is_perchqr_owner())
+  with check (public.is_perchqr_owner());
+
+-- 10c. What a brand-new self-serve signup starts as (editable later without
+--      code changes). Signup is the request (PLANNING.md 2026-10-22), so
+--      new accounts start Active on the Beta tier and flagged as beta testers.
+alter table public.site_settings add column if not exists default_signup_tier text not null default 'beta';
+alter table public.site_settings add column if not exists default_signup_status text not null default 'active';
+alter table public.site_settings add column if not exists default_signup_beta_tester boolean not null default true;
+
+-- 10d. Account fields on agents. Existing accounts migrate as Beta / Active /
+--      beta tester (the column defaults fill them in); nothing is overwritten.
+alter table public.agents add column if not exists tier_id text not null default 'beta' references public.subscription_tiers(id);
+alter table public.agents add column if not exists status_id text not null default 'active' references public.account_statuses(id);
+alter table public.agents add column if not exists is_beta_tester boolean not null default true;
+alter table public.agents add column if not exists status_changed_at timestamptz not null default now();
+alter table public.agents add column if not exists admin_notes text;
+alter table public.agents add column if not exists last_activity_at timestamptz;
+
+create index if not exists agents_status_id_idx on public.agents(status_id);
+create index if not exists agents_tier_id_idx on public.agents(tier_id);
+
+-- Best starting value for "last activity" on existing accounts.
+update public.agents a
+   set last_activity_at = u.last_sign_in_at
+  from auth.users u
+ where u.id = a.id and a.last_activity_at is null and u.last_sign_in_at is not null;
+
+-- 10e. Permanent audit history. Rows are only ever added by the admin RPC
+--      below; there are no insert/update/delete policies for clients, and
+--      API callers are blocked from changing or removing rows. `restrict`
+--      (not cascade) so removing an account can never silently erase its
+--      history.
+create table if not exists public.account_history (
+  id             uuid primary key default gen_random_uuid(),
+  agent_id       uuid not null references public.agents(id) on delete restrict,
+  kind           text not null check (kind in ('tier', 'status', 'beta_tester')),
+  previous_value text,
+  new_value      text,
+  changed_by     uuid,                         -- the administrator's auth id (null = set by the migration)
+  changed_at     timestamptz not null default now(),
+  reason         text
+);
+
+create index if not exists account_history_agent_idx on public.account_history(agent_id, changed_at desc);
+
+alter table public.account_history enable row level security;
+
+drop policy if exists "account_history_owner_read" on public.account_history;
+create policy "account_history_owner_read"
+  on public.account_history for select
+  to authenticated
+  using (public.is_perchqr_owner());
+
+revoke insert, update, delete on public.account_history from anon, authenticated;
+
+create or replace function public.account_history_immutable()
+returns trigger language plpgsql as $$
+begin
+  if auth.uid() is not null then
+    raise exception 'Account history cannot be edited or erased' using errcode = '42501';
+  end if;
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists account_history_no_edit on public.account_history;
+create trigger account_history_no_edit
+  before update or delete on public.account_history
+  for each row execute function public.account_history_immutable();
+
+-- Starting entry for accounts that existed before this system.
+insert into public.account_history (agent_id, kind, previous_value, new_value, reason)
+select a.id, 'tier', null, a.tier_id, 'Initial value when account management was introduced'
+  from public.agents a
+ where not exists (select 1 from public.account_history h where h.agent_id = a.id and h.kind = 'tier');
+insert into public.account_history (agent_id, kind, previous_value, new_value, reason)
+select a.id, 'status', null, a.status_id, 'Initial value when account management was introduced'
+  from public.agents a
+ where not exists (select 1 from public.account_history h where h.agent_id = a.id and h.kind = 'status');
+
+-- 10f. Tier / status / beta-tester / notes belong to administrators only.
+--      Agents can still edit their own profile row, but not these columns,
+--      and a self-inserted row always gets the signup defaults. (Direct SQL
+--      and the service role, which have no auth.uid(), are not restricted.)
+create or replace function public.agents_guard_admin_fields()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare d record;
+begin
+  if auth.uid() is null or public.is_perchqr_owner() then
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    select default_signup_tier, default_signup_status, default_signup_beta_tester
+      into d from public.site_settings where id = 1;
+    new.tier_id          := coalesce(d.default_signup_tier, 'beta');
+    new.status_id        := coalesce(d.default_signup_status, 'active');
+    new.is_beta_tester   := coalesce(d.default_signup_beta_tester, true);
+    new.admin_notes      := null;
+    new.status_changed_at := now();
+  else
+    if new.tier_id is distinct from old.tier_id
+       or new.status_id is distinct from old.status_id
+       or new.is_beta_tester is distinct from old.is_beta_tester
+       or new.admin_notes is distinct from old.admin_notes
+       or new.status_changed_at is distinct from old.status_changed_at then
+      raise exception 'Subscription tier, account status and notes can only be changed by an administrator'
+        using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists agents_guard_admin_fields_trg on public.agents;
+create trigger agents_guard_admin_fields_trg
+  before insert or update on public.agents
+  for each row execute function public.agents_guard_admin_fields();
+
+-- 10g. The one way an administrator changes a tier / status / beta-tester
+--      flag: the update and its audit row happen in a single transaction, so
+--      they can never disagree. Returns the updated agents row.
+create or replace function public.admin_set_account_field(
+  p_agent_id uuid, p_kind text, p_value text, p_reason text default null
+) returns public.agents
+language plpgsql security definer set search_path = public as $$
+declare
+  a public.agents;
+  cur text;
+begin
+  if not public.is_perchqr_owner() then
+    raise exception 'Only an administrator can change account settings' using errcode = '42501';
+  end if;
+
+  select * into a from public.agents where id = p_agent_id for update;
+  if not found then raise exception 'Account not found'; end if;
+
+  if p_kind = 'tier' then
+    if not exists (select 1 from public.subscription_tiers where id = p_value) then
+      raise exception 'Unknown subscription tier';
+    end if;
+    cur := a.tier_id;
+    if cur = p_value then return a; end if;
+    update public.agents set tier_id = p_value where id = p_agent_id returning * into a;
+
+  elsif p_kind = 'status' then
+    if not exists (select 1 from public.account_statuses where id = p_value) then
+      raise exception 'Unknown account status';
+    end if;
+    if p_agent_id = auth.uid()
+       and not (select allows_access from public.account_statuses where id = p_value) then
+      raise exception 'You cannot restrict your own administrator account';
+    end if;
+    cur := a.status_id;
+    if cur = p_value then return a; end if;
+    update public.agents set status_id = p_value, status_changed_at = now()
+     where id = p_agent_id returning * into a;
+
+  elsif p_kind = 'beta_tester' then
+    if p_value not in ('true', 'false') then raise exception 'Invalid value'; end if;
+    cur := a.is_beta_tester::text;
+    if cur = p_value then return a; end if;
+    update public.agents set is_beta_tester = (p_value = 'true')
+     where id = p_agent_id returning * into a;
+
+  else
+    raise exception 'Unknown account field';
+  end if;
+
+  insert into public.account_history (agent_id, kind, previous_value, new_value, changed_by, reason)
+  values (p_agent_id, p_kind, cur, p_value, auth.uid(), nullif(trim(coalesce(p_reason, '')), ''));
+
+  return a;
+end;
+$$;
+
+revoke all on function public.admin_set_account_field(uuid, text, text, text) from public, anon;
+grant execute on function public.admin_set_account_field(uuid, text, text, text) to authenticated;
+
+-- 10h. "Last activity": the dashboard calls this when an agent signs in /
+--      opens it (at most once every 10 minutes per agent).
+create or replace function public.touch_my_activity()
+returns void language sql security definer set search_path = public as $$
+  update public.agents
+     set last_activity_at = now()
+   where id = auth.uid()
+     and (last_activity_at is null or last_activity_at < now() - interval '10 minutes');
+$$;
+
+revoke all on function public.touch_my_activity() from public, anon;
+grant execute on function public.touch_my_activity() to authenticated;
+
+-- 10i. Access enforcement in the database. An account whose status does not
+--      allow access (pending, paused, suspended, canceled, archived) can no
+--      longer write through the API, even with a still-valid session. All
+--      data stays in place. Administrators (is_perchqr_owner) are unaffected.
+--      The policies below REPLACE the same-named ones defined earlier in this
+--      file, so re-running the whole file keeps them in force.
+create or replace function public.account_allows_access(p_agent_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select s.allows_access
+       from public.agents a
+       join public.account_statuses s on s.id = a.status_id
+      where a.id = p_agent_id),
+    true);
+$$;
+
+create or replace function public.is_agent_self(p_agent_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select p_agent_id = auth.uid() and public.account_allows_access(p_agent_id);
+$$;
+
+drop policy if exists "agents_self_write" on public.agents;
+create policy "agents_self_write"
+  on public.agents for update
+  to authenticated
+  using (public.is_agent_self(id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(id) or public.is_perchqr_owner());
+
+drop policy if exists "mls_credentials_owner_only" on public.mls_credentials;
+create policy "mls_credentials_owner_only"
+  on public.mls_credentials for all
+  to authenticated
+  using (public.is_agent_self(agent_id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(agent_id) or public.is_perchqr_owner());
+
+drop policy if exists "properties_agent_write" on public.properties;
+create policy "properties_agent_write"
+  on public.properties for all
+  to authenticated
+  using (public.is_agent_self(agent_id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(agent_id) or public.is_perchqr_owner());
+
+drop policy if exists "qr_codes_agent_only" on public.qr_codes;
+create policy "qr_codes_agent_only"
+  on public.qr_codes for all
+  to authenticated
+  using (public.is_agent_self(agent_id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(agent_id) or public.is_perchqr_owner());
+
+drop policy if exists "testimonials_agent_write" on public.testimonials;
+create policy "testimonials_agent_write"
+  on public.testimonials for all
+  to authenticated
+  using (public.is_agent_self(agent_id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(agent_id) or public.is_perchqr_owner());
+
+drop policy if exists "agent_settings_agent_write" on public.agent_settings;
+create policy "agent_settings_agent_write"
+  on public.agent_settings for all
+  to authenticated
+  using (public.is_agent_self(agent_id) or public.is_perchqr_owner())
+  with check (public.is_agent_self(agent_id) or public.is_perchqr_owner());
+
+drop policy if exists "property_media_agent_write" on storage.objects;
+create policy "property_media_agent_write"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id in ('property-photos', 'property-videos')
+    and (((storage.foldername(name))[1] = auth.uid()::text and public.account_allows_access(auth.uid()))
+         or public.is_perchqr_owner())
+  )
+  with check (
+    bucket_id in ('property-photos', 'property-videos')
+    and (((storage.foldername(name))[1] = auth.uid()::text and public.account_allows_access(auth.uid()))
+         or public.is_perchqr_owner())
+  );
+
+drop policy if exists "qr_codes_bucket_agent_only" on storage.objects;
+create policy "qr_codes_bucket_agent_only"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'qr-codes'
+    and (((storage.foldername(name))[1] = auth.uid()::text and public.account_allows_access(auth.uid()))
+         or public.is_perchqr_owner())
+  )
+  with check (
+    bucket_id = 'qr-codes'
+    and (((storage.foldername(name))[1] = auth.uid()::text and public.account_allows_access(auth.uid()))
+         or public.is_perchqr_owner())
+  );

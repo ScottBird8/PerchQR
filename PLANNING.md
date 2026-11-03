@@ -441,6 +441,63 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-03 — Account management system (tiers, statuses, archive, audit
+  log).** Built from Scott's written spec; framework only — **no tier pricing,
+  features, or limits are defined or enforced anywhere.** Restore point before
+  this work: git tag `restore-point-2026-11-03` (code only; the SQL below is not
+  undone by a revert — see "Undo" at the end of this entry).
+  - **Schema (supabase/schema.sql section 10, re-runnable):** `subscription_tiers`
+    (stable text id + editable name/description, nullable price/features/limits
+    columns reserved for later, `is_active` instead of delete; seeded Beta, Free,
+    Tier 1–3), `account_statuses` (active, pending, paused, suspended, canceled,
+    archived; each has an `allows_access` flag — only Active is true for now),
+    new `agents` columns (`tier_id`, `status_id`, `is_beta_tester`,
+    `status_changed_at`, `admin_notes`, `last_activity_at`), and `account_history`
+    (permanent audit log: kind, previous/new value, admin id, timestamp, reason).
+  - **Tier and status are separate**, and Beta-tester is its own flag, so an
+    agent can upgrade to a paid tier and stay marked as a beta tester. Changing a
+    status never touches the tier.
+  - **Existing accounts migrate as Beta / Active / beta tester**, with one
+    starting history row each; nothing overwritten. The old
+    `agents.subscription_status` column is left alone and unused.
+  - **New signups** start Active / Beta / beta tester, driven by new
+    `site_settings.default_signup_*` columns (change them there, not in code).
+    Decision: signup stays instant (per the 2026-10-22 "signup is the request"
+    call); Pending exists for admins to use but isn't applied automatically.
+  - **Changes are atomic:** one RPC, `admin_set_account_field`, updates the
+    account and writes the history row in a single transaction; it refuses
+    non-owners and refuses to let the owner restrict their own account.
+    `touch_my_activity` records "last activity" when an agent opens the dashboard.
+  - **Agents can't edit their own tier/status/beta flag/notes** (trigger on
+    `agents`; self-inserted rows are forced to the signup defaults). History has
+    no insert/update/delete policies and API calls can't alter it; its FK to
+    `agents` is `on delete restrict`, so removing an account row can't silently
+    erase history.
+  - **No account is ever deleted by the admin tooling** — no Delete button;
+    Archive is a status. Archived accounts stay searchable and restorable.
+  - **Access enforcement:** `app.html` shows a "your account is <status>" screen
+    instead of the dashboard for any status with `allows_access = false` (owner
+    exempt), and the database write policies on agents, properties, MLS
+    credentials, QR codes, testimonials, settings and storage now require an
+    access-allowed account. `mls-lookup` also checks it (**redeploy that Edge
+    Function manually** to pick this up).
+  - **Open question:** a suspended/archived agent's *public* page and listings
+    stay online — only dashboard access is blocked. Decide later whether
+    suspending/archiving should also hide the public page.
+  - **Admin UI (`/admin`):** Users table (name, email, tier, status, beta tester,
+    created, last activity, View/Manage) with search (searches all statuses,
+    including archived), tier filter, and status tabs — default Active & Pending,
+    plus Paused, Suspended, Canceled, Archived accounts, All. Profile view: info,
+    tier/status/beta-tester controls with confirmation pop-up (shows user,
+    current and new value, extra warning for Suspended/Archived, optional reason),
+    Restore to Active, page-address change, listings, notes, history. A separate
+    "Subscription tiers" tab edits tier names/descriptions/active flag and adds
+    tiers.
+  - **Undo:** code → revert commits back to tag `restore-point-2026-11-03`. The
+    new tables/columns can stay harmlessly if code is reverted (the old app
+    ignores them), but the new write policies and agents trigger would remain —
+    to fully undo SQL too, ask for the matching rollback script.
+
 - **2026-11-03 — Admin console + page-address changes.** First outside signup
   (Kendall Clements) ended up at `/551n1400e` and wanted `/kendall`. `admin.html`
   (perchqr.com/admin, owner-only, still unlisted) no longer just forwards to

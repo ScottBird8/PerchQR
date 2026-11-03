@@ -70,6 +70,17 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) return json({ error: 'Not authenticated' }, 401);
     const agentId = userData.user.id;
 
+    // Respect the account's status (pending/paused/suspended/canceled/archived
+    // accounts can't use the dashboard). If the account-management tables
+    // aren't set up yet this lookup simply finds nothing and lets it through.
+    const { data: acct } = await admin
+      .from('agents')
+      .select('status_id, account_statuses(allows_access)')
+      .eq('id', agentId)
+      .maybeSingle();
+    const allows = (acct as any)?.account_statuses?.allows_access;
+    if (allows === false) return json({ error: 'Your account is not currently active' }, 403);
+
     // This agent's own Spark token, set via the admin's "Connect MLS" tab.
     const { data: creds, error: credsErr } = await admin
       .from('mls_credentials')

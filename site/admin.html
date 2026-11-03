@@ -47,7 +47,7 @@ button:disabled{opacity:0.6;cursor:default;}
 .hidden{display:none!important;}
 
 /* Signed-in administrator console (shown in place of the gate). */
-.console{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+.console{max-width:1120px;margin:0 auto;padding:28px 20px 60px;}
 .console-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px;}
 .console-bar .wordmark{margin:0;justify-content:flex-start;}
 .console-bar-actions{display:flex;gap:8px;align-items:center;}
@@ -73,6 +73,71 @@ button:disabled{opacity:0.6;cursor:default;}
 .console-note{font-size:12.5px;color:var(--charcoal-soft);margin-top:6px;line-height:1.5;}
 .console-msg{background:#E6F2E8;border:1px solid #b9d9bf;color:#1f5c2c;border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:14px;}
 .console-msg.err{background:#F8E7E7;border-color:#e3b9b9;color:#8a2a2a;}
+
+.view-tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line);}
+.view-tab{width:auto;margin:0 0 -1px;padding:9px 16px;background:none;color:var(--charcoal-soft);border:1px solid transparent;border-radius:6px 6px 0 0;font-size:14px;}
+.view-tab:hover{background:none;color:var(--charcoal);}
+.view-tab.active{color:var(--maroon);background:var(--panel);border-color:var(--line);border-bottom-color:var(--panel);}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.controls input{width:280px;margin:0;}
+select{font-family:var(--body);font-size:14px;padding:9px 12px;border:1px solid var(--line-bright);border-radius:8px;background:#fff;color:var(--charcoal);}
+textarea{width:100%;font-family:var(--body);font-size:14px;padding:10px 12px;border:1px solid var(--line-bright);border-radius:8px;background:#fff;color:var(--charcoal);resize:vertical;}
+input[type=checkbox]{width:auto;margin:0;}
+.segments{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.seg{width:auto;margin:0;padding:6px 12px;font-size:13px;border-radius:100px;background:#fff;color:var(--charcoal);border:1px solid var(--line-bright);}
+.seg:hover{background:var(--maroon-wash);}
+.seg.active{background:var(--maroon);color:#fff;border-color:var(--maroon);}
+.seg .n{opacity:.7;font-weight:500;margin-left:4px;}
+.search-note{font-size:12.5px;color:var(--charcoal-soft);margin:0 0 8px;min-height:16px;}
+.table-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;}
+table.users{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.users th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--charcoal-soft);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+table.users td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+table.users tr:last-child td{border-bottom:none;}
+.u-name{font-weight:700;}
+.u-sub{font-family:var(--mono);font-size:11.5px;color:var(--charcoal-soft);}
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:600;background:#E9ECEA;color:var(--charcoal);white-space:nowrap;}
+.badge.st-active{background:#E6F2E8;color:#1f5c2c;}
+.badge.st-pending{background:#FBF1DC;color:#7a5410;}
+.badge.st-paused{background:#E4EAF3;color:#2f4a73;}
+.badge.st-suspended{background:#F8E7E7;color:#8a2a2a;}
+.badge.st-canceled{background:#EDE6E0;color:#5e4632;}
+.badge.st-archived{background:#E3E3E3;color:#4a4a4a;}
+.empty-row{padding:26px;text-align:center;color:var(--charcoal-soft);font-size:14px;}
+
+.back-link{width:auto;margin:0 0 14px;padding:0;background:none;color:var(--maroon);font-size:13.5px;text-align:left;}
+.back-link:hover{background:none;text-decoration:underline;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.card h3{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 12px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 22px;}
+.info-grid .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--charcoal-soft);}
+.info-grid .v{font-size:14px;margin-top:2px;word-break:break-word;}
+.ctl-row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;}
+.ctl label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--charcoal-soft);margin-bottom:5px;}
+.ctl-check{display:flex;gap:8px;align-items:center;font-size:14px;padding-bottom:9px;}
+.list-line{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;flex-wrap:wrap;}
+.list-line:last-child{border-bottom:none;}
+.list-line a{color:var(--maroon);font-weight:600;}
+.hist-what{font-weight:600;}
+.hist-when{font-family:var(--mono);font-size:11.5px;color:var(--charcoal-soft);}
+.hist-reason{color:var(--charcoal-soft);font-size:12.5px;margin-top:2px;}
+.muted{color:var(--charcoal-soft);font-size:13.5px;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(20,22,26,0.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:300;}
+.modal{background:#fff;border-radius:12px;max-width:460px;width:100%;padding:24px 26px;box-shadow:0 30px 60px -20px rgba(0,0,0,0.45);}
+.modal h3{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 12px;}
+.modal p{font-size:14px;margin:0 0 12px;line-height:1.5;}
+.modal .facts{background:var(--bg);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:12px;line-height:1.7;}
+.modal .warn{background:#FBF1DC;border:1px solid #ecd49a;color:#6b4a0c;border-radius:8px;padding:10px 14px;font-size:13.5px;margin-bottom:12px;line-height:1.5;}
+.modal .reason-label{font-size:12.5px;color:var(--charcoal-soft);display:block;margin:0 0 5px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--charcoal);color:#fff;padding:11px 20px;border-radius:100px;font-size:13.5px;opacity:0;transition:all .25s;z-index:500;pointer-events:none;max-width:90vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.err{background:#8a2a2a;}
+.tier-row{display:grid;grid-template-columns:150px 1fr 2fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+.tier-row input{margin:0;}
+.tier-key{font-family:var(--mono);font-size:12px;color:var(--charcoal-soft);}
+@media (max-width:760px){.tier-row{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -87,11 +152,37 @@ button:disabled{opacity:0.6;cursor:default;}
       <button class="btn-sm" id="signOutBtn">Sign out</button>
     </div>
   </div>
-  <h1>Agents</h1>
-  <p class="console-sub">Everyone who has signed up. Change a page address here when someone picked the wrong one.</p>
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="users">Users</button>
+    <button class="view-tab" data-view="tiers">Subscription tiers</button>
+  </div>
   <div id="consoleMsg"></div>
-  <div id="agentList"><div class="agent-meta">Loading&hellip;</div></div>
+
+  <div id="usersView">
+    <div id="listView">
+      <h1>Users</h1>
+      <p class="console-sub">Everyone who has signed up. Accounts are never deleted &mdash; archive them instead, and restore any time.</p>
+      <div class="controls">
+        <input id="searchBox" type="search" placeholder="Search by name or email" autocomplete="off">
+        <select id="tierFilter"></select>
+      </div>
+      <div class="segments" id="segments"></div>
+      <div class="search-note" id="searchNote"></div>
+      <div class="table-wrap">
+        <table class="users">
+          <thead><tr><th>User</th><th>Email</th><th>Subscription</th><th>Status</th><th>Beta tester</th><th>Date created</th><th>Last activity</th><th>Actions</th></tr></thead>
+          <tbody id="userRows"><tr><td colspan="8" class="empty-row">Loading&hellip;</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="profileView" class="hidden"></div>
+  </div>
+
+  <div id="tiersView" class="hidden"></div>
 </div>
+
+<div id="modalHost"></div>
+<div class="toast" id="toast"></div>
 
 <div class="gate" id="gate">
   <div class="gate-card">
@@ -149,9 +240,9 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
   if (session && session.user.id === PERCHQR_OWNER_ID) showConsole();
 })();
 
-// ---------- Administrator console: agents + page-address changes ----------
-// Same rules as signup.html and the agents table's CHECK constraints (format,
-// length, reserved words) — keep the three in sync.
+// ---------- Administrator console: users, accounts, tiers ----------
+// Same slug rules as signup.html and the agents table's CHECK constraints
+// (format, length, reserved words) — keep the three in sync.
 const RESERVED_SLUGS = new Set([
   'app','admin','api','www','mail','cdn','static','assets',
   'login','signup','signin','signout','logout','account',
@@ -160,53 +251,308 @@ const RESERVED_SLUGS = new Set([
 ]);
 const slugFormatOk = s => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length >= 3 && s.length <= 40;
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtDate = d => d ? new Date(d).toLocaleDateString() : '—';
+const fmtDateTime = d => d ? new Date(d).toLocaleString() : '—';
 
+let TIERS = [];
+let STATUSES = [];
 let AGENTS = [];
 let QR_BY_AGENT = {};
+let currentSegment = 'default';
+let currentProfileId = null;
+
+const tierById = id => TIERS.find(t => t.id === id);
+const statusById = id => STATUSES.find(s => s.id === id);
+const tierName = id => (tierById(id) || {}).name || id || '—';
+const statusName = id => (statusById(id) || {}).name || id || '—';
+const agentName = id => { const a = AGENTS.find(x => x.id === id); return a ? a.display_name : 'Unknown'; };
 
 function showMsg(text, isErr) {
   document.getElementById('consoleMsg').innerHTML = text ? `<div class="console-msg${isErr ? ' err' : ''}">${text}</div>` : '';
+}
+let toastTimer = null;
+function toast(text, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3800);
 }
 
 async function showConsole() {
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('console').classList.remove('hidden');
-  await loadAgents();
+  await loadAll();
 }
 
-async function loadAgents() {
-  const [{ data: agents, error }, { data: qrs }] = await Promise.all([
-    sb.from('agents').select('id, slug, display_name, email, phone, created_at').order('created_at', { ascending: false }),
+async function loadAll() {
+  const [t, s, a, q] = await Promise.all([
+    sb.from('subscription_tiers').select('*').order('sort_order').order('name'),
+    sb.from('account_statuses').select('*').order('sort_order'),
+    sb.from('agents').select('*').order('created_at', { ascending: false }),
     sb.from('qr_codes').select('id, agent_id, url'),
   ]);
-  if (error) { console.error(error); showMsg('Could not load agents.', true); return; }
-  AGENTS = agents || [];
+  if (t.error || s.error) {
+    console.error(t.error || s.error);
+    showMsg('Account management isn\'t set up in the database yet. Run the latest <code>supabase/schema.sql</code> (section 10) in the Supabase SQL Editor, then reload.', true);
+    return;
+  }
+  if (a.error) { console.error(a.error); showMsg('Could not load users.', true); return; }
+  TIERS = t.data || [];
+  STATUSES = s.data || [];
+  AGENTS = a.data || [];
   QR_BY_AGENT = {};
-  (qrs || []).forEach(q => { (QR_BY_AGENT[q.agent_id] = QR_BY_AGENT[q.agent_id] || []).push(q); });
-  renderAgents();
+  (q.data || []).forEach(x => { (QR_BY_AGENT[x.agent_id] = QR_BY_AGENT[x.agent_id] || []).push(x); });
+  renderTierFilter();
+  renderList();
+  renderTiersView();
 }
 
-function renderAgents() {
-  const el = document.getElementById('agentList');
-  if (!AGENTS.length) { el.innerHTML = '<div class="agent-meta">No agents yet.</div>'; return; }
-  el.innerHTML = AGENTS.map(a => {
-    const isOwner = a.id === PERCHQR_OWNER_ID;
-    const joined = a.created_at ? new Date(a.created_at).toLocaleDateString() : '';
-    return `<div class="agent-row" data-agent="${esc(a.id)}">
-      <div class="agent-line">
-        <div>
-          <div class="agent-name">${esc(a.display_name)}${isOwner ? ' (you)' : ''}</div>
-          <div class="agent-meta">${esc(a.email || 'no email')}${a.phone ? ' &middot; ' + esc(a.phone) : ''}${joined ? ' &middot; joined ' + esc(joined) : ''}</div>
-          <div class="agent-url"><a href="/${esc(a.slug)}" target="_blank" rel="noopener">perchqr.com/${esc(a.slug)}</a></div>
-        </div>
-        <button class="btn-sm" data-edit="${esc(a.id)}">Change page address</button>
+// ---------- User list ----------
+function segments() {
+  const segs = [{ key: 'default', label: 'Active & Pending', match: a => a.status_id === 'active' || a.status_id === 'pending' }];
+  STATUSES.filter(s => s.id !== 'active' && s.id !== 'pending').forEach(s =>
+    segs.push({ key: s.id, label: s.id === 'archived' ? 'Archived accounts' : s.name, match: a => a.status_id === s.id }));
+  segs.push({ key: 'all', label: 'All accounts', match: () => true });
+  return segs;
+}
+
+function renderTierFilter() {
+  const sel = document.getElementById('tierFilter');
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">All subscriptions</option>' +
+    TIERS.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');
+  sel.value = keep;
+}
+
+function renderList() {
+  const term = document.getElementById('searchBox').value.trim().toLowerCase();
+  const tier = document.getElementById('tierFilter').value;
+  const segs = segments();
+  const seg = segs.find(s => s.key === currentSegment) || segs[0];
+
+  document.getElementById('segments').innerHTML = segs.map(s =>
+    `<button class="seg${s.key === seg.key && !term ? ' active' : ''}" data-seg="${esc(s.key)}">${esc(s.label)}<span class="n">${AGENTS.filter(s.match).length}</span></button>`).join('');
+  document.querySelectorAll('[data-seg]').forEach(b => b.addEventListener('click', () => {
+    currentSegment = b.dataset.seg;
+    document.getElementById('searchBox').value = '';
+    renderList();
+  }));
+  document.getElementById('searchNote').textContent = term ? 'Searching across all accounts, including archived.' : '';
+
+  const rows = AGENTS.filter(a => {
+    if (!term && !seg.match(a)) return false;
+    if (tier && a.tier_id !== tier) return false;
+    if (term) {
+      const hay = `${a.display_name} ${a.email || ''} ${a.slug}`.toLowerCase();
+      if (!hay.includes(term)) return false;
+    }
+    return true;
+  });
+
+  const body = document.getElementById('userRows');
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="8" class="empty-row">No accounts match.</td></tr>'; return; }
+  body.innerHTML = rows.map(a => `<tr>
+      <td><div class="u-name">${esc(a.display_name)}${a.id === PERCHQR_OWNER_ID ? ' (you)' : ''}</div><div class="u-sub">/${esc(a.slug)}</div></td>
+      <td>${esc(a.email || '—')}</td>
+      <td>${esc(tierName(a.tier_id))}</td>
+      <td><span class="badge st-${esc(a.status_id)}">${esc(statusName(a.status_id))}</span></td>
+      <td>${a.is_beta_tester ? 'Yes' : 'No'}</td>
+      <td>${esc(fmtDate(a.created_at))}</td>
+      <td>${esc(fmtDate(a.last_activity_at))}</td>
+      <td><button class="btn-sm" data-open="${esc(a.id)}">View / Manage</button></td>
+    </tr>`).join('');
+  body.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openProfile(b.dataset.open)));
+}
+
+document.getElementById('searchBox').addEventListener('input', renderList);
+document.getElementById('tierFilter').addEventListener('change', renderList);
+
+// ---------- Individual profile ----------
+function closeProfile() {
+  currentProfileId = null;
+  document.getElementById('profileView').classList.add('hidden');
+  document.getElementById('profileView').innerHTML = '';
+  document.getElementById('listView').classList.remove('hidden');
+  renderList();
+}
+
+async function openProfile(id) {
+  const a = AGENTS.find(x => x.id === id);
+  if (!a) return;
+  currentProfileId = id;
+  showMsg('');
+  document.getElementById('listView').classList.add('hidden');
+  const view = document.getElementById('profileView');
+  view.classList.remove('hidden');
+  view.innerHTML = '<div class="muted">Loading&hellip;</div>';
+
+  const [{ data: props, error: pErr }, { data: history, error: hErr }] = await Promise.all([
+    sb.from('properties').select('id, addr, city, status, mls, created_at').eq('agent_id', id).order('created_at', { ascending: false }),
+    sb.from('account_history').select('*').eq('agent_id', id).order('changed_at', { ascending: false }),
+  ]);
+  if (pErr) console.error(pErr);
+  if (hErr) console.error(hErr);
+  if (currentProfileId !== id) return;
+
+  const tierOpts = TIERS.filter(t => t.is_active || t.id === a.tier_id)
+    .map(t => `<option value="${esc(t.id)}"${t.id === a.tier_id ? ' selected' : ''}>${esc(t.name)}${t.is_active ? '' : ' (inactive)'}</option>`).join('');
+  const statusOpts = STATUSES
+    .map(s => `<option value="${esc(s.id)}"${s.id === a.status_id ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+  const canRestore = a.status_id !== 'active';
+  const histLabel = { tier: 'Subscription tier', status: 'Account status', beta_tester: 'Beta tester' };
+  const histVal = (kind, v) => v == null ? '—' : kind === 'tier' ? tierName(v) : kind === 'status' ? statusName(v) : (v === 'true' ? 'Yes' : 'No');
+
+  view.innerHTML = `
+    <button class="back-link" id="backBtn">&larr; Back to users</button>
+    <h1>${esc(a.display_name)} <span class="badge st-${esc(a.status_id)}" style="vertical-align:middle;">${esc(statusName(a.status_id))}</span></h1>
+    <p class="console-sub"><a href="/${esc(a.slug)}" target="_blank" rel="noopener" style="color:var(--maroon);">perchqr.com/${esc(a.slug)}</a>
+      &middot; <a href="/${esc(a.slug)}/access" style="color:var(--maroon);">Open in user dashboard</a></p>
+
+    <div class="card">
+      <h3>Account</h3>
+      <div class="info-grid">
+        <div><div class="k">Email</div><div class="v">${esc(a.email || '—')}</div></div>
+        <div><div class="k">Phone</div><div class="v">${esc(a.phone || '—')}</div></div>
+        <div><div class="k">Brokerage</div><div class="v">${esc(a.brokerage_name || '—')}</div></div>
+        <div><div class="k">License</div><div class="v">${esc(a.license_number || '—')}</div></div>
+        <div><div class="k">Date created</div><div class="v">${esc(fmtDateTime(a.created_at))}</div></div>
+        <div><div class="k">Last activity</div><div class="v">${esc(fmtDateTime(a.last_activity_at))}</div></div>
+        <div><div class="k">Status last changed</div><div class="v">${esc(fmtDateTime(a.status_changed_at))}</div></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>Subscription &amp; status</h3>
+      <div class="ctl-row">
+        <div class="ctl"><label for="tierSel">Subscription tier</label><select id="tierSel">${tierOpts}</select></div>
+        <div class="ctl"><label for="statusSel">Account status</label><select id="statusSel">${statusOpts}</select></div>
+        <label class="ctl-check"><input type="checkbox" id="betaChk"${a.is_beta_tester ? ' checked' : ''}> Beta tester</label>
+        ${canRestore ? '<div class="ctl"><button class="btn-sm primary" id="restoreBtn">Restore to Active</button></div>' : ''}
+      </div>
+      <div class="console-note">Every change asks for confirmation first and is recorded in the history below. Changing the status never changes the subscription tier.</div>
+    </div>
+
+    <div class="card">
+      <h3>Page address</h3>
+      <div class="muted">perchqr.com/${esc(a.slug)} <button class="btn-sm" id="changeSlugBtn" style="margin-left:10px;">Change page address</button></div>
       <div class="slug-editor hidden" id="editor-${esc(a.id)}"></div>
+    </div>
+
+    <div class="card">
+      <h3>Property listings (${(props || []).length})</h3>
+      ${(props || []).length ? (props || []).map(p => `<div class="list-line">
+          <div><a href="/${esc(a.slug)}/listing?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">${esc(p.addr)}</a>, ${esc(p.city)}</div>
+          <div class="muted">${esc(p.status)}${p.mls ? ' &middot; MLS ' + esc(p.mls) : ''} &middot; added ${esc(fmtDate(p.created_at))}</div>
+        </div>`).join('') : '<div class="muted">No listings yet.</div>'}
+    </div>
+
+    <div class="card">
+      <h3>Administrator notes</h3>
+      <textarea id="notesBox" rows="4" placeholder="Private notes — never shown to the user.">${esc(a.admin_notes || '')}</textarea>
+      <div style="margin-top:10px;"><button class="btn-sm" id="saveNotesBtn">Save notes</button></div>
+    </div>
+
+    <div class="card">
+      <h3>History</h3>
+      ${(history || []).length ? (history || []).map(h => `<div class="list-line">
+          <div>
+            <div><span class="hist-what">${esc(histLabel[h.kind] || h.kind)}:</span> ${esc(histVal(h.kind, h.previous_value))} &rarr; ${esc(histVal(h.kind, h.new_value))}</div>
+            ${h.reason ? `<div class="hist-reason">${esc(h.reason)}</div>` : ''}
+          </div>
+          <div class="hist-when">${esc(fmtDateTime(h.changed_at))} &middot; ${h.changed_by ? esc(agentName(h.changed_by)) : 'System'}</div>
+        </div>`).join('') : '<div class="muted">No history recorded.</div>'}
     </div>`;
-  }).join('');
-  el.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openEditor(b.dataset.edit)));
+
+  document.getElementById('backBtn').addEventListener('click', closeProfile);
+  document.getElementById('changeSlugBtn').addEventListener('click', () => openEditor(a.id));
+  document.getElementById('saveNotesBtn').addEventListener('click', () => saveNotes(a));
+
+  const tierSel = document.getElementById('tierSel');
+  const statusSel = document.getElementById('statusSel');
+  const betaChk = document.getElementById('betaChk');
+  tierSel.addEventListener('change', () => confirmChange(a, 'tier', tierSel.value, () => { tierSel.value = a.tier_id; }));
+  statusSel.addEventListener('change', () => confirmChange(a, 'status', statusSel.value, () => { statusSel.value = a.status_id; }));
+  betaChk.addEventListener('change', () => confirmChange(a, 'beta_tester', String(betaChk.checked), () => { betaChk.checked = a.is_beta_tester; }));
+  const restoreBtn = document.getElementById('restoreBtn');
+  if (restoreBtn) restoreBtn.addEventListener('click', () => confirmChange(a, 'status', 'active', () => {}));
 }
 
+async function saveNotes(a) {
+  const val = document.getElementById('notesBox').value.trim() || null;
+  const { error } = await sb.from('agents').update({ admin_notes: val }).eq('id', a.id);
+  if (error) { console.error(error); toast('Notes could not be saved.', true); return; }
+  a.admin_notes = val;
+  toast('Notes saved.');
+}
+
+// ---------- Confirmation pop-up (every tier / status / beta-tester change) ----------
+const STATUS_WARNINGS = {
+  archived: 'Archiving removes this account from the normal user list and blocks the user from signing in to their dashboard or changing anything. Nothing is deleted: their listings, history and records are all kept, their public page and listings are not removed, and you can restore the account to Active at any time.',
+  suspended: 'Suspending restricts this user: they will not be able to use their dashboard or change any of their data until you restore the account. Their information is kept, and their public page and listings are not removed.',
+};
+
+function confirmChange(agent, kind, newValue, revert) {
+  const labels = { tier: 'Subscription Tier', status: 'Account Status', beta_tester: 'Beta Tester Designation' };
+  const cur = kind === 'tier' ? agent.tier_id : kind === 'status' ? agent.status_id : String(!!agent.is_beta_tester);
+  if (newValue === cur) { revert(); return; }
+  const show = v => kind === 'tier' ? tierName(v) : kind === 'status' ? statusName(v) : (v === 'true' ? 'Yes' : 'No');
+
+  let warning = '';
+  if (kind === 'status') {
+    warning = STATUS_WARNINGS[newValue] || '';
+    if (!warning && statusById(newValue) && statusById(newValue).allows_access === false) {
+      warning = `This status blocks the user from their dashboard until the account is restored to Active. Nothing is deleted.`;
+    }
+  }
+
+  const host = document.getElementById('modalHost');
+  host.innerHTML = `<div class="modal-bg" id="modalBg"><div class="modal" role="dialog" aria-modal="true">
+      <h3>Confirm ${esc(labels[kind])} Change</h3>
+      <p>You are about to change this user's ${esc(labels[kind].toLowerCase())}.</p>
+      <div class="facts">
+        <div><strong>User:</strong> ${esc(agent.display_name)}</div>
+        <div><strong>Current ${esc(kind === 'tier' ? 'Tier' : kind === 'status' ? 'Status' : 'Value')}:</strong> ${esc(show(cur))}</div>
+        <div><strong>New ${esc(kind === 'tier' ? 'Tier' : kind === 'status' ? 'Status' : 'Value')}:</strong> ${esc(show(newValue))}</div>
+      </div>
+      ${warning ? `<div class="warn"><strong>Please note:</strong> ${esc(warning)}</div>` : ''}
+      <label class="reason-label" for="modalReason">Reason or note (optional, saved in the history)</label>
+      <textarea id="modalReason" rows="2"></textarea>
+      <p style="margin-top:12px;">Are you sure you want to make this change?</p>
+      <div class="modal-actions">
+        <button class="btn-sm" id="modalCancel">Cancel</button>
+        <button class="btn-sm primary" id="modalConfirm">Confirm Change</button>
+      </div>
+    </div></div>`;
+
+  const close = () => { host.innerHTML = ''; };
+  document.getElementById('modalCancel').addEventListener('click', () => { close(); revert(); });
+  document.getElementById('modalBg').addEventListener('mousedown', e => { if (e.target.id === 'modalBg') { close(); revert(); } });
+  document.getElementById('modalConfirm').addEventListener('click', async () => {
+    const btn = document.getElementById('modalConfirm');
+    const reason = document.getElementById('modalReason').value.trim();
+    btn.disabled = true; btn.textContent = 'Saving…';
+    document.getElementById('modalCancel').disabled = true;
+    const { error } = await sb.rpc('admin_set_account_field', { p_agent_id: agent.id, p_kind: kind, p_value: newValue, p_reason: reason || null });
+    close();
+    if (error) {
+      console.error(error);
+      toast('The change could not be saved: ' + (error.message || 'unknown error') + ' Nothing was changed.', true);
+      revert();
+      return;
+    }
+    toast(`${labels[kind]} updated for ${agent.display_name}.`);
+    await loadAll();
+    if (currentProfileId === agent.id) await openProfile(agent.id);
+  });
+  document.getElementById('modalConfirm').focus();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modalCancel')) document.getElementById('modalCancel').click();
+});
+
+// ---------- Page address (slug) ----------
 function openEditor(agentId) {
   const a = AGENTS.find(x => x.id === agentId);
   const box = document.getElementById('editor-' + agentId);
@@ -272,7 +618,8 @@ async function changeSlug(agent, newSlug, saveBtn) {
     const { error: qErr } = await sb.from('qr_codes').update({ url: next }).eq('id', q.id);
     if (qErr) { console.error(qErr); failed++; } else updated++;
   }
-  await loadAgents();
+  await loadAll();
+  if (currentProfileId === agent.id) await openProfile(agent.id);
   let text = `Done. ${esc(agent.display_name)} is now at <strong>perchqr.com/${esc(newSlug)}</strong>.`;
   if (updated) text += ` Updated ${updated} QR code destination${updated === 1 ? '' : 's'}.`;
   if (failed) { showMsg(text + ` ${failed} QR code destination${failed === 1 ? '' : 's'} could not be updated — the agent should check the QR Codes tab.`, true); return; }
@@ -289,6 +636,73 @@ function rewriteQrUrl(url, oldSlug, newSlug) {
   } catch (e) { /* not a URL we can rewrite */ }
   return null;
 }
+
+// ---------- Subscription tiers (configuration only — no pricing/features yet) ----------
+function renderTiersView() {
+  const el = document.getElementById('tiersView');
+  const counts = {};
+  AGENTS.forEach(a => { counts[a.tier_id] = (counts[a.tier_id] || 0) + 1; });
+  el.innerHTML = `
+    <h1>Subscription tiers</h1>
+    <p class="console-sub">Names and descriptions you can edit any time; accounts follow the tier&rsquo;s internal key, so renaming never affects anyone. Pricing, features and limits aren&rsquo;t set up yet &mdash; the database has room for them when you&rsquo;re ready. Tiers are made inactive, never deleted.</p>
+    <div class="card">
+      ${TIERS.map(t => `<div class="tier-row" data-tier="${esc(t.id)}">
+          <div><div class="tier-key">${esc(t.id)}</div><div class="muted">${counts[t.id] || 0} user${(counts[t.id] || 0) === 1 ? '' : 's'}</div></div>
+          <input data-f="name" value="${esc(t.name)}" placeholder="Name">
+          <input data-f="description" value="${esc(t.description || '')}" placeholder="Description (optional)">
+          <label class="ctl-check" style="padding:0;"><input type="checkbox" data-f="is_active"${t.is_active ? ' checked' : ''}> Active</label>
+          <button class="btn-sm" data-save-tier="${esc(t.id)}">Save</button>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <h3>Add a tier</h3>
+      <div class="ctl-row">
+        <div class="ctl"><label for="newTierKey">Internal key</label><input id="newTierKey" placeholder="e.g. tier_4" style="width:160px;margin:0;"></div>
+        <div class="ctl"><label for="newTierName">Display name</label><input id="newTierName" placeholder="e.g. Tier 4" style="width:200px;margin:0;"></div>
+        <div class="ctl"><button class="btn-sm primary" id="addTierBtn">Add tier</button></div>
+      </div>
+      <div class="console-note">The key is permanent (lowercase letters, numbers, underscores). The display name can be changed later.</div>
+    </div>`;
+  el.querySelectorAll('[data-save-tier]').forEach(b => b.addEventListener('click', () => saveTier(b.dataset.saveTier)));
+  document.getElementById('addTierBtn').addEventListener('click', addTier);
+}
+
+async function saveTier(id) {
+  const row = document.querySelector(`[data-tier="${id}"]`);
+  const name = row.querySelector('[data-f=name]').value.trim();
+  if (!name) { toast('A tier needs a name.', true); return; }
+  const patch = {
+    name,
+    description: row.querySelector('[data-f=description]').value.trim() || null,
+    is_active: row.querySelector('[data-f=is_active]').checked,
+  };
+  const { error } = await sb.from('subscription_tiers').update(patch).eq('id', id);
+  if (error) { console.error(error); toast('Could not save the tier.', true); return; }
+  toast('Tier saved.');
+  await loadAll();
+}
+
+async function addTier() {
+  const key = document.getElementById('newTierKey').value.trim().toLowerCase();
+  const name = document.getElementById('newTierName').value.trim();
+  if (!/^[a-z0-9_]+$/.test(key)) { toast('Use lowercase letters, numbers and underscores for the key.', true); return; }
+  if (!name) { toast('Give the tier a display name.', true); return; }
+  if (tierById(key)) { toast('That key is already in use.', true); return; }
+  const nextSort = TIERS.reduce((m, t) => Math.max(m, t.sort_order || 0), 0) + 10;
+  const { error } = await sb.from('subscription_tiers').insert({ id: key, name, sort_order: nextSort });
+  if (error) { console.error(error); toast('Could not add the tier.', true); return; }
+  toast('Tier added.');
+  await loadAll();
+}
+
+// ---------- Tabs / sign out ----------
+document.querySelectorAll('.view-tab').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b === btn));
+  const users = btn.dataset.view === 'users';
+  document.getElementById('usersView').classList.toggle('hidden', !users);
+  document.getElementById('tiersView').classList.toggle('hidden', users);
+  showMsg('');
+}));
 
 document.getElementById('signOutBtn').addEventListener('click', async () => {
   await sb.auth.signOut();

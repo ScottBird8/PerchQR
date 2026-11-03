@@ -124,6 +124,14 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
   </div>
 </div>
 
+<div id="accountBlocked" class="gate hidden">
+  <div class="gate-card">
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
+    <p id="accountBlockedText">Your account is not currently active.</p>
+    <button class="btn-sm" id="accountBlockedSignOutBtn" style="width:100%;">Sign out</button>
+  </div>
+</div>
+
 <div id="adminApp" class="hidden">
   <div class="admin-header">
     <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR User Access</h1></div>
@@ -496,6 +504,8 @@ function loadAgentScopedData() {
 
 async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
+  const blockedEl = document.getElementById('accountBlocked');
+  blockedEl.classList.add('hidden');
   if (!session) {
     gate.classList.remove('hidden');
     notAnAgent.classList.add('hidden');
@@ -530,6 +540,24 @@ async function checkAuth() {
   }
   AGENT_SELF = agent;
   AGENT = agent;
+
+  // Account status gate. A status that doesn't allow access (pending, paused,
+  // suspended, canceled, archived — configured in account_statuses) keeps the
+  // user out of the dashboard; nothing about the account is deleted. The
+  // database enforces the same rule on writes. The owner is never locked out.
+  if (agent.id !== PERCHQR_OWNER_ID && agent.status_id) {
+    const { data: st } = await sb.from('account_statuses').select('name, allows_access').eq('id', agent.status_id).maybeSingle();
+    if (st && st.allows_access === false) {
+      gate.classList.add('hidden');
+      notAnAgent.classList.add('hidden');
+      adminApp.classList.add('hidden');
+      document.getElementById('accountBlockedText').textContent =
+        `Your PerchQR account is currently ${st.name.toLowerCase()}, so the dashboard isn't available. Your information has not been deleted. Please contact PerchQR to have access restored.`;
+      blockedEl.classList.remove('hidden');
+      return;
+    }
+  }
+  sb.rpc('touch_my_activity').then(() => {}, () => {}); // "last activity" for the admin user list
 
   // Owner following a personalized "/<slug>/access" link for someone else's
   // account: switch to that agent before the first data load, so it's right
@@ -599,6 +627,7 @@ document.getElementById('loginPassword').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('loginBtn').click();
 });
 document.getElementById('signOutBtn').addEventListener('click', async () => { await sb.auth.signOut(); checkAuth(); });
+document.getElementById('accountBlockedSignOutBtn').addEventListener('click', async () => { await sb.auth.signOut(); checkAuth(); });
 document.getElementById('notAgentSignOutBtn').addEventListener('click', async () => { await sb.auth.signOut(); checkAuth(); });
 checkAuth();
 
