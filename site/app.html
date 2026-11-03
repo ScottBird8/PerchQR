@@ -1042,7 +1042,10 @@ document.getElementById('mlsLookupBtn').addEventListener('click', async () => {
     toast('Listing pulled in from MLS');
   } catch (err) {
     console.error(err);
-    statusEl.textContent = err.message && err.message.includes('MLS') ? err.message : "Couldn't find or fetch that listing — double check the MLS number and that you're connected (Connect MLS tab).";
+    const generic = "Couldn't find or fetch that listing — double check the MLS number and that you're connected (Connect MLS tab).";
+    statusEl.textContent = !err.message ? generic
+      : err.message.includes('MLS') ? err.message
+      : `${generic} (Details: ${err.message})`;
   } finally {
     btn.disabled = false; btn.textContent = 'Fetch listing';
   }
