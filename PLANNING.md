@@ -441,6 +441,15 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-04 — Bug fix: every `/q/<id>` QR scan showed "This QR link is
+  missing its code."** Found via Kendall's first code. Root cause, present since
+  the original port: `q.html` read the id from `?id=`, but Netlify's 200 rewrite
+  (`/q/:id -> /q.html?id=:id`) keeps the browser's original URL, so the query
+  string never reached the page's JavaScript. `q.html` now reads the id from the
+  path (still accepts `?id=`). Codes already printed or saved needed no change —
+  they encode `/q/<id>`. Lesson: scan a real code end to end after building the
+  QR flow; this slipped through because it was never tested by scanning.
+
 - **2026-11-03 — MLS question added to signup.** Optional "Your MLS" dropdown on
   `/signup` (Washington County BOR, Iron County BOR, "Other" → type it in);
   **no state field** (Scott's call — add later if needed). Stored as
