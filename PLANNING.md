@@ -449,6 +449,8 @@ expansion, polished onboarding) until the beta says the product is real.
   path (still accepts `?id=`). Codes already printed or saved needed no change —
   they encode `/q/<id>`. Lesson: scan a real code end to end after building the
   QR flow; this slipped through because it was never tested by scanning.
+  **Confirmed 2026-11-04:** Scott scanned Kendall's real code after the fix and
+  it worked.
 
 - **2026-11-03 — MLS question added to signup.** Optional "Your MLS" dropdown on
   `/signup` (Washington County BOR, Iron County BOR, "Other" → type it in);
