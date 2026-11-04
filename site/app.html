@@ -1228,6 +1228,11 @@ async function loadMlsStatus() {
   }
 }
 
+// The Flexmls connection function's slug (its URL is /functions/v1/<slug>).
+// Supabase named it "dynamic-handler" when it was created in the dashboard and a
+// slug can't be renamed — see supabase/functions/spark-oidc/index.ts.
+const SPARK_OIDC_FN = 'dynamic-handler';
+
 // supabase-js puts a generic message on a failed Edge Function call; the real
 // {error: "..."} we returned has to be read off the raw response.
 async function functionErrorMessage(error) {
@@ -1242,7 +1247,7 @@ document.getElementById('mlsConnectBtn').addEventListener('click', async () => {
   const btn = document.getElementById('mlsConnectBtn');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Opening Flexmls…';
-  const { data, error } = await sb.functions.invoke('spark-oidc', { body: { action: 'start' } });
+  const { data, error } = await sb.functions.invoke(SPARK_OIDC_FN, { body: { action: 'start' } });
   if (error || !data || !data.url) {
     console.error(error || data);
     toast(error ? await functionErrorMessage(error) : ((data && data.error) || 'Could not start the Flexmls connection'));
@@ -1254,7 +1259,7 @@ document.getElementById('mlsConnectBtn').addEventListener('click', async () => {
 
 document.getElementById('mlsDisconnectBtn').addEventListener('click', async () => {
   if (!confirm('Disconnect your Flexmls account? You can reconnect any time.')) return;
-  const { error } = await sb.functions.invoke('spark-oidc', { body: { action: 'disconnect' } });
+  const { error } = await sb.functions.invoke(SPARK_OIDC_FN, { body: { action: 'disconnect' } });
   if (error) { console.error(error); toast(await functionErrorMessage(error)); return; }
   toast('Flexmls disconnected');
   await loadMlsStatus();

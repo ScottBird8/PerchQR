@@ -1,3 +1,6 @@
+// DEPLOYED AS "dynamic-handler": the dashboard gave it that slug (URL /functions/v1/dynamic-handler)
+// and slugs cannot be renamed; the site calls it by that slug (SPARK_OIDC_FN in app.html and
+// oauth-callback.html). This file is its source of truth either way.
 // Connects an agent's Flexmls account to PerchQR using Spark's OpenID Connect
 // flow ("Connect your Flexmls account" on the dashboard's Connect MLS tab),
 // replacing the old copy-and-paste-an-access-token step.

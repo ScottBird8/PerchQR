@@ -28,6 +28,7 @@
 <script src="/assets/supabase-client.js"></script>
 <script>
 (async function () {
+  const SPARK_OIDC_FN = 'dynamic-handler'; // slug of the spark-oidc function (see app.html)
   const msg = document.getElementById('msg');
   const params = new URLSearchParams(window.location.search);
   const back = '<br><br><a href="/app" style="color:var(--maroon);font-weight:600;">Back to your dashboard</a>';
@@ -56,7 +57,7 @@
     return;
   }
 
-  const { data, error } = await sb.functions.invoke('spark-oidc', { body: { action: 'callback', code, state } });
+  const { data, error } = await sb.functions.invoke(SPARK_OIDC_FN, { body: { action: 'callback', code, state } });
   let message = null;
   if (error) {
     message = error.message;
