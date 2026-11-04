@@ -469,6 +469,13 @@ expansion, polished onboarding) until the beta says the product is real.
   - Dashboard Connect MLS tab: big **Connect your Flexmls account** button
     (+ Disconnect); the paste-a-token form is kept under "Advanced" as the
     fallback. The owner viewing another agent can't connect on their behalf.
+  - **Setup notes (2026-11-04):** the new function deployed from the dashboard
+    editor got the slug `dynamic-handler` (slugs can't be renamed), so the site
+    calls it by that name (`SPARK_OIDC_FN`). First connect attempt failed with
+    "Client secret is invalid" — the Supabase secret had to be re-entered;
+    after that **Scott's Flexmls connection succeeded** (dashboard shows
+    "Connected through Flexmls as Scott Bird"). Next: confirm the MLS lookup
+    (photos + 3D tour) works through the OIDC token.
   - **Open questions / follow-ups:** (1) role `idx` — confirm with FBS/Melissa
     what IDX-role access allows and whether IDX display rules apply to what we
     pull; photos/virtual tours may now work since IDX can read photos.
