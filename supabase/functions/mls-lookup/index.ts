@@ -171,7 +171,18 @@ Deno.serve(async (req) => {
       return json({ error: listingJson?.D?.Message || 'Spark API request failed — check your MLS connection is still valid' }, 502);
     }
     const results: any[] = listingJson.D.Results || [];
-    if (!results.length) return json({ error: `No listing found for MLS #${cleanMls}` }, 404);
+    if (!results.length) {
+      // Say how much of the MLS this connection can see at all, so "not found"
+      // can be told apart from "this connection sees a tiny/test feed" or
+      // "that listing isn't in the part of the feed this key can read".
+      let seen = '';
+      try {
+        const countRes = await fetch(`${API_BASE}/v1/listings?_pagination=count`, { headers: sparkHeaders });
+        const total = (await countRes.json())?.D?.Pagination?.TotalRows;
+        if (typeof total === 'number') seen = ` This connection can see ${total.toLocaleString('en-US')} listing${total === 1 ? '' : 's'} in total.`;
+      } catch (_e) { /* just omit the extra detail */ }
+      return json({ error: `No listing found for MLS #${cleanMls}.${seen}` }, 404);
+    }
     // If more than one listing shares this number, prefer an Active one and
     // tell the agent so they can double-check it's the right property.
     const isActive = (r: any) => /^(active|coming)/i.test(r?.StandardFields?.StandardStatus || r?.StandardFields?.MlsStatus || '');
