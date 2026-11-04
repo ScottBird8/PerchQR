@@ -25,6 +25,49 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Spark hosts + the OIDC key (same secrets as the spark-oidc function; only
+// needed for agents who connected with "Connect your Flexmls account").
+const AUTH_BASE = (Deno.env.get('SPARK_AUTH_BASE') || 'https://sparkplatform.com').replace(/\/$/, '');
+const API_BASE = (Deno.env.get('SPARK_API_BASE') || 'https://replication.sparkapi.com').replace(/\/$/, '');
+const OIDC_CLIENT_ID = Deno.env.get('SPARK_OIDC_CLIENT_ID') || '';
+const OIDC_CLIENT_SECRET = Deno.env.get('SPARK_OIDC_CLIENT_SECRET') || '';
+
+// An OIDC agent's access token (they last 24h). Returns a still-valid one,
+// refreshing it first when it's within 5 minutes of expiring (Spark rotates
+// the refresh token on every refresh, so the new one is saved right away).
+// Returns null when there's no usable connection — the agent must reconnect.
+async function getOidcAccessToken(admin: any, agentId: string): Promise<string | null> {
+  const { data: row } = await admin
+    .from('spark_oidc_tokens')
+    .select('access_token, refresh_token, expires_at')
+    .eq('agent_id', agentId)
+    .maybeSingle();
+  if (!row) return null;
+  const expiresMs = row.expires_at ? new Date(row.expires_at).getTime() : 0;
+  if (expiresMs - Date.now() > 5 * 60 * 1000) return row.access_token;
+  if (!row.refresh_token || !OIDC_CLIENT_ID || !OIDC_CLIENT_SECRET) return null;
+
+  const res = await fetch(`${AUTH_BASE}/openid/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      client_id: OIDC_CLIENT_ID,
+      client_secret: OIDC_CLIENT_SECRET,
+      grant_type: 'refresh_token',
+      refresh_token: row.refresh_token,
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body?.access_token) return null;
+  await admin.from('spark_oidc_tokens').update({
+    access_token: body.access_token,
+    refresh_token: body.refresh_token || row.refresh_token,
+    expires_at: new Date(Date.now() + (Number(body.expires_in) || 86400) * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq('agent_id', agentId);
+  return body.access_token;
+}
+
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -84,17 +127,25 @@ Deno.serve(async (req) => {
     // This agent's own Spark token, set via the admin's "Connect MLS" tab.
     const { data: creds, error: credsErr } = await admin
       .from('mls_credentials')
-      .select('access_token')
+      .select('access_token, auth_type')
       .eq('agent_id', agentId)
       .maybeSingle();
     if (credsErr) return json({ error: 'Could not check your MLS connection' }, 500);
     if (!creds) return json({ error: 'Connect your MLS first (see the Connect MLS tab)' }, 400);
 
+    let sparkToken: string | null = creds.access_token;
+    if (creds.auth_type === 'oidc') {
+      sparkToken = await getOidcAccessToken(admin, agentId);
+      if (!sparkToken) {
+        return json({ error: 'Your Flexmls connection has expired — please reconnect your MLS on the Connect MLS tab.' }, 400);
+      }
+    }
+
     const { mlsNumber } = await req.json();
     if (!mlsNumber || typeof mlsNumber !== 'string') return json({ error: 'mlsNumber is required' }, 400);
     const cleanMls = mlsNumber.trim().replace(/'/g, '');
 
-    const sparkHeaders = { Authorization: `Bearer ${creds.access_token}`, Accept: 'application/json' };
+    const sparkHeaders = { Authorization: `Bearer ${sparkToken}`, Accept: 'application/json' };
 
     // Try the number exactly as typed first, then — since MLS numbers with a
     // dash (e.g. "26-274631") are sometimes stored by Spark without it —
@@ -102,7 +153,7 @@ Deno.serve(async (req) => {
     async function trySparkFilter(idValue: string) {
       const filter = `ListingId Eq '${idValue}'`;
       const res = await fetch(
-        `https://replication.sparkapi.com/v1/listings?_filter=${encodeURIComponent(filter)}`,
+        `${API_BASE}/v1/listings?_filter=${encodeURIComponent(filter)}`,
         { headers: sparkHeaders }
       );
       const body = await res.json();
@@ -144,7 +195,7 @@ Deno.serve(async (req) => {
     let photoProblem = '';
     try {
       const photosRes = await fetch(
-        `https://replication.sparkapi.com/v1/listings/${listing.Id}/photos`,
+        `${API_BASE}/v1/listings/${listing.Id}/photos`,
         { headers: sparkHeaders }
       );
       const photosJson = await photosRes.json();
@@ -188,7 +239,7 @@ Deno.serve(async (req) => {
     for (const u of [f.VirtualTourURLUnbranded, f.VirtualTourURLBranded]) if (u) tourUrls.push(String(u));
     try {
       const toursRes = await fetch(
-        `https://replication.sparkapi.com/v1/listings/${listing.Id}/virtualtours`,
+        `${API_BASE}/v1/listings/${listing.Id}/virtualtours`,
         { headers: sparkHeaders }
       );
       const toursJson = await toursRes.json();

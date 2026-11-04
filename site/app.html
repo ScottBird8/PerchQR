@@ -214,25 +214,38 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <h2 style="font-size:16px;">Connect your MLS</h2>
         <div id="mlsStatus" class="mls-status disconnected">Not connected yet.</div>
 
-        <p class="field-hint" style="margin-bottom:16px;">
-          Get a free access token from your MLS's Spark Datamart
-          (<a href="https://sparkplatform.com/ticket" target="_blank" rel="noopener">sparkplatform.com/ticket</a>):
-          sign in, search for your board, subscribe to the free
-          "A Broker or Agent's Own Data" plan (or whatever your board calls its
-          own-data role), and paste the Access Token it gives you below. This
-          only needs doing once — it lets the "Pull in from MLS" button on the
-          Add Property form auto-fill a listing from its MLS number.
-        </p>
-
-        <div class="field" style="margin-bottom:12px;"><label>MLS / board name</label><input id="mls_name" placeholder="e.g. Washington County Board of REALTORS"></div>
-        <div class="field" style="margin-bottom:12px;"><label>Your Flexmls username (optional, for reference)</label><input id="mls_flexmls_username"></div>
-        <div class="field" style="margin-bottom:12px;"><label>Access Token</label><input id="mls_access_token" type="password" placeholder="Paste the token from Spark Datamart"></div>
-        <div class="field" style="margin-bottom:16px;"><label>API Feed ID (optional)</label><input id="mls_api_feed_id" placeholder="Only needed if support ever asks for it"></div>
-        <div class="field-hint" style="margin-bottom:16px;">Treat this token like a password — it's stored so only you (and PerchQR's server-side lookup) can use it, never shown publicly.</div>
-
-        <div class="form-actions" style="justify-content:flex-start;">
-          <button class="btn-sm primary" id="mlsSaveBtn">Save connection</button>
+        <div id="mlsOidcBox" style="margin-bottom:18px;">
+          <p class="field-hint" style="margin-bottom:12px;">
+            Connect your Flexmls account to fill in a listing from its MLS number.
+            You'll sign in to Flexmls and approve PerchQR — one click, nothing to copy or paste.
+          </p>
+          <div class="form-actions" style="justify-content:flex-start;gap:8px;">
+            <button class="btn-sm primary" id="mlsConnectBtn">Connect your Flexmls account</button>
+            <button class="btn-sm danger hidden" id="mlsDisconnectBtn">Disconnect</button>
+          </div>
+          <div class="field-hint hidden" id="mlsOwnerNote" style="margin-top:8px;"></div>
         </div>
+
+        <details id="mlsManualBox" style="border-top:1px solid var(--line);padding-top:14px;">
+          <summary style="cursor:pointer;font-size:13.5px;color:var(--charcoal-soft);">Advanced: connect with an access token instead</summary>
+          <p class="field-hint" style="margin:12px 0 16px;">
+            Only if the button above doesn't work for your MLS. Get a free access token from your MLS's Spark Datamart
+            (<a href="https://sparkplatform.com/ticket" target="_blank" rel="noopener">sparkplatform.com/ticket</a>):
+            sign in, search for your board, subscribe to the free
+            "A Broker or Agent's Own Data" plan (or whatever your board calls its
+            own-data role), and paste the Access Token it gives you below.
+          </p>
+
+          <div class="field" style="margin-bottom:12px;"><label>MLS / board name</label><input id="mls_name" placeholder="e.g. Washington County Board of REALTORS"></div>
+          <div class="field" style="margin-bottom:12px;"><label>Your Flexmls username (optional, for reference)</label><input id="mls_flexmls_username"></div>
+          <div class="field" style="margin-bottom:12px;"><label>Access Token</label><input id="mls_access_token" type="password" placeholder="Paste the token from Spark Datamart"></div>
+          <div class="field" style="margin-bottom:16px;"><label>API Feed ID (optional)</label><input id="mls_api_feed_id" placeholder="Only needed if support ever asks for it"></div>
+          <div class="field-hint" style="margin-bottom:16px;">Treat this token like a password — it's stored so only you (and PerchQR's server-side lookup) can use it, never shown publicly.</div>
+
+          <div class="form-actions" style="justify-content:flex-start;">
+            <button class="btn-sm primary" id="mlsSaveBtn">Save connection</button>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -480,6 +493,10 @@ const PERCHQR_OWNER_ID = '72158799-b0f4-47c9-ac2a-45ffe52db1df';
 const urlSegments = window.location.pathname.split('/').filter(Boolean);
 const urlSlug = urlSegments[1] === 'access' ? urlSegments[0] : null;
 
+// /oauth/spark/callback sends an agent back here with ?mls=connected after they
+// connect Flexmls. Read it now, before goToPersonalizedUrl() rewrites the URL.
+let justConnectedMls = new URLSearchParams(window.location.search).get('mls') === 'connected';
+
 // Keeps the address bar in sync with whichever agent's data is currently
 // showing (AGENT — not necessarily AGENT_SELF, once the owner has switched)
 // — however you actually arrived here: /app, /admin, or someone else's
@@ -596,6 +613,12 @@ async function checkAuth() {
   document.getElementById('adminTitle').textContent =
     `${AGENT.display_name} — User Access${AGENT.id !== AGENT_SELF.id ? ' (viewing as owner)' : ''}`;
   loadAgentScopedData();
+  if (justConnectedMls) {
+    justConnectedMls = false;
+    const mlsTab = document.querySelector('.tab-btn[data-tab="mls"]');
+    if (mlsTab) mlsTab.click();
+    toast('Flexmls connected — you can now fill in listings from their MLS number.');
+  }
   syncLandingVideoTab();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('adminLinkBtn').classList.remove('hidden'); // owner-only link back to /admin
@@ -1170,10 +1193,27 @@ async function loadMlsStatus() {
   // (the loader below only fills them for agents that HAVE a connection).
   ['mls_name', 'mls_flexmls_username', 'mls_access_token', 'mls_api_feed_id'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('mls_access_token').placeholder = 'Paste the token from Spark Datamart';
-  const { data, error } = await sb.from('mls_credentials').select('mls_name, flexmls_username, api_feed_id, connected_at').eq('agent_id', AGENT.id).maybeSingle();
+  const credCols = 'mls_name, flexmls_username, api_feed_id, connected_at';
+  let { data, error } = await sb.from('mls_credentials').select(credCols + ', auth_type').eq('agent_id', AGENT.id).maybeSingle();
+  // (auth_type only exists once schema.sql section 12 has been run.)
+  if (error) ({ data, error } = await sb.from('mls_credentials').select(credCols).eq('agent_id', AGENT.id).maybeSingle());
   const statusEl = document.getElementById('mlsStatus');
   if (error) { console.error(error); return; }
-  if (data) {
+  const isOidc = !!(data && data.auth_type === 'oidc');
+  const ownAccount = AGENT.id === AGENT_SELF.id;
+  const connectBtn = document.getElementById('mlsConnectBtn');
+  const disconnectBtn = document.getElementById('mlsDisconnectBtn');
+  const ownerNote = document.getElementById('mlsOwnerNote');
+  connectBtn.textContent = isOidc ? 'Reconnect your Flexmls account' : 'Connect your Flexmls account';
+  connectBtn.disabled = !ownAccount;
+  disconnectBtn.classList.toggle('hidden', !isOidc);
+  disconnectBtn.disabled = !ownAccount;
+  ownerNote.classList.toggle('hidden', ownAccount);
+  if (!ownAccount) ownerNote.textContent = `Only ${AGENT.display_name} can connect their own Flexmls account — they need to sign in themselves and use this button.`;
+  if (isOidc) {
+    statusEl.className = 'mls-status connected';
+    statusEl.textContent = `Connected through Flexmls${data.flexmls_username ? ' as ' + data.flexmls_username : ''} (since ${new Date(data.connected_at).toLocaleDateString()}).`;
+  } else if (data) {
     statusEl.className = 'mls-status connected';
     statusEl.textContent = `Connected to ${data.mls_name}${data.flexmls_username ? ' as ' + data.flexmls_username : ''} (since ${new Date(data.connected_at).toLocaleDateString()}).`;
     document.getElementById('mls_name').value = data.mls_name || '';
@@ -1187,6 +1227,38 @@ async function loadMlsStatus() {
     if (AGENT.mls_name && !document.getElementById('mls_name').value) document.getElementById('mls_name').value = AGENT.mls_name;
   }
 }
+
+// supabase-js puts a generic message on a failed Edge Function call; the real
+// {error: "..."} we returned has to be read off the raw response.
+async function functionErrorMessage(error) {
+  let message = error.message;
+  if (error.context && typeof error.context.json === 'function') {
+    try { const b = await error.context.json(); if (b && b.error) message = b.error; } catch (_e) { /* keep generic */ }
+  }
+  return message;
+}
+
+document.getElementById('mlsConnectBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('mlsConnectBtn');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Opening Flexmls…';
+  const { data, error } = await sb.functions.invoke('spark-oidc', { body: { action: 'start' } });
+  if (error || !data || !data.url) {
+    console.error(error || data);
+    toast(error ? await functionErrorMessage(error) : ((data && data.error) || 'Could not start the Flexmls connection'));
+    btn.disabled = false; btn.textContent = label;
+    return;
+  }
+  window.location.href = data.url; // off to Flexmls to sign in; it returns to /oauth/spark/callback
+});
+
+document.getElementById('mlsDisconnectBtn').addEventListener('click', async () => {
+  if (!confirm('Disconnect your Flexmls account? You can reconnect any time.')) return;
+  const { error } = await sb.functions.invoke('spark-oidc', { body: { action: 'disconnect' } });
+  if (error) { console.error(error); toast(await functionErrorMessage(error)); return; }
+  toast('Flexmls disconnected');
+  await loadMlsStatus();
+});
 
 document.getElementById('mlsSaveBtn').addEventListener('click', async () => {
   const mls_name = document.getElementById('mls_name').value.trim();
@@ -1202,8 +1274,9 @@ document.getElementById('mlsSaveBtn').addEventListener('click', async () => {
     // reconnect (to update the board name, say) doesn't wipe it out.
     let tokenToSave = access_token;
     if (!tokenToSave) {
-      const { data: existing } = await sb.from('mls_credentials').select('access_token').eq('agent_id', AGENT.id).maybeSingle();
-      if (!existing) { toast('Paste an access token first'); saveBtn.disabled = false; saveBtn.textContent = 'Save connection'; return; }
+      const { data: existing } = await sb.from('mls_credentials').select('access_token, auth_type').eq('agent_id', AGENT.id).maybeSingle();
+      // (a Flexmls-connected agent has no pasted token to keep)
+      if (!existing || existing.auth_type === 'oidc') { toast('Paste an access token first'); saveBtn.disabled = false; saveBtn.textContent = 'Save connection'; return; }
       tokenToSave = existing.access_token;
     }
     const { error } = await sb.from('mls_credentials').upsert({
@@ -1212,6 +1285,7 @@ document.getElementById('mlsSaveBtn').addEventListener('click', async () => {
       flexmls_username: flexmls_username || null,
       access_token: tokenToSave,
       api_feed_id: api_feed_id || null,
+      auth_type: 'token',
     });
     if (error) throw error;
     document.getElementById('mls_access_token').value = '';

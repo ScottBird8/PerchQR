@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Connecting Flexmls — PerchQR</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+<!--
+  Where Flexmls (Spark) sends an agent back after they approve PerchQR:
+  https://perchqr.com/oauth/spark/callback?code=...&state=...
+  (reached via "/oauth/spark/callback -> /oauth-callback.html" in _redirects —
+  a 200 rewrite, so the browser keeps the original URL and its query string).
+
+  This page never sees a token. It hands the one-time `code` and the signed
+  `state` to the spark-oidc Edge Function, along with the agent's own PerchQR
+  session; the function swaps the code for tokens server-side (that step needs
+  the client secret) and stores them where no browser can read them.
+-->
+<div class="state-wrap" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+  <div class="state-msg" id="msg" style="max-width:440px;text-align:center;line-height:1.6;">Finishing your Flexmls connection&hellip;</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script>
+(async function () {
+  const msg = document.getElementById('msg');
+  const params = new URLSearchParams(window.location.search);
+  const back = '<br><br><a href="/app" style="color:var(--maroon);font-weight:600;">Back to your dashboard</a>';
+  const fail = (text) => { msg.innerHTML = text + back; };
+
+  // Take the one-time code out of the address bar right away, so a refresh or
+  // a copied link can't try to use it a second time.
+  const code = params.get('code');
+  const state = params.get('state');
+  const oauthError = params.get('error');
+  const oauthErrorText = params.get('error_description');
+  history.replaceState(null, '', window.location.pathname);
+
+  if (oauthError) {
+    fail(`Flexmls didn't connect${oauthErrorText ? ' (' + oauthErrorText.replace(/[<>&]/g, '') + ')' : ''}. You can try again from the Connect MLS tab.`);
+    return;
+  }
+  if (!code || !state) {
+    fail('This page is only used when you connect your Flexmls account. Start from the Connect MLS tab in your dashboard.');
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    fail('Please sign in to PerchQR first, then connect your Flexmls account from the Connect MLS tab.');
+    return;
+  }
+
+  const { data, error } = await sb.functions.invoke('spark-oidc', { body: { action: 'callback', code, state } });
+  let message = null;
+  if (error) {
+    message = error.message;
+    if (error.context && typeof error.context.json === 'function') {
+      try { const b = await error.context.json(); if (b && b.error) message = b.error; } catch (_e) { /* keep generic */ }
+    }
+  } else if (data && data.error) {
+    message = data.error;
+  }
+  if (message) { fail(String(message).replace(/[<>&]/g, '')); return; }
+
+  msg.textContent = 'Connected! Taking you back to your dashboard…';
+  window.location.replace('/app?mls=connected');
+})();
+</script>
+</body>
+</html>

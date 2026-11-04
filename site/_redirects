@@ -12,6 +12,10 @@
 # forwards to its stored destination. See site/q.html.
 /q/:id           /q.html?id=:id       200
 
+# Flexmls (Spark OIDC) sign-in return page — see site/oauth-callback.html.
+# Registered with FBS as the key's Redirect URI, so this exact path must stay.
+/oauth/spark/callback  /oauth-callback.html  200
+
 # Per-agent listing detail page: /<slug>/listing?id=<propertyId>
 /:slug/listing   /listing.html        200
 

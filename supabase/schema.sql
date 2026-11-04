@@ -812,3 +812,32 @@ create policy "qr_codes_bucket_agent_only"
 --     no extra policy is needed.
 -- ============================================================
 alter table public.agents add column if not exists mls_name text;
+
+-- ============================================================
+-- 12. Flexmls (Spark OIDC) connection. Agents click "Connect your Flexmls
+--     account" instead of pasting a token. The OAuth tokens live in their
+--     own table with NO client policies at all — only the server-side Edge
+--     Functions (service role) can read or write them, so no browser, and
+--     no script running in one, can ever see an agent's tokens. The agent's
+--     mls_credentials row still exists (auth_type = 'oidc', placeholder in
+--     access_token) so the dashboard can show "connected".
+-- ============================================================
+alter table public.mls_credentials add column if not exists auth_type text not null default 'token';
+alter table public.mls_credentials drop constraint if exists mls_credentials_auth_type_check;
+alter table public.mls_credentials add constraint mls_credentials_auth_type_check
+  check (auth_type in ('token', 'oidc'));
+
+create table if not exists public.spark_oidc_tokens (
+  agent_id      uuid primary key references public.agents(id) on delete cascade,
+  access_token  text not null,
+  refresh_token text,
+  expires_at    timestamptz,
+  spark_account jsonb,                    -- non-sensitive bits of Spark's my/account (name, ids)
+  connected_at  timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.spark_oidc_tokens enable row level security;
+-- (deliberately no policies)
+revoke all on public.spark_oidc_tokens from anon, authenticated;
+-- TODO before scaling past beta: encrypt these at rest (Supabase Vault).

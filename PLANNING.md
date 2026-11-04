@@ -441,6 +441,44 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-04 — Flexmls (Spark OIDC) key issued; sign-in flow built.** FBS
+  (Forrest Pinson) created the OIDC key: Redirect URI
+  `https://perchqr.com/oauth/spark/callback`, **Role: `idx`**, and said we can
+  test with their developer sandbox before full release; "we'll follow up on
+  the email thread with Melissa" (WCBOR) — i.e. MLS-side approval may still be
+  pending. The OAuth key/secret live ONLY in Supabase secrets
+  (`SPARK_OIDC_CLIENT_ID`, `SPARK_OIDC_CLIENT_SECRET`) — never in the repo (it is
+  public). Built (nothing active until the setup steps below are done):
+  - `supabase/functions/spark-oidc` (new): `start` (returns the Flexmls
+    sign-in URL, with an HMAC-signed 10-minute `state` bound to the agent),
+    `callback` (verifies state, exchanges the code for tokens server-side,
+    reads `my/account`, stores everything), `disconnect`.
+  - `site/oauth-callback.html` + `_redirects` rule for `/oauth/spark/callback`:
+    reads `code`/`state`, strips them from the URL, hands them to the function
+    with the agent's own session, then returns to `/app?mls=connected`.
+  - Tokens are stored in a new `spark_oidc_tokens` table with **no client
+    policies at all** (only the server functions can read it — Spark's docs say
+    never expose tokens to a browser). `mls_credentials` gets `auth_type`
+    (`token` | `oidc`) and a placeholder row so the dashboard shows "connected".
+    schema.sql section 12.
+  - `mls-lookup` now uses the OIDC token for `oidc` agents and refreshes it
+    (24h access tokens; refresh tokens rotate) when within 5 min of expiry;
+    asks the agent to reconnect if that fails. Spark hosts are overridable via
+    secrets `SPARK_AUTH_BASE` / `SPARK_API_BASE` (defaults: sparkplatform.com,
+    replication.sparkapi.com) in case the sandbox uses different ones.
+  - Dashboard Connect MLS tab: big **Connect your Flexmls account** button
+    (+ Disconnect); the paste-a-token form is kept under "Advanced" as the
+    fallback. The owner viewing another agent can't connect on their behalf.
+  - **Open questions / follow-ups:** (1) role `idx` — confirm with FBS/Melissa
+    what IDX-role access allows and whether IDX display rules apply to what we
+    pull; photos/virtual tours may now work since IDX can read photos.
+    (2) An IDX-role key can see any IDX listing, so an agent could look up
+    someone else's MLS# — consider checking the listing's agent against the
+    connected Flexmls member (`my/account`) once we see real responses.
+    (3) Which hosts the sandbox uses (docs don't say). (4) Encrypt stored
+    tokens (Vault) before scaling. (5) The OAuth secret was pasted into a chat
+    session — ask FBS to reissue it if that matters to you.
+
 - **2026-11-04 — Bug fix: every `/q/<id>` QR scan showed "This QR link is
   missing its code."** Found via Kendall's first code. Root cause, present since
   the original port: `q.html` read the id from `?id=`, but Netlify's 200 rewrite
