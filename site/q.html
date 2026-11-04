@@ -28,7 +28,13 @@
 <script>
 (async function () {
   const msg = document.getElementById('msg');
-  const id = new URLSearchParams(window.location.search).get('id');
+  // Reached as /q/<id>, which Netlify serves from this file via a 200 rewrite
+  // ("/q/:id -> /q.html?id=:id"). A rewrite keeps the browser's ORIGINAL url,
+  // so the "?id=" never shows up in window.location.search — the id has to be
+  // read from the path. (?id= is still accepted for direct /q.html?id= links.)
+  const pathMatch = window.location.pathname.match(/^\/q\/([^/]+)\/?$/);
+  const id = (pathMatch && decodeURIComponent(pathMatch[1])) ||
+    new URLSearchParams(window.location.search).get('id');
 
   if (!id) {
     msg.textContent = 'This QR link is missing its code.';
