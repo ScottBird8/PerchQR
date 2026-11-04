@@ -162,8 +162,22 @@
 
   const homeVideoUrl = settings && settings.home_video_url;
 
+  // Testimonials show three at a time. Each trio is made of similar-length
+  // quotes (so a row never pairs one long card with two short ones), but the
+  // trios themselves are random and different on every visit: shuffle, drop
+  // the odd one(s) out so every trio is full, sort by length with a little
+  // random jitter (so neighbours in length change from visit to visit), cut
+  // into threes, then shuffle the order of the trios.
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let pool = shuffle([...(testimonials || [])]);
+  if (pool.length > 3) pool = pool.slice(0, pool.length - (pool.length % 3));
+  pool = pool
+    .map(t => ({ t, k: (t.quote_length || t.quote.length) * (0.85 + Math.random() * 0.3) }))
+    .sort((x, y) => x.k - y.k)
+    .map(x => x.t);
   const tChunks = [];
-  for (let i = 0; i < (testimonials || []).length; i += 3) tChunks.push(testimonials.slice(i, i + 3));
+  for (let i = 0; i < pool.length; i += 3) tChunks.push(pool.slice(i, i + 3));
+  shuffle(tChunks);
   const testimonialsSection = tChunks.length ? `<div class="testimonials-section">
       <div class="section-head"><h2>What clients are saying</h2></div>
       <div class="t-carousel" id="testimonialsCarousel">
