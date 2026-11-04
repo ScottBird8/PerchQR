@@ -180,6 +180,16 @@ Deno.serve(async (req) => {
         const countRes = await fetch(`${API_BASE}/v1/listings?_pagination=count`, { headers: sparkHeaders });
         const total = (await countRes.json())?.D?.Pagination?.TotalRows;
         if (typeof total === 'number') seen = ` This connection can see ${total.toLocaleString('en-US')} listing${total === 1 ? '' : 's'} in total.`;
+        // A few examples (number, city, status) — shows which MLS/board this
+        // connection is really reading and how its listing numbers look.
+        const sampleRes = await fetch(
+          `${API_BASE}/v1/listings?_limit=3&_select=ListingId,City,StateOrProvince,StandardStatus`,
+          { headers: sparkHeaders }
+        );
+        const sample = ((await sampleRes.json())?.D?.Results || [])
+          .map((r: any) => `${r?.StandardFields?.ListingId} (${[r?.StandardFields?.City, r?.StandardFields?.StateOrProvince].filter(Boolean).join(', ')}, ${r?.StandardFields?.StandardStatus})`)
+          .join('; ');
+        if (sample) seen += ` Examples it can see: ${sample}.`;
       } catch (_e) { /* just omit the extra detail */ }
       return json({ error: `No listing found for MLS #${cleanMls}.${seen}` }, 404);
     }
