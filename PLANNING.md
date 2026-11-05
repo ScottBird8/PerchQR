@@ -700,8 +700,14 @@ Resurface these at the start of planning sessions until each is closed.
    9/35/36/42, Utah business-name registry. Grab `@perchqr` socials.
 
 ### Product / architecture
-**OPEN (2026-11-03) — MLS autofill doesn't bring in photos or the Matterport
-tour.** Scott's Own Data token returns listing details but the photos call
+**RESOLVED (2026-11-05) — the OIDC key was changed to Broker Back Office; Scott
+reconnected through Flexmls and the lookup of #26-270282 pulled in everything
+(photos and tour included). A listing owned by another agent (#26-274631,
+Kendall's) correctly returned "not found" for Scott — confirms lookups are
+scoped to the signed-in agent's own listings. Next: Kendall connects with his own
+Flexmls login.
+Original issue — MLS autofill didn't bring in photos or the Matterport
+tour (2026-11-03):** Scott's Own Data token returns listing details but the photos call
 (`/v1/listings/{id}/photos`) fails with "You do not have permission to perform
 the requested action" (Spark/FBS side, likely a data-plan/key permission); the
 virtual-tour lookup returned no Matterport link (its errors are swallowed, so
