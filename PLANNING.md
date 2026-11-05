@@ -484,7 +484,18 @@ expansion, polished onboarding) until the beta says the product is real.
     Washington County (`26-######`). So the OIDC key (role `idx`) is attached to
     the Iron County IDX plan, not the Washington County "Own Data" plan. Asked
     Forrest (FBS) which account/plan it's tied to and to link Washington County.
-  - **Direction (Scott's idea, 2026-11-04):** keep this key for **Iron County** and
+  - **FBS answer (James Richards, 2026-11-05) — SUPERSEDES the one-key-per-MLS
+    direction below:** the key was IDX-scoped (each agent's IDX-*eligible*
+    listings only, hence the misses). FBS **changed the key's role to Broker Back
+    Office**: each authenticated agent now gets **their own listings in any
+    status**, with IDX fields plus extra back-office fields (not labeled IDX vs
+    non-IDX). Photos are readable with this role; virtual-tour links come as
+    standard listing fields. **Other MLSs: no new key needed** — an agent from
+    another board just authenticates, agrees to that MLS's Member Terms of Use,
+    and grants data access. So one key serves every board. Next: Scott
+    reconnects (to be safe, so the token is issued under the new role) and
+    re-tests `26-270282` / `26-274631`.
+  - **Direction (Scott's idea, 2026-11-04 — superseded above):** keep this key for **Iron County** and
     get a **second key for Washington County** — one OIDC key per MLS. FBS
     allows up to 3 keys per product, one redirect URI each (confirm both may use
     `https://perchqr.com/oauth/spark/callback`). Code change when the second key
