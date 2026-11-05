@@ -476,6 +476,26 @@ expansion, polished onboarding) until the beta says the product is real.
     after that **Scott's Flexmls connection succeeded** (dashboard shows
     "Connected through Flexmls as Scott Bird"). Next: confirm the MLS lookup
     (photos + 3D tour) works through the OIDC token.
+  - **Finding (2026-11-04):** with the connection live, looking up Scott's
+    Washington County listings (MLS #26-270282, #26-274631 — both Active) returned
+    "No listing found … can see 581 listings". Sample listings the connection
+    could see were numbered `114807` (Cedar City), `116740` (Enoch), `117411`
+    (Hurricane) — **Iron County BOR IDX** data (plain 6-digit numbers), not
+    Washington County (`26-######`). So the OIDC key (role `idx`) is attached to
+    the Iron County IDX plan, not the Washington County "Own Data" plan. Asked
+    Forrest (FBS) which account/plan it's tied to and to link Washington County.
+  - **Direction (Scott's idea, 2026-11-04):** keep this key for **Iron County** and
+    get a **second key for Washington County** — one OIDC key per MLS. FBS
+    allows up to 3 keys per product, one redirect URI each (confirm both may use
+    `https://perchqr.com/oauth/spark/callback`). Code change when the second key
+    exists: store keys as secrets per board (e.g. a JSON secret mapping board →
+    client id/secret) and pick the key from the agent's MLS (`agents.mls_name`,
+    from the signup dropdown; ask on the Connect MLS tab if blank); `spark-oidc`
+    and `mls-lookup` both need it. Until then Washington County agents use the
+    paste-a-token fallback ("Advanced" on Connect MLS). Also confirm with Iron
+    County BOR/FBS that serving agents' own listings from the Iron IDX plan is
+    allowed (IDX display rules), and that it's not the same plan utahrealestate.us
+    relies on in a way that conflicts.
   - **Open questions / follow-ups:** (1) role `idx` — confirm with FBS/Melissa
     what IDX-role access allows and whether IDX display rules apply to what we
     pull; photos/virtual tours may now work since IDX can read photos.
