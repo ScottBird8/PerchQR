@@ -1864,13 +1864,14 @@ function buildQr(text, logo) {
   const quiet = 4;
   const total = count + quiet * 2;
 
-  // Optional center logo on a white backing. The logo box is 34% of the code's
-  // width (about 14% of its area including the backing). Tested by decoding
-  // generated codes: up to 38% still read cleanly even with blur and noise, and
-  // 42%+ started failing, so 34% keeps a safety margin for glare, wear and
+  // Optional center logo on a white backing. The logo box is 36% of the code's
+  // width (about 16% of its area including the backing). Tested by decoding
+  // generated codes (clean, and with camera-like blur and noise): 36% read in
+  // every trial, 38% missed one, 40% missed about one in five, 42%+ failed — so
+  // 36% is about the ceiling that still leaves a margin for glare, wear and
   // printing at a distance. Don't go larger without re-testing.
   const lg = logo ? (() => {
-    const box = count * 0.34;
+    const box = count * 0.36;
     const pad = count * 0.02;
     const bx = (total - box) / 2 - pad;
     const fit = Math.min(box / logo.img.naturalWidth, box / logo.img.naturalHeight);
