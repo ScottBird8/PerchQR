@@ -228,7 +228,7 @@ ${Perch.renderContact(agent)}
 ${Perch.renderFooter(agent)}`;
 
   Perch.wireHeader();
-  if (homeVideoUrl) Perch.initHomeVideo();
+  if (homeVideoUrl) Perch.initHomeVideo({ keepSize: true });
 
   if (tChunks.length > 1) {
     let idx = 0;

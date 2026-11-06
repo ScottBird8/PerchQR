@@ -138,11 +138,12 @@ const Perch = (function () {
   </section>`;
   }
 
-  // Homepage welcome video: click-to-play. Shrinks to a fixed top-right box
-  // 5s after starting, or immediately on click-to-skip/pause. Only called
-  // when the agent has actually configured a home_video_url. With
-  // { keepSize: true } (the perchqr.com landing page) it never shrinks:
-  // clicking just plays / pauses it in place.
+  // Homepage welcome video: click-to-play. Only called when there is actually
+  // a video to show. By default it shrinks to a fixed top-right box 5s after
+  // starting, or immediately on click-to-skip/pause. With { keepSize: true }
+  // (now used by the perchqr.com landing page AND every agent's homepage) it
+  // never shrinks: clicking just plays / pauses it in place, and pausing
+  // then clicking again continues from where it stopped.
   function initHomeVideo(opts = {}) {
     const wrap = document.getElementById('heroVideoWrap');
     const video = document.getElementById('welcomeVideo');
@@ -160,11 +161,13 @@ const Perch = (function () {
       expand();
       overlay.classList.add('hidden');
       setPaused(false);
-      video.currentTime = 0;
+      // Restart from the beginning — except when pausing in place, where
+      // resuming should continue (a finished video still starts over).
+      if (!opts.keepSize || video.ended || !video.currentTime) video.currentTime = 0;
       const p = video.play();
       if (p && p.catch) p.catch(() => { overlay.classList.remove('hidden'); setPaused(true); });
       clearTimeout(minimizeTimer);
-      minimizeTimer = setTimeout(floatMinimized, 5000);
+      if (!opts.keepSize) minimizeTimer = setTimeout(floatMinimized, 5000);
     }
 
     video.addEventListener('playing', () => { overlay.classList.add('hidden'); setPaused(false); });
