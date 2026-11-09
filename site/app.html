@@ -285,8 +285,9 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <p class="field-hint" style="margin-bottom:16px;">Optional. Shown at the top of your homepage; if you don't upload one, that space is simply left out.</p>
 
         <div class="field" style="margin-bottom:8px;">
-          <label>Welcome video</label>
+          <label>Welcome video &mdash; 50 MB max</label>
           <input type="file" id="homeVideoFile" accept="video/*">
+          <div class="field-hint" style="margin-top:6px;">Maximum file size: 50 MB. MP4 works best.</div>
           <div id="homeVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
           <video id="homeVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
         </div>
@@ -316,8 +317,9 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <p class="field-hint" style="margin-bottom:16px;">Only visible to you — this is the company site, not an agent page. Optional intro video shown at the top of perchqr.com itself.</p>
 
         <div class="field" style="margin-bottom:8px;">
-          <label>Intro video</label>
+          <label>Intro video &mdash; 50 MB max</label>
           <input type="file" id="landingVideoFile" accept="video/*">
+          <div class="field-hint" style="margin-top:6px;">Maximum file size: 50 MB. MP4 works best.</div>
           <div id="landingVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
           <video id="landingVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
         </div>
@@ -364,8 +366,9 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <div id="galleryPreview" class="thumb-strip"></div>
       </div>
       <div class="field full">
-        <label>Video (optional)</label>
+        <label>Video (optional) &mdash; 50 MB max</label>
         <input type="file" id="f_video" accept="video/*">
+        <div class="field-hint" style="margin-top:6px;">Maximum file size: 50 MB. MP4 works best.</div>
         <div id="videoPreview" class="field-hint"></div>
       </div>
       <div class="field full"><label>Matterport 3D tour URL</label><input id="f_matterport_url"></div>
