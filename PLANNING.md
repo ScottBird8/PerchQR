@@ -441,6 +441,28 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-09 — Profile-completion checklist (ideas 1, 2 and 4 from the
+  brainstorm).** **Restore point:** git tag `restore-point-before-completion-checklist`
+  (commit `0d7a769`); the work is commit `d427817`. No database changes, so undoing
+  is code-only: revert that commit (or restore the tag).
+  - **Idea 1 — checklist card** at the top of the Properties tab: "Your page is
+    X% complete", seven equal items — profile and logo (photo + logo +
+    brokerage), Flexmls connected, listings added, testimonials, homepage video,
+    QR code created, and a welcome video on every non-Sold listing — with a
+    "Next:" action button. Collapses to a one-line "100% complete" message.
+    Nothing is required and it can't block anything. Scoring is one shared
+    function, `Perch.profileCompletion` in `perch.js`.
+  - **Idea 2 — per-listing chips** (Photos / Welcome video / 3D tour) replacing
+    the old emoji badges; a "No welcome video" warning chip and an **Add video**
+    button (opens the edit form scrolled to the video field) on every non-Sold
+    listing without a video.
+  - **Idea 4 — admin:** a "Profile complete" bar column in the `/admin` users
+    list (hover shows what's missing) and a Profile completion card on each
+    user's profile.
+  - Notes: the admin queries cap at 5,000 rows per table (fine for the beta; move
+    to a counted query/RPC if it ever matters). "Complete" is defined only in
+    `profileCompletion` — change the list there.
+
 - **2026-11-04 — Flexmls (Spark OIDC) key issued; sign-in flow built.** FBS
   (Forrest Pinson) created the OIDC key: Redirect URI
   `https://perchqr.com/oauth/spark/callback`, **Role: `idx`**, and said we can
