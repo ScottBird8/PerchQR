@@ -441,6 +441,16 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-09 — Video upload size limit (50 MB).** A 62 MB listing video failed
+  to upload; after compressing it uploaded fine, consistent with Supabase's free-plan
+  50 MB per-file limit (not independently confirmed in the dashboard). The page
+  only said "check your connection," so uploads now show the real reason
+  (`friendlyUploadError` in `app.html`), and "50 MB max" is shown next to every
+  video upload (property, home page, landing page). Deferred, not started:
+  letting agents paste a YouTube link instead of uploading (would avoid the size
+  and storage limits; tradeoffs discussed — YouTube branding/related videos,
+  embed must stay allowed).
+
 - **2026-11-09 — Admin "To do": location checks + property activity log.**
   **Restore point:** git tag `restore-point-before-location-todo` (commit `cb8d39d`).
   Auto-filled coordinates aren't always exact, so Scott verifies each in Google
