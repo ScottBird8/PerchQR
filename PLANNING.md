@@ -441,6 +441,22 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-09 — Admin "To do": location checks + property activity log.**
+  **Restore point:** git tag `restore-point-before-location-todo` (commit `cb8d39d`).
+  Auto-filled coordinates aren't always exact, so Scott verifies each in Google
+  Maps/Earth. New `properties.location_verified_at` / `location_verified_by`
+  (schema.sql section 13, run once). Every new property starts unverified; if an
+  agent later changes a property's lat/lng or address it goes back to unverified.
+  A trigger stops agents from setting the verified fields themselves. `/admin`
+  has a **To do** tab (with a count badge on the tab): "Needs checking" lists
+  each unverified property — agent, when it was added, Google Maps / Earth links,
+  editable latitude/longitude, and **Save and mark verified**; "Verified" lists
+  what's been checked (when and by whom). It doubles as a log of when agents add
+  listings (newest first). The six properties that existed at launch start as
+  "needs checking". Notification is the in-app badge only — email alerts would
+  need an email service (not set up). Possible later: an email/text when a new
+  property is added, and bulk "mark verified".
+
 - **2026-11-09 — Profile-completion checklist (ideas 1, 2 and 4 from the
   brainstorm).** **Restore point:** git tag `restore-point-before-completion-checklist`
   (commit `0d7a769`); the work is commit `d427817`. No database changes, so undoing

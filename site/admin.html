@@ -154,6 +154,7 @@ table.users tr:last-child td{border-bottom:none;}
   </div>
   <div class="view-tabs">
     <button class="view-tab active" data-view="users">Users</button>
+    <button class="view-tab" data-view="todo">To do <span id="todoBadge" class="badge hidden" style="margin-left:4px;background:#fbf1dc;color:#7a5410;"></span></button>
     <button class="view-tab" data-view="tiers">Subscription tiers</button>
   </div>
   <div id="consoleMsg"></div>
@@ -178,6 +179,7 @@ table.users tr:last-child td{border-bottom:none;}
     <div id="profileView" class="hidden"></div>
   </div>
 
+  <div id="todoView" class="hidden"></div>
   <div id="tiersView" class="hidden"></div>
 </div>
 
@@ -328,6 +330,7 @@ async function loadAll() {
   renderTierFilter();
   renderList();
   renderTiersView();
+  loadTodo(); // fills in the "To do" count badge
 }
 
 // A small bar + percentage; green when complete, amber otherwise.
@@ -738,11 +741,108 @@ async function addTier() {
 // ---------- Tabs / sign out ----------
 document.querySelectorAll('.view-tab').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b === btn));
-  const users = btn.dataset.view === 'users';
-  document.getElementById('usersView').classList.toggle('hidden', !users);
-  document.getElementById('tiersView').classList.toggle('hidden', users);
+  const view = btn.dataset.view;
+  document.getElementById('usersView').classList.toggle('hidden', view !== 'users');
+  document.getElementById('todoView').classList.toggle('hidden', view !== 'todo');
+  document.getElementById('tiersView').classList.toggle('hidden', view !== 'tiers');
+  if (view === 'todo') loadTodo();
   showMsg('');
 }));
+
+// ---------- To do: location checks ----------
+// Coordinates that auto-fill aren't always exact, so every property lands here
+// until the administrator checks it on the map and marks it verified. Also a
+// running log of when agents add listings (newest first). Needs schema.sql
+// section 13 (location_verified_at / location_verified_by on properties).
+let TODO_PROPS = [];
+let todoFilter = 'needs'; // 'needs' | 'verified'
+
+function mapsUrl(p) {
+  return (p.lat != null && p.lng != null)
+    ? `https://www.google.com/maps?q=${p.lat},${p.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.addr + ', ' + p.city)}`;
+}
+function earthUrl(p) {
+  return (p.lat != null && p.lng != null)
+    ? `https://earth.google.com/web/search/${p.lat},${p.lng}`
+    : `https://earth.google.com/web/search/${encodeURIComponent(p.addr + ', ' + p.city)}`;
+}
+
+async function loadTodo() {
+  const el = document.getElementById('todoView');
+  const { data, error } = await sb.from('properties')
+    .select('id, agent_id, addr, city, lat, lng, status, created_at, location_verified_at, location_verified_by')
+    .order('created_at', { ascending: false }).limit(5000);
+  if (error) {
+    console.error(error);
+    el.innerHTML = '<div class="console-msg err">The location to-do list isn\'t set up in the database yet. Run the latest <code>supabase/schema.sql</code> (section 13) in the Supabase SQL Editor, then reload.</div>';
+    document.getElementById('todoBadge').classList.add('hidden');
+    return;
+  }
+  TODO_PROPS = data || [];
+  renderTodo();
+}
+
+function renderTodo() {
+  const el = document.getElementById('todoView');
+  const needs = TODO_PROPS.filter(p => !p.location_verified_at);
+  const done = TODO_PROPS.filter(p => p.location_verified_at);
+  const badge = document.getElementById('todoBadge');
+  badge.textContent = needs.length;
+  badge.classList.toggle('hidden', !needs.length);
+
+  const rows = todoFilter === 'needs' ? needs : done.sort((a, b) => new Date(b.location_verified_at) - new Date(a.location_verified_at));
+  const coord = v => (v == null ? '' : Number(v).toFixed(6));
+  el.innerHTML = `
+    <h1>To do</h1>
+    <p class="console-sub">Check each new listing's pin on the map, fix the coordinates if needed, then mark it verified. A listing comes back here if its agent changes the address or coordinates.</p>
+    <div class="segments" style="margin-bottom:14px;">
+      <button class="seg${todoFilter === 'needs' ? ' active' : ''}" data-todo-filter="needs">Needs checking<span class="n">${needs.length}</span></button>
+      <button class="seg${todoFilter === 'verified' ? ' active' : ''}" data-todo-filter="verified">Verified<span class="n">${done.length}</span></button>
+    </div>
+    ${rows.length ? rows.map(p => `<div class="card" data-todo="${esc(p.id)}">
+      <div class="agent-line" style="align-items:flex-start;">
+        <div>
+          <div class="u-name">${esc(p.addr)}, ${esc(p.city)}</div>
+          <div class="agent-meta">${esc(agentName(p.agent_id))} &middot; added ${esc(fmtDateTime(p.created_at))} &middot; ${esc(p.status)}${p.location_verified_at ? ` &middot; verified ${esc(fmtDateTime(p.location_verified_at))}${p.location_verified_by ? ' by ' + esc(agentName(p.location_verified_by)) : ''}` : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <a class="btn-sm" href="${esc(mapsUrl(p))}" target="_blank" rel="noopener">Google Maps</a>
+          <a class="btn-sm" href="${esc(earthUrl(p))}" target="_blank" rel="noopener">Google Earth</a>
+        </div>
+      </div>
+      <div class="ctl-row" style="margin-top:12px;">
+        <div class="ctl"><label>Latitude</label><input data-lat value="${esc(coord(p.lat))}" style="width:150px;margin:0;font-family:var(--mono);" inputmode="decimal"></div>
+        <div class="ctl"><label>Longitude</label><input data-lng value="${esc(coord(p.lng))}" style="width:150px;margin:0;font-family:var(--mono);" inputmode="decimal"></div>
+        <div class="ctl" style="display:flex;gap:8px;">
+          <button class="btn-sm primary" data-verify="${esc(p.id)}">${p.location_verified_at ? 'Save and re-verify' : 'Save and mark verified'}</button>
+        </div>
+      </div>
+    </div>`).join('') : `<div class="muted" style="padding:14px 2px;">${todoFilter === 'needs' ? 'Nothing to check right now.' : 'Nothing verified yet.'}</div>`}`;
+
+  el.querySelectorAll('[data-todo-filter]').forEach(b => b.addEventListener('click', () => { todoFilter = b.dataset.todoFilter; renderTodo(); }));
+  el.querySelectorAll('[data-verify]').forEach(b => b.addEventListener('click', () => verifyLocation(b.dataset.verify, b)));
+}
+
+async function verifyLocation(id, btn) {
+  const card = document.querySelector(`[data-todo="${CSS.escape(id)}"]`);
+  const latRaw = card.querySelector('[data-lat]').value.trim();
+  const lngRaw = card.querySelector('[data-lng]').value.trim();
+  const lat = latRaw === '' ? null : Number(latRaw);
+  const lng = lngRaw === '' ? null : Number(lngRaw);
+  if ((lat !== null && (!isFinite(lat) || lat < -90 || lat > 90)) || (lng !== null && (!isFinite(lng) || lng < -180 || lng > 180))) {
+    toast('Enter valid coordinates (latitude -90 to 90, longitude -180 to 180).', true); return;
+  }
+  if (lat === null || lng === null) { toast('Add both a latitude and a longitude first.', true); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.from('properties')
+    .update({ lat, lng, location_verified_at: new Date().toISOString(), location_verified_by: user ? user.id : null })
+    .eq('id', id);
+  if (error) { console.error(error); toast('Could not save: ' + (error.message || 'unknown error'), true); btn.disabled = false; btn.textContent = 'Save and mark verified'; return; }
+  toast('Location verified.');
+  await loadTodo();
+}
 
 document.getElementById('signOutBtn').addEventListener('click', async () => {
   await sb.auth.signOut();

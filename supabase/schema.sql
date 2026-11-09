@@ -841,3 +841,40 @@ alter table public.spark_oidc_tokens enable row level security;
 -- (deliberately no policies)
 revoke all on public.spark_oidc_tokens from anon, authenticated;
 -- TODO before scaling past beta: encrypt these at rest (Supabase Vault).
+
+-- ============================================================
+-- 13. Location verification (admin to-do). Coordinates that auto-fill from
+--     the MLS / address lookup aren't always exact, so each property is
+--     checked by the administrator (in Google Maps / Earth) and marked
+--     verified. New properties start unverified; if an agent later changes a
+--     property's coordinates or address it goes back to unverified. Only an
+--     administrator can set the verified fields — agents can't.
+-- ============================================================
+alter table public.properties add column if not exists location_verified_at timestamptz;
+alter table public.properties add column if not exists location_verified_by uuid;
+
+create or replace function public.properties_guard_location_verified()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null or public.is_perchqr_owner() then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    new.location_verified_at := null;
+    new.location_verified_by := null;
+  elsif new.lat is distinct from old.lat or new.lng is distinct from old.lng
+     or new.addr is distinct from old.addr or new.city is distinct from old.city then
+    new.location_verified_at := null;
+    new.location_verified_by := null;
+  else
+    new.location_verified_at := old.location_verified_at;
+    new.location_verified_by := old.location_verified_by;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists properties_guard_location_verified_trg on public.properties;
+create trigger properties_guard_location_verified_trg
+  before insert or update on public.properties
+  for each row execute function public.properties_guard_location_verified();
