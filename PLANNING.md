@@ -476,6 +476,13 @@ expansion, polished onboarding) until the beta says the product is real.
     after that **Scott's Flexmls connection succeeded** (dashboard shows
     "Connected through Flexmls as Scott Bird"). Next: confirm the MLS lookup
     (photos + 3D tour) works through the OIDC token.
+  - **Confirmed (2026-11-09):** Kendall Clements — the first outside agent —
+    connected his own Flexmls account through the button and it worked. The
+    one-click connection is validated for a second agent/account.
+  - **Also 2026-11-09:** homepage/landing videos now size their box to the
+    uploaded video's real shape (`fitToVideo` in `perch.js`, `.landscape` /
+    `.video-landscape` in `styles.css`), so landscape, portrait and square
+    uploads all show uncropped, automatically, for every agent.
   - **Finding (2026-11-04):** with the connection live, looking up Scott's
     Washington County listings (MLS #26-270282, #26-274631 — both Active) returned
     "No listing found … can see 581 listings". Sample listings the connection
