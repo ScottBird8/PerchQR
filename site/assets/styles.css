@@ -132,6 +132,16 @@ main.content{min-width:0;}
              border-radius .45s cubic-bezier(.2,.9,.25,1), box-shadow .3s;
 }
 .hero-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
+/* The box takes the shape of whatever was uploaded: perch.js (initHomeVideo)
+   sets its aspect-ratio from the video's real width/height, so nothing is
+   cropped, and tags it .landscape (and its grid .video-landscape) for wide
+   videos. It stays hidden for a moment until the shape is known, so it never
+   flashes in the wrong shape. */
+.hero-video-wrap:not(.ready){visibility:hidden;}
+.hero-video-wrap.landscape{max-width:none;width:100%;}
+@media (min-width:941px){
+  .hero.video-landscape{grid-template-columns:1fr 1fr;}
+}
 .hero-video-wrap .replay-hint{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,0.32);opacity:0;transition:opacity .2s;color:#fff;
@@ -471,6 +481,10 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
 @media (max-width:940px){
   .landing-hero-grid{grid-template-columns:1fr;}
   .landing .hero-video-wrap{max-width:220px;margin:0;}
+  .landing .hero-video-wrap.landscape{max-width:100%;}
+}
+@media (min-width:941px){
+  .landing-hero-grid.video-landscape{grid-template-columns:1fr 1fr;}
 }
 .landing-hero h1{font-family:var(--pq-display);font-weight:600;font-size:clamp(32px,4.3vw,50px);line-height:1.1;margin:0 0 18px;text-wrap:balance;color:var(--pq-ink);}
 .landing-hero h1 em{font-style:italic;color:var(--pq-cedar);}

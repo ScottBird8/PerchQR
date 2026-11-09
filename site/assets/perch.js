@@ -151,6 +151,24 @@ const Perch = (function () {
     if (!wrap || !video) return;
     let minimizeTimer = null;
 
+    // Shape the box to the video that was actually uploaded (landscape,
+    // portrait or square) so it is never cropped. See ".hero-video-wrap" in
+    // styles.css. Hidden until the shape is known; the timeout is a safety net
+    // so it can never stay hidden if the metadata is slow or fails to load.
+    function fitToVideo() {
+      if (video.videoWidth && video.videoHeight) {
+        const ratio = video.videoWidth / video.videoHeight;
+        wrap.style.aspectRatio = String(ratio);
+        const landscape = ratio > 1.1;
+        wrap.classList.toggle('landscape', landscape);
+        const grid = wrap.closest('.hero, .landing-hero-grid');
+        if (grid) grid.classList.toggle('video-landscape', landscape);
+      }
+      wrap.classList.add('ready');
+    }
+    if (video.readyState >= 1) fitToVideo(); else video.addEventListener('loadedmetadata', fitToVideo);
+    setTimeout(() => wrap.classList.add('ready'), 2500);
+
     function setPaused(isPaused) { wrap.classList.toggle('is-paused', isPaused); }
     function floatMinimized() {
       clearTimeout(minimizeTimer);
