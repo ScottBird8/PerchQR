@@ -61,6 +61,8 @@ body{background:var(--bg);}
 .btn-sm.primary{background:var(--maroon);color:#fff;border-color:var(--maroon);}
 .btn-sm.primary:hover{background:var(--maroon-bright);}
 .btn-sm.danger:hover{border-color:#b3261e;color:#b3261e;}
+.btn-sm.attention{background:#fbf1dc;border-color:#b9923a;color:#7a5410;}
+.btn-sm.attention:hover{background:#f6e6bd;border-color:#b9923a;color:#7a5410;}
 
 /* property / qr list rows */
 .list-row{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;flex-wrap:wrap;}
@@ -544,6 +546,21 @@ function loadAgentScopedData() {
   loadHomeSettings();
 }
 
+// Owner only: lights up the Admin button (amber, with a count) while there is
+// something waiting for the administrator — currently properties whose map
+// location hasn't been verified yet (the /admin "To do" tab). Add other kinds
+// of tasks to `count` here and in admin.html's To do tab as they come up.
+async function refreshAdminTodo() {
+  if (!AGENT_SELF || AGENT_SELF.id !== PERCHQR_OWNER_ID) return;
+  const btn = document.getElementById('adminLinkBtn');
+  const { count, error } = await sb.from('properties').select('id', { count: 'exact', head: true }).is('location_verified_at', null);
+  if (error) { console.error(error); return; } // (column missing until schema.sql section 13 is run)
+  const n = count || 0;
+  btn.classList.toggle('attention', n > 0);
+  btn.textContent = n > 0 ? `Admin · ${n} to do` : 'Admin';
+  btn.title = n > 0 ? `${n} ${n === 1 ? 'property needs its location checked' : 'properties need their locations checked'}` : '';
+}
+
 // The perchqr.com landing-page video belongs to the owner alone. Its tab shows
 // only when the signed-in user is the owner AND is looking at their own
 // account — never for other agents, and not while the owner is viewing
@@ -647,6 +664,7 @@ async function checkAuth() {
   syncLandingVideoTab();
   if (AGENT_SELF.id === PERCHQR_OWNER_ID) {
     document.getElementById('adminLinkBtn').classList.remove('hidden'); // owner-only link back to /admin
+    refreshAdminTodo();
     loadLandingSettings();
     setupAgentSwitcher();
   }
@@ -713,6 +731,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     // Coming back to Properties after changing something on another tab:
     // re-check the completion checklist.
     if (btn.dataset.tab === 'properties' && typeof refreshCompletion === 'function' && AGENT) refreshCompletion();
+    if (typeof refreshAdminTodo === 'function' && AGENT_SELF) refreshAdminTodo(); // owner: keep the Admin button's to-do count current
   });
 });
 
