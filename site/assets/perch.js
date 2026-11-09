@@ -433,8 +433,37 @@ const Perch = (function () {
     root.setProperty('--maroon-wash', pal.wash);
   }
 
+  // How "complete" an agent's page is. One definition, used by the dashboard's
+  // checklist card and by the admin users list, so they can never disagree.
+  // Nothing here is required — it's a nudge. Seven equal items; the last one
+  // (a welcome video on every listing that isn't Sold) is the one most agents
+  // skip. Pass plain data in, get the checklist out.
+  function profileCompletion({ agent, hasMls, properties, testimonialCount, qrCount, hasHomeVideo }) {
+    const listings = properties || [];
+    const tracked = listings.filter(p => p.status !== 'Sold');
+    const withVideo = tracked.filter(p => p.video_url).length;
+    const items = [
+      { key: 'profile', label: 'Profile and logo', done: !!(agent && agent.headshot_url && agent.logo_url && agent.brokerage_name), tab: 'profile', todo: 'Add your photo, logo and brokerage' },
+      { key: 'mls', label: 'Flexmls connected', done: !!hasMls, tab: 'mls', todo: 'Connect your Flexmls account' },
+      { key: 'listings', label: 'Listings added', done: listings.length > 0, tab: 'properties', todo: 'Add your first listing' },
+      { key: 'testimonials', label: 'Testimonials', done: (testimonialCount || 0) > 0, tab: 'testimonials', todo: 'Add a client testimonial' },
+      { key: 'homevideo', label: 'Homepage video', done: !!hasHomeVideo, tab: 'homepage', todo: 'Add a welcome video to your homepage' },
+      { key: 'qr', label: 'QR code created', done: (qrCount || 0) > 0, tab: 'qr', todo: 'Create your QR code' },
+      {
+        key: 'listingvideos',
+        label: 'Welcome video on your listings',
+        done: tracked.length > 0 && withVideo === tracked.length,
+        detail: tracked.length ? `${withVideo} of ${tracked.length}` : 'add a listing first',
+        tab: 'properties',
+        todo: 'Add a welcome video to each listing',
+      },
+    ];
+    const done = items.filter(i => i.done).length;
+    return { items, done, total: items.length, percent: Math.round(done / items.length * 100) };
+  }
+
   return {
-    esc, TYPE_LABEL, formatPhone,
+    esc, TYPE_LABEL, formatPhone, profileCompletion,
     renderHeader, wireHeader, renderFooter, renderContact,
     initHomeVideo, initPropertyVideo, initMatterport, initGallery,
     renderFacts, renderRooms, renderOtherListings, renderTestimonialCard,

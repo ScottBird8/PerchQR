@@ -170,8 +170,8 @@ table.users tr:last-child td{border-bottom:none;}
       <div class="search-note" id="searchNote"></div>
       <div class="table-wrap">
         <table class="users">
-          <thead><tr><th>User</th><th>Email</th><th>Subscription</th><th>Status</th><th>Beta tester</th><th>Date created</th><th>Last activity</th><th>Actions</th></tr></thead>
-          <tbody id="userRows"><tr><td colspan="8" class="empty-row">Loading&hellip;</td></tr></tbody>
+          <thead><tr><th>User</th><th>Email</th><th>Subscription</th><th>Status</th><th>Beta tester</th><th>Date created</th><th>Last activity</th><th>Profile complete</th><th>Actions</th></tr></thead>
+          <tbody id="userRows"><tr><td colspan="9" class="empty-row">Loading&hellip;</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -201,6 +201,7 @@ table.users tr:last-child td{border-bottom:none;}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
 <script>
 // Mirrors the same id used in supabase/schema.sql's is_perchqr_owner() and
 // app.html's PERCHQR_OWNER_ID — keep all three in sync if this ever changes.
@@ -258,6 +259,7 @@ let TIERS = [];
 let STATUSES = [];
 let AGENTS = [];
 let QR_BY_AGENT = {};
+let COMPLETION = {};
 let currentSegment = 'default';
 let currentProfileId = null;
 
@@ -286,11 +288,16 @@ async function showConsole() {
 }
 
 async function loadAll() {
-  const [t, s, a, q] = await Promise.all([
+  const [t, s, a, q, pr, ts, ml, st] = await Promise.all([
     sb.from('subscription_tiers').select('*').order('sort_order').order('name'),
     sb.from('account_statuses').select('*').order('sort_order'),
     sb.from('agents').select('*').order('created_at', { ascending: false }),
     sb.from('qr_codes').select('id, agent_id, url'),
+    // for the "Profile complete" column (see Perch.profileCompletion)
+    sb.from('properties').select('agent_id, status, video_url').limit(5000),
+    sb.from('testimonials').select('agent_id').limit(5000),
+    sb.from('mls_credentials').select('agent_id'),
+    sb.from('agent_settings').select('agent_id, home_video_url'),
   ]);
   if (t.error || s.error) {
     console.error(t.error || s.error);
@@ -303,9 +310,34 @@ async function loadAll() {
   AGENTS = a.data || [];
   QR_BY_AGENT = {};
   (q.data || []).forEach(x => { (QR_BY_AGENT[x.agent_id] = QR_BY_AGENT[x.agent_id] || []).push(x); });
+
+  // How complete is each agent's page? (one checklist per agent)
+  const by = (rows) => { const m = {}; (rows || []).forEach(r => { (m[r.agent_id] = m[r.agent_id] || []).push(r); }); return m; };
+  const propsBy = by(pr.data), testsBy = by(ts.data), mlsBy = by(ml.data), setBy = by(st.data);
+  COMPLETION = {};
+  AGENTS.forEach(ag => {
+    COMPLETION[ag.id] = Perch.profileCompletion({
+      agent: ag,
+      hasMls: (mlsBy[ag.id] || []).length > 0,
+      properties: propsBy[ag.id] || [],
+      testimonialCount: (testsBy[ag.id] || []).length,
+      qrCount: (QR_BY_AGENT[ag.id] || []).length,
+      hasHomeVideo: (setBy[ag.id] || []).some(r => r.home_video_url),
+    });
+  });
   renderTierFilter();
   renderList();
   renderTiersView();
+}
+
+// A small bar + percentage; green when complete, amber otherwise.
+function completionBar(c) {
+  if (!c) return '—';
+  const color = c.percent === 100 ? '#2a7a3b' : c.percent >= 60 ? '#b9923a' : '#b9923a';
+  const missing = c.items.filter(i => !i.done).map(i => i.label).join(', ');
+  return `<span style="display:flex;align-items:center;gap:8px;min-width:120px;" title="${esc(missing ? 'Still to do: ' + missing : 'Complete')}">
+    <span style="flex:1;height:6px;background:#e4e6e0;border-radius:3px;overflow:hidden;"><span style="display:block;width:${c.percent}%;height:100%;background:${color};"></span></span>
+    <span style="font-size:12.5px;">${c.percent}%</span></span>`;
 }
 
 // ---------- User list ----------
@@ -351,7 +383,7 @@ function renderList() {
   });
 
   const body = document.getElementById('userRows');
-  if (!rows.length) { body.innerHTML = '<tr><td colspan="8" class="empty-row">No accounts match.</td></tr>'; return; }
+  if (!rows.length) { body.innerHTML = '<tr><td colspan="9" class="empty-row">No accounts match.</td></tr>'; return; }
   body.innerHTML = rows.map(a => `<tr>
       <td><div class="u-name">${esc(a.display_name)}${a.id === PERCHQR_OWNER_ID ? ' (you)' : ''}</div><div class="u-sub">/${esc(a.slug)}</div></td>
       <td>${esc(a.email || '—')}</td>
@@ -360,6 +392,7 @@ function renderList() {
       <td>${a.is_beta_tester ? 'Yes' : 'No'}</td>
       <td>${esc(fmtDate(a.created_at))}</td>
       <td>${esc(fmtDate(a.last_activity_at))}</td>
+      <td>${completionBar(COMPLETION[a.id])}</td>
       <td><button class="btn-sm" data-open="${esc(a.id)}">View / Manage</button></td>
     </tr>`).join('');
   body.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openProfile(b.dataset.open)));
@@ -421,6 +454,12 @@ async function openProfile(id) {
         <div><div class="k">Last activity</div><div class="v">${esc(fmtDateTime(a.last_activity_at))}</div></div>
         <div><div class="k">Status last changed</div><div class="v">${esc(fmtDateTime(a.status_changed_at))}</div></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>Profile completion${COMPLETION[a.id] ? ` &middot; ${COMPLETION[a.id].percent}%` : ''}</h3>
+      ${COMPLETION[a.id] ? `<div class="info-grid" style="gap:8px 22px;">${COMPLETION[a.id].items.map(i => `<div class="v">${i.done ? '<span style="color:#2a7a3b;">&#10003;</span>' : '<span style="color:#b9923a;">&#9675;</span>'} ${esc(i.label)}${!i.done && i.detail ? ` <span class="muted">(${esc(i.detail)})</span>` : ''}</div>`).join('')}</div>` : '<div class="muted">Not available.</div>'}
+      <div class="console-note">Nothing here is required. It&rsquo;s a guide to what an agent could add next.</div>
     </div>
 
     <div class="card">

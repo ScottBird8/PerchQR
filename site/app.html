@@ -70,6 +70,27 @@ body{background:var(--bg);}
 .row-addr{font-weight:600;font-size:14px;}
 .row-meta{font-family:var(--mono);font-size:11.5px;color:var(--charcoal-soft);margin-top:3px;}
 .row-badges{font-size:12px;color:var(--charcoal-soft);margin-top:3px;}
+.row-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.chip{font-size:12px;padding:2px 9px;border-radius:6px;background:#eceeea;color:var(--charcoal-soft);}
+.chip.ok{background:#e6f2e8;color:#1f5c2c;}
+.chip.warn{background:#fbf1dc;color:#7a5410;}
+
+/* "Your page is X% complete" checklist (Properties tab) */
+.completion-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+.completion-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.completion-title{font-weight:700;font-size:15px;}
+.completion-sub{font-size:13px;color:var(--charcoal-soft);margin-top:2px;}
+.completion-count{font-family:var(--display);font-size:22px;font-weight:600;white-space:nowrap;}
+.completion-bar{height:8px;background:#eceeea;border-radius:4px;overflow:hidden;margin-bottom:14px;}
+.completion-bar > span{display:block;height:100%;background:#2a7a3b;border-radius:4px;transition:width .4s;}
+.completion-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px 18px;font-size:14px;}
+.completion-item{display:flex;gap:8px;align-items:center;}
+.completion-item .mark{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.completion-item.done .mark{background:#2a7a3b;color:#fff;}
+.completion-item.open .mark{border:2px dashed #b9a263;}
+.completion-item button{margin-left:auto;}
+.completion-next{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px;padding:10px 12px;background:#fbf1dc;border-radius:8px;color:#6b4a0c;}
+.completion-card.complete{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#e6f2e8;border-color:#b9d9bf;color:#1f5c2c;font-size:14px;}
 .row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-radius:8px;border:1px solid var(--line-bright);background:#fff;}
 .state-msg-inline{color:var(--charcoal-soft);font-family:var(--mono);font-size:13px;padding:20px 4px;}
@@ -206,6 +227,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <div></div>
         <button class="btn-sm primary" id="addPropertyBtn">+ Add property</button>
       </div>
+      <div id="completionCard"></div>
       <div id="propertyList"><div class="state-msg-inline">Loading&hellip;</div></div>
     </div>
 
@@ -685,6 +707,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    // Coming back to Properties after changing something on another tab:
+    // re-check the completion checklist.
+    if (btn.dataset.tab === 'properties' && typeof refreshCompletion === 'function' && AGENT) refreshCompletion();
   });
 });
 
@@ -861,29 +886,39 @@ document.getElementById('profileSaveBtn').addEventListener('click', async () => 
 let PROPERTIES = [];
 
 async function loadProperties() {
+  COMPLETION_EXTRA = null;
+  document.getElementById('completionCard').innerHTML = '';
   const { data, error } = await sb.from('properties').select('*').eq('agent_id', AGENT.id).order('created_at', { ascending: true });
   const listEl = document.getElementById('propertyList');
   if (error) { listEl.innerHTML = '<div class="state-msg-inline">Could not load properties.</div>'; console.error(error); return; }
   PROPERTIES = data || [];
   renderPropertyList();
+  refreshCompletion();
 }
 
 function renderPropertyList() {
   const listEl = document.getElementById('propertyList');
+  renderCompletionCard();
   if (!PROPERTIES.length) { listEl.innerHTML = '<div class="state-msg-inline">No properties yet — add your first one above.</div>'; return; }
   listEl.innerHTML = PROPERTIES.map(p => {
-    const badges = [];
-    if (p.video_url) badges.push('🎥 video');
-    if ((p.gallery_photo_urls || []).length) badges.push(`📷 +${p.gallery_photo_urls.length}`);
-    if (p.matterport_url) badges.push('🏠 3D tour');
+    const sold = p.status === 'Sold';
+    const hasPhotos = !!(p.hero_photo_url || (p.gallery_photo_urls || []).length);
+    const chips = [
+      hasPhotos ? '<span class="chip ok">Photos</span>' : '<span class="chip">No photos</span>',
+      p.video_url ? '<span class="chip ok">Welcome video</span>'
+        : sold ? '<span class="chip">No video</span>'
+        : '<span class="chip warn">No welcome video</span>',
+      p.matterport_url ? '<span class="chip ok">3D tour</span>' : '<span class="chip">No 3D tour</span>',
+    ];
     return `<div class="list-row" data-id="${p.id}">
       <div class="row-thumb"><img src="${Perch.esc(p.hero_photo_url || '')}" alt=""></div>
       <div class="row-main">
         <div class="row-addr">${Perch.esc(p.addr)}</div>
         <div class="row-meta">${Perch.esc(p.price)} &middot; ${Perch.TYPE_LABEL[p.type] || p.type}${p.mls ? ' &middot; MLS #' + Perch.esc(p.mls) : ''}</div>
-        ${badges.length ? `<div class="row-badges">${badges.join(' &middot; ')}</div>` : ''}
+        <div class="row-chips">${chips.join('')}</div>
       </div>
       <div class="row-actions">
+        ${!p.video_url && !sold ? `<button class="btn-sm primary" data-add-video="${p.id}">Add video</button>` : ''}
         <select class="qstatus" data-id="${p.id}">
           <option value="Active"${p.status === 'Active' ? ' selected' : ''}>Active</option>
           <option value="Pending"${p.status === 'Pending' ? ' selected' : ''}>Pending</option>
@@ -905,12 +940,88 @@ function renderPropertyList() {
       p.status = next;
       const { error } = await sb.from('properties').update({ status: next }).eq('id', id);
       if (error) { p.status = prev; sel.value = prev; toast('Could not update status'); console.error(error); }
-      else toast('Status updated');
+      else { toast('Status updated'); renderPropertyList(); }
     });
   });
+  listEl.querySelectorAll('[data-add-video]').forEach(btn => btn.addEventListener('click', () => {
+    openPropertyForm(btn.dataset.addVideo);
+    setTimeout(() => document.getElementById('f_video').scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
+  }));
   listEl.querySelectorAll('[data-preview]').forEach(btn => btn.addEventListener('click', () => window.open(`/${AGENT.slug}/listing?id=${encodeURIComponent(btn.dataset.preview)}`, '_blank')));
   listEl.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openPropertyForm(btn.dataset.edit)));
   listEl.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteProperty(btn.dataset.delete)));
+}
+
+/* ============================================================
+   "Your page is X% complete" checklist (top of the Properties tab).
+   The scoring lives in Perch.profileCompletion (shared with /admin). The parts
+   that aren't on this tab (profile fields, MLS, testimonials, QR codes, home
+   video) are fetched here; the listings come from PROPERTIES, so deleting a
+   listing or marking one Sold updates the card straight away.
+   ============================================================ */
+let COMPLETION_EXTRA = null;
+
+async function refreshCompletion() {
+  const agentId = AGENT.id;
+  const count = (table) => sb.from(table).select('agent_id', { count: 'exact', head: true }).eq('agent_id', agentId);
+  const [prof, mls, tests, qrs, settings] = await Promise.all([
+    sb.from('agents').select('headshot_url, logo_url, brokerage_name').eq('id', agentId).maybeSingle(),
+    count('mls_credentials'),
+    sb.from('testimonials').select('id', { count: 'exact', head: true }).eq('agent_id', agentId),
+    sb.from('qr_codes').select('id', { count: 'exact', head: true }).eq('agent_id', agentId),
+    sb.from('agent_settings').select('home_video_url').eq('agent_id', agentId).maybeSingle(),
+  ]);
+  if (AGENT.id !== agentId) return; // switched to another agent while loading
+  COMPLETION_EXTRA = {
+    agent: prof.data || AGENT,
+    hasMls: (mls.count || 0) > 0,
+    testimonialCount: tests.count || 0,
+    qrCount: qrs.count || 0,
+    hasHomeVideo: !!(settings.data && settings.data.home_video_url),
+  };
+  renderCompletionCard();
+}
+
+function goToTab(tab) {
+  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  if (btn) btn.click();
+}
+
+function renderCompletionCard() {
+  const el = document.getElementById('completionCard');
+  if (!el || !COMPLETION_EXTRA) return;
+  const c = Perch.profileCompletion({ ...COMPLETION_EXTRA, properties: PROPERTIES });
+  if (c.done === c.total) {
+    el.innerHTML = `<div class="completion-card complete"><span class="mark" style="width:20px;height:20px;border-radius:50%;background:#2a7a3b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">&#10003;</span>Your page is 100% complete. Nice work.</div>`;
+    return;
+  }
+  const hasTracked = PROPERTIES.some(p => p.status !== 'Sold');
+  const next = (hasTracked && c.items.find(i => !i.done && i.key === 'listingvideos')) || c.items.find(i => !i.done);
+  el.innerHTML = `<div class="completion-card">
+      <div class="completion-head">
+        <div>
+          <div class="completion-title">Your page is ${c.percent}% complete</div>
+          <div class="completion-sub">Nothing here is required, but videos are what set your page apart.</div>
+        </div>
+        <div class="completion-count">${c.done} of ${c.total}</div>
+      </div>
+      <div class="completion-bar"><span style="width:${c.percent}%"></span></div>
+      <div class="completion-items">
+        ${c.items.map(i => `<div class="completion-item ${i.done ? 'done' : 'open'}"><span class="mark">${i.done ? '&#10003;' : ''}</span>${Perch.esc(i.label)}${!i.done && i.detail ? ` <span style="color:var(--charcoal-soft);">(${Perch.esc(i.detail)})</span>` : ''}</div>`).join('')}
+        <div class="completion-next">
+          <span><strong>Next:</strong> ${Perch.esc(next.todo)}${next.detail && next.key === 'listingvideos' && PROPERTIES.length ? ` (${Perch.esc(next.detail)})` : ''}</span>
+          <button class="btn-sm" id="completionNextBtn">${next.key === 'listingvideos' && PROPERTIES.some(p => !p.video_url && p.status !== 'Sold') ? 'Add a video' : next.tab === 'properties' ? 'Add a listing' : 'Take me there'}</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('completionNextBtn').addEventListener('click', () => {
+    if (next.key === 'listingvideos') {
+      const target = PROPERTIES.find(p => !p.video_url && p.status !== 'Sold');
+      if (target) { document.querySelector(`[data-add-video="${target.id}"]`)?.click(); return; }
+    }
+    if (next.key === 'listings') { document.getElementById('addPropertyBtn').click(); return; }
+    goToTab(next.tab);
+  });
 }
 
 async function deleteProperty(id) {
