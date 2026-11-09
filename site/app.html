@@ -717,6 +717,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    Storage helpers — every path is prefixed with AGENT.id so the
    storage.objects RLS policies (first path segment = auth.uid()) hold.
    ============================================================ */
+// Turns a failed save/upload into something an agent can act on instead of a
+// generic "check your connection". Storage rejects files over the project's
+// upload limit (50 MB on Supabase's free plan, by default).
+function friendlyUploadError(err) {
+  const msg = (err && (err.message || err.error_description || err.error)) || '';
+  if (/exceed|too large|maximum allowed|payload|413/i.test(msg) || (err && (err.statusCode === '413' || err.status === 413))) {
+    return 'that file is too large to upload. Try a smaller or compressed video (under about 50 MB).';
+  }
+  if (/mime|not supported|invalid.*type/i.test(msg)) return 'that file type isn\'t supported. Use an MP4 video.';
+  return msg ? `${msg}.` : 'check your connection and try again.';
+}
+
 async function uploadFile(bucket, propId, kind, file) {
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
   const path = `${AGENT.id}/${propId}/${kind}-${Date.now()}-${randSuffix()}.${ext}`;
@@ -874,7 +886,7 @@ document.getElementById('profileSaveBtn').addEventListener('click', async () => 
     await loadProfile();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
   }
@@ -1100,7 +1112,7 @@ document.getElementById('f_gallery').addEventListener('change', (e) => {
 document.getElementById('f_video').addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > 60 * 1024 * 1024) toast('That video is over 60MB — it will still upload, but consider a smaller file for faster loading.');
+  if (file.size > 50 * 1024 * 1024) toast('That video is over 50 MB, which may be too large to upload. If saving fails, try a smaller or compressed video.');
   videoFile = file; videoRemoved = false;
   renderVideoPreview();
 });
@@ -1289,7 +1301,7 @@ document.getElementById('propertySaveBtn').addEventListener('click', async () =>
     await loadProperties();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save property';
   }
@@ -1409,7 +1421,7 @@ document.getElementById('mlsSaveBtn').addEventListener('click', async () => {
     await loadMlsStatus();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save connection';
   }
@@ -1502,7 +1514,7 @@ document.getElementById('testimonialSaveBtn').addEventListener('click', async ()
     await loadTestimonials();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save testimonial';
   }
@@ -1565,7 +1577,7 @@ document.getElementById('homeVideoSaveBtn').addEventListener('click', async () =
     await loadHomeSettings();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
   }
@@ -1628,7 +1640,7 @@ document.getElementById('landingVideoSaveBtn').addEventListener('click', async (
     await loadLandingSettings();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
   }
@@ -2149,7 +2161,7 @@ document.getElementById('qrSaveBtn').addEventListener('click', async () => {
     await loadQrCodes();
   } catch (err) {
     console.error(err);
-    toast('Save failed — check your connection and try again.');
+    toast('Save failed — ' + friendlyUploadError(err));
   } finally {
     saveBtn.disabled = false; saveBtn.textContent = 'Save & download';
   }
