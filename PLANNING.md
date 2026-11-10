@@ -441,6 +441,40 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-10 — Possible rename PerchQR -> FlyerBox: research + plan (NOT started;
+  discussion only — Scott will decide).** Scott owns `flyerbox.ai` and
+  `flyerbox.net`. Opinion given: FlyerBox is the stronger name for agents (the
+  flyer box on a yard sign is universally understood; PerchQR needs explaining),
+  with caveats: "flyer" can read as paper-only, the phrase is descriptive (weaker
+  trademark), `.ai` is less familiar than `.com`.
+  - **Checks run (web search + DNS, not authoritative):** no "FlyerBox" product in
+    real estate/software found. A UK leaflet-distribution company named FlyerBox
+    exists (London; physical distribution, different market/country). A live US
+    mark **FLYBOX** (Flybox Services, LLC; Reg. 8043990, classes 9/16/42/45; a
+    household-storage app) is the closest conflict — similar name, software
+    classes; goods differ but have an attorney/USPTO TESS search confirm before
+    committing. `flyerbox.com` is owned by someone else and parked (redirects to a
+    `/lander` page) — agents who type `.com` land there. Instagram has an
+    `@flyerbox` account (owner unknown); other handles inconclusive.
+  - **Domain pick:** `flyerbox.ai` as primary, `flyerbox.net` as a defensive
+    redirect, `perchqr.com` kept FOREVER (every printed QR code encodes
+    `perchqr.com/q/<id>`). Consider buying `flyerbox.com` if it's ever for sale.
+  - **Plan (if we go):** (0) trademark/TESS check, pick domain, new logo/wordmark.
+    (1) Prep, no user impact: add the new domains in Netlify + DNS + SSL; set
+    Supabase Auth site URL/redirect URLs for both; add a single canonical-origin
+    constant so new QR codes always encode the primary domain (today they use
+    `window.location.origin`). (2) FBS/Spark: ask to add/replace the OIDC
+    redirect URI for the new domain and update the registered company name; keep
+    `perchqr.com/oauth/spark/callback` working until confirmed; update the
+    `SPARK_OIDC_REDIRECT_URI` secret. (3) Rename text/assets: landing, headers,
+    page titles, admin/app/signup, Supabase email templates, favicon/logo,
+    PLANNING.md; repo name optional. (4) Cutover: `perchqr.com/*` 301s to the new
+    domain keeping paths, with `/q/*` guaranteed to keep resolving. (5) Tell the
+    agents (old links keep working), update social handles, file the trademark.
+  - **Effort:** text rename + domain setup ~ half a day; FBS change takes days;
+    the real work is the logo. Cost of delay grows with every sign printed and
+    agent onboarded — decide before the beta agents print at scale.
+
 - **2026-11-09 — Video upload size limit (50 MB).** A 62 MB listing video failed
   to upload; after compressing it uploaded fine, consistent with Supabase's free-plan
   50 MB per-file limit (not independently confirmed in the dashboard). The page
