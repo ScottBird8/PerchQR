@@ -447,6 +447,23 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 </div>
 
 <!-- QR code form -->
+<!-- QR code edit form (label + destination of an existing code) -->
+<div class="overlay" id="qrEditOverlay">
+  <div class="overlay-card" style="max-width:440px;">
+    <h2>Edit QR code</h2>
+    <div class="field" style="margin-bottom:12px;"><label>Label</label><input id="qre_label"></div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>Destination</label>
+      <input id="qre_url">
+      <div class="field-hint">Where scans send people. Changing it takes effect right away, so signs that are already printed keep working &mdash; no reprint needed. The picture of the code itself doesn't change. Use your landing page to send visitors who are standing near one of your listings straight to it.</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-sm" id="qreCancelBtn">Cancel</button>
+      <button class="btn-sm primary" id="qreSaveBtn">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="qrFormOverlay">
   <div class="overlay-card" style="max-width:420px;">
     <h2>New QR code</h2>
@@ -1897,9 +1914,11 @@ function renderQrList() {
         ${q.image_url ? `<button class="btn-sm" data-dl-qr="${q.id}" data-kind="big" title="Print-ready PNG for a 4×4 ft sign">4×4 ft</button>
         <button class="btn-sm" data-dl-qr="${q.id}" data-kind="yard" title="Print-ready PNG for an 18×24 in yard sign">18×24 in</button>
         <button class="btn-sm" data-dl-qr="${q.id}" data-kind="svg" title="Vector file — sharp at any size">SVG</button>` : ''}
+        <button class="btn-sm" data-edit-qr="${q.id}">Edit</button>
         <button class="btn-sm danger" data-delete-qr="${q.id}">Delete</button>
       </div>
     </div>`).join('');
+  listEl.querySelectorAll('[data-edit-qr]').forEach(btn => btn.addEventListener('click', () => openQrEdit(btn.dataset.editQr)));
   listEl.querySelectorAll('[data-dl-qr]').forEach(btn => btn.addEventListener('click', () => downloadSavedQr(btn.dataset.dlQr, btn.dataset.kind)));
   listEl.querySelectorAll('[data-delete-qr]').forEach(btn => btn.addEventListener('click', () => deleteQr(btn.dataset.deleteQr)));
 }
@@ -2087,17 +2106,59 @@ function openQrForm() {
 document.getElementById('qrNewBtn').addEventListener('click', openQrForm);
 document.getElementById('qrFormCancelBtn').addEventListener('click', () => qrFormOverlay.classList.remove('open'));
 
+// Cleans up a QR destination as typed: a path like "/kendall" gets this site's
+// address in front, and a bare perchqr.com (the marketing site) becomes the
+// agent's own landing page. Used when creating and when editing a code.
+function normalizeQrDestination(raw) {
+  let url = String(raw || '').trim();
+  if (!/^https?:\/\//i.test(url)) url = window.location.origin + (url.startsWith('/') ? url : '/' + url);
+  try {
+    const u = new URL(url);
+    if (u.origin === window.location.origin && u.pathname === '/') url = u.origin + '/' + AGENT.slug;
+  } catch (e) { /* leave as typed */ }
+  return url;
+}
+
+// ---- edit an existing code (label + destination) ----
+// A code's picture encodes /q/<id>, never the destination, so changing where
+// it points takes effect immediately for signs that are already printed.
+let editingQrId = null;
+const qrEditOverlay = document.getElementById('qrEditOverlay');
+function openQrEdit(id) {
+  const q = QR_CODES.find(x => x.id === id);
+  if (!q) return;
+  editingQrId = id;
+  document.getElementById('qre_label').value = q.label;
+  document.getElementById('qre_url').value = q.url;
+  qrEditOverlay.classList.add('open');
+}
+document.getElementById('qreCancelBtn').addEventListener('click', () => qrEditOverlay.classList.remove('open'));
+document.getElementById('qreSaveBtn').addEventListener('click', async () => {
+  const q = QR_CODES.find(x => x.id === editingQrId);
+  if (!q) return;
+  const label = document.getElementById('qre_label').value.trim();
+  const rawUrl = document.getElementById('qre_url').value.trim();
+  if (!label) { toast('Give this QR code a label'); return; }
+  if (!rawUrl) { toast('Enter a destination'); return; }
+  const url = normalizeQrDestination(rawUrl);
+  try { new URL(url); } catch (e) { toast('That destination isn\'t a valid web address'); return; }
+  const btn = document.getElementById('qreSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.from('qr_codes').update({ label, url }).eq('id', q.id);
+  btn.disabled = false; btn.textContent = 'Save changes';
+  if (error) { console.error(error); toast('Save failed — ' + friendlyUploadError(error)); return; }
+  q.label = label; q.url = url;
+  qrEditOverlay.classList.remove('open');
+  renderQrList();
+  toast('QR code updated — scans now go to the new destination');
+});
+
 document.getElementById('qrGenerateBtn').addEventListener('click', async () => {
   let url = document.getElementById('qr_url').value.trim();
   const label = document.getElementById('qr_label').value.trim();
   if (!label) { toast('Give this QR code a label first'); return; }
   if (!url) { toast('Enter a destination first'); return; }
-  if (!/^https?:\/\//i.test(url)) url = window.location.origin + (url.startsWith('/') ? url : '/' + url);
-  // A bare perchqr.com address is the marketing site — use the agent's own landing page instead.
-  try {
-    const u = new URL(url);
-    if (u.origin === window.location.origin && u.pathname === '/') url = u.origin + '/' + AGENT.slug;
-  } catch (e) { /* leave as typed */ }
+  url = normalizeQrDestination(url);
   document.getElementById('qr_url').value = url;
   if (typeof QRCode === 'undefined') { toast('Could not load the QR library — check your connection.'); return; }
 
