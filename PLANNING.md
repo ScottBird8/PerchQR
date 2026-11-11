@@ -794,9 +794,13 @@ expansion, polished onboarding) until the beta says the product is real.
   `/scott-bird/card`; other agents' `/<slug>/card` is NOT routed. If it becomes a
   feature for everyone, change the rule to `/:slug/card` and make the page's
   `SLUG` come from the URL.
-- **Text Scott controls:** `ABOUT` (paragraphs) and `HIGHLIGHTS` (bullets) at the
-  top of the script in `card.html`. Both start empty and the sections stay
-  hidden until filled — nothing was invented on his behalf.
+- **Text Scott controls (updated):** an owner-only **Business Card** tab in the
+  dashboard (`app.html`, same visibility rule as Landing Page Video: Scott on his
+  own account only) edits "About me" and "Why work with me" and saves them to
+  `agent_settings.card_about` / `card_highlights` (schema section 14 — SQL must be
+  run). `card.html` reads them with `select('*')` so it still works before the
+  columns exist. Both sections stay hidden until filled — nothing was invented
+  on his behalf.
 - **QR smart-match:** `q.html` now treats `/card` like `/listing` — a code that
   points at the card always goes to the card, never to the nearest listing.
 - To use: QR Codes tab -> create a code with destination `/scott-bird/card`.

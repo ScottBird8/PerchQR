@@ -878,3 +878,13 @@ drop trigger if exists properties_guard_location_verified_trg on public.properti
 create trigger properties_guard_location_verified_trg
   before insert or update on public.properties
   for each row execute function public.properties_guard_location_verified();
+
+-- ============================================================
+-- 14. Business card page text (Scott's /scott-bird/card page)
+--     Written in the dashboard's owner-only "Business Card" tab and read by
+--     site/card.html. Plain text: card_about uses blank lines between
+--     paragraphs, card_highlights is one bullet per line. Covered by the
+--     existing agent_settings policies (public read, owner/agent write).
+-- ============================================================
+alter table public.agent_settings add column if not exists card_about text;
+alter table public.agent_settings add column if not exists card_highlights text;

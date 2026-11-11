@@ -67,15 +67,8 @@
   const app = document.getElementById('app');
 
   // This page is for Scott's account only (see the single /scott-bird/card
-  // rule in _redirects). Edit the two lists below to change what it says.
+  // rule in _redirects). The "About me" text comes from the dashboard.
   const SLUG = 'scott-bird';
-
-  // ---- Things only Scott can say about himself -------------------------
-  // Paragraphs shown under "About me". Leave empty to hide the section.
-  const ABOUT = [];
-  // Short bullet points ("Why work with me"). Leave empty to hide.
-  const HIGHLIGHTS = [];
-  // ----------------------------------------------------------------------
 
   const { data: agent, error: agentError } = await sb.from('agents').select('*').eq('slug', SLUG).maybeSingle();
   if (agentError || !agent) {
@@ -90,10 +83,17 @@
   const [tCountRes, tRes, settingsRes] = await Promise.all([
     sb.from('testimonials').select('id', { count: 'exact', head: true }).eq('agent_id', agent.id),
     sb.from('testimonials').select('*').eq('agent_id', agent.id).order('quote_length', { ascending: true }),
-    sb.from('agent_settings').select('home_video_url').eq('agent_id', agent.id).maybeSingle(),
+    // select('*') (not named columns) so the page keeps working even before
+    // the card_about / card_highlights columns exist.
+    sb.from('agent_settings').select('*').eq('agent_id', agent.id).maybeSingle(),
   ]);
   const testimonialCount = tCountRes.count || 0;
   const videoUrl = settingsRes.data && settingsRes.data.home_video_url;
+  // Text written in the dashboard's "Business Card" tab: a blank line starts a
+  // new About paragraph; each line of the highlights box is one bullet.
+  const cs = settingsRes.data || {};
+  const ABOUT = String(cs.card_about || '').split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  const HIGHLIGHTS = String(cs.card_highlights || '').split('\n').map(s => s.trim()).filter(Boolean);
 
   // Three random reviews, medium-length ones preferred so the card stays short.
   const all = (tRes.data || []).filter(t => (t.quote_length || t.quote.length) <= 400);
