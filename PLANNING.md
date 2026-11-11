@@ -771,6 +771,33 @@ expansion, polished onboarding) until the beta says the product is real.
     Own Data plan → paste token in Connect MLS) or manual property entry.
   - Client ID/secret go in Supabase secrets, never the repo.
 
+### QR Codes: Edit button (2026-11-11)
+
+- Each saved QR code now has an **Edit** button (label + destination) in
+  `app.html`. The code's picture encodes `/q/<id>`, so changing the destination
+  redirects the same printed code — no reprint. Destinations typed as a path
+  (`/kendall/listing?id=…`) get the site address added; a bare `perchqr.com`
+  becomes the agent's own landing page. Restore point:
+  `restore-point-before-qr-edit`. Tested with stubbed data, not a real save.
+
+### Business-card page — Scott's account only (2026-11-11)
+
+- **What:** `site/card.html`, reached at `perchqr.com/scott-bird/card`. A
+  phone-first "about me" page for the QR code on Scott's business cards: photo,
+  name/brokerage/license, review count, Call/Text/Email buttons, a "Save to my
+  contacts" button (builds a `.vcf` in the browser), the home welcome video,
+  current listings, three random reviews, contact links.
+- **Scott only, on purpose:** a single explicit `_redirects` rule for
+  `/scott-bird/card`; other agents' `/<slug>/card` is NOT routed. If it becomes a
+  feature for everyone, change the rule to `/:slug/card` and make the page's
+  `SLUG` come from the URL.
+- **Text Scott controls:** `ABOUT` (paragraphs) and `HIGHLIGHTS` (bullets) at the
+  top of the script in `card.html`. Both start empty and the sections stay
+  hidden until filled — nothing was invented on his behalf.
+- **QR smart-match:** `q.html` now treats `/card` like `/listing` — a code that
+  points at the card always goes to the card, never to the nearest listing.
+- To use: QR Codes tab -> create a code with destination `/scott-bird/card`.
+
 ---
 
 ## Open Questions

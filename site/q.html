@@ -69,7 +69,7 @@
   // not within 100 ft of a listing -> the code's own destination.
   const NEARBY_METERS = 30.48; // 100 feet
   let smartMatch = false;
-  try { smartMatch = !/\/listing\/?$/.test(new URL(destination, window.location.origin).pathname); } catch (e) { /* plain redirect */ }
+  try { smartMatch = !/\/(listing|card)\/?$/.test(new URL(destination, window.location.origin).pathname); } catch (e) { /* plain redirect */ }
 
   // Geolocation never blocks the redirect for long. Smart-match codes wait
   // long enough for the visitor to answer the browser's permission prompt;

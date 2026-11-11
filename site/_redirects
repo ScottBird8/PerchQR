@@ -16,6 +16,10 @@
 # Registered with FBS as the key's Redirect URI, so this exact path must stay.
 /oauth/spark/callback  /oauth-callback.html  200
 
+# Business-card page — Scott's account only (not a feature for other agents).
+# Put a QR code on the card pointing at /scott-bird/card. See site/card.html.
+/scott-bird/card /card.html          200
+
 # Per-agent listing detail page: /<slug>/listing?id=<propertyId>
 /:slug/listing   /listing.html        200
 

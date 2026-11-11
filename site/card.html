@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scott Bird | Business Card</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>
+  /* Business-card landing page. Built phone-first because almost every visit
+     starts with someone scanning a card. Colors come from the same variables
+     as the rest of the site, so it follows the agent's brand color. */
+  .card-page{max-width:760px;margin:0 auto;padding:0 20px 40px;}
+  .card-hero{text-align:center;padding:44px 0 26px;}
+  .card-photo{
+    width:150px;height:150px;border-radius:50%;object-fit:cover;margin:0 auto 18px;
+    border:4px solid var(--white);box-shadow:0 6px 24px rgba(0,0,0,.14);background:var(--line);
+  }
+  .card-hero h1{font-family:var(--display);font-size:2.4rem;line-height:1.1;margin:0 0 4px;color:var(--maroon);}
+  .card-role{font-weight:600;color:var(--charcoal);margin:0;}
+  .card-sub{color:var(--charcoal-soft);font-size:.95rem;margin:2px 0 0;}
+  .card-stat{display:inline-block;margin-top:14px;padding:6px 14px;border-radius:999px;background:var(--maroon-wash);color:var(--maroon);font-weight:600;font-size:.88rem;}
+  .card-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 10px;}
+  .card-actions .btn{justify-content:center;text-align:center;padding-left:8px;padding-right:8px;}
+  .card-save{width:100%;justify-content:center;margin-top:2px;}
+  .card-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 24px;margin-top:22px;}
+  .card-block h2{font-family:var(--display);font-size:1.45rem;margin:0 0 12px;color:var(--maroon);}
+  .card-block p{margin:0 0 12px;}
+  .card-block p:last-child{margin-bottom:0;}
+  .card-video{width:100%;border-radius:10px;background:#000;max-height:70vh;display:block;}
+  .card-bullets{margin:0;padding:0;list-style:none;display:grid;gap:10px;}
+  .card-bullets li{padding-left:28px;position:relative;}
+  .card-bullets li::before{content:"";position:absolute;left:0;top:.45em;width:12px;height:12px;border-radius:50%;background:var(--maroon);}
+  .card-listings{display:grid;gap:12px;}
+  .card-listing{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--white);}
+  .card-listing:hover{border-color:var(--maroon);}
+  .card-listing img{width:92px;height:70px;border-radius:8px;object-fit:cover;flex:none;background:var(--line);}
+  .card-listing b{display:block;line-height:1.25;}
+  .card-listing span{color:var(--charcoal-soft);font-size:.9rem;}
+  .card-quotes{display:grid;gap:12px;}
+  .card-quote{border-left:3px solid var(--maroon);padding:2px 0 2px 14px;}
+  .card-quote p{font-style:italic;}
+  .card-quote .who{font-size:.88rem;color:var(--charcoal-soft);font-style:normal;font-weight:600;}
+  .card-more{display:inline-block;margin-top:14px;font-weight:600;color:var(--maroon);}
+  .card-links{display:flex;flex-wrap:wrap;gap:10px;}
+  .card-foot{text-align:center;color:var(--charcoal-soft);font-size:.82rem;padding:26px 0 0;}
+  @media (max-width:420px){
+    .card-hero h1{font-size:2rem;}
+    .card-actions{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="state-msg">Loading&hellip;</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/supabase-client.js"></script>
+<script src="/assets/perch.js"></script>
+<script>
+(async function () {
+  const app = document.getElementById('app');
+
+  // This page is for Scott's account only (see the single /scott-bird/card
+  // rule in _redirects). Edit the two lists below to change what it says.
+  const SLUG = 'scott-bird';
+
+  // ---- Things only Scott can say about himself -------------------------
+  // Paragraphs shown under "About me". Leave empty to hide the section.
+  const ABOUT = [];
+  // Short bullet points ("Why work with me"). Leave empty to hide.
+  const HIGHLIGHTS = [];
+  // ----------------------------------------------------------------------
+
+  const { data: agent, error: agentError } = await sb.from('agents').select('*').eq('slug', SLUG).maybeSingle();
+  if (agentError || !agent) {
+    app.innerHTML = '<div class="state-msg">This page isn\'t available right now.</div>';
+    if (agentError) console.error(agentError);
+    return;
+  }
+
+  document.title = `${agent.display_name} | ${agent.brokerage_name || 'Real Estate'}`;
+  Perch.applyBrand(agent);
+
+  const [propsRes, tCountRes, tRes, settingsRes] = await Promise.all([
+    sb.from('properties').select('id,addr,city,price,type,hero_photo_url,status,created_at').eq('agent_id', agent.id).neq('status', 'Sold').order('created_at', { ascending: true }),
+    sb.from('testimonials').select('id', { count: 'exact', head: true }).eq('agent_id', agent.id),
+    sb.from('testimonials').select('*').eq('agent_id', agent.id).order('quote_length', { ascending: true }),
+    sb.from('agent_settings').select('home_video_url').eq('agent_id', agent.id).maybeSingle(),
+  ]);
+  const properties = propsRes.data || [];
+  const testimonialCount = tCountRes.count || 0;
+  const videoUrl = settingsRes.data && settingsRes.data.home_video_url;
+
+  // Three random reviews, medium-length ones preferred so the card stays short.
+  const all = (tRes.data || []).filter(t => (t.quote_length || t.quote.length) <= 400);
+  for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+  const picks = all.slice(0, 3);
+
+  const first = agent.display_name.split(' ')[0];
+  const esc = Perch.esc;
+  const phone = agent.phone ? String(agent.phone).replace(/\D/g, '') : '';
+
+  const social = [];
+  if (agent.google_url) social.push(`<a class="btn btn-ghost" href="${esc(agent.google_url)}" target="_blank" rel="noopener">Google</a>`);
+  if (agent.facebook_url) social.push(`<a class="btn btn-ghost" href="${esc(agent.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
+
+  app.innerHTML = `<main class="card-page">
+    <section class="card-hero">
+      ${agent.headshot_url ? `<img class="card-photo" src="${esc(agent.headshot_url)}" alt="${esc(agent.display_name)}">` : ''}
+      <h1>${esc(agent.display_name)}</h1>
+      <p class="card-role">REALTOR&reg;${agent.brokerage_name ? ' &middot; ' + esc(agent.brokerage_name) : ''}</p>
+      ${agent.license_number ? `<p class="card-sub">License #${esc(agent.license_number)}</p>` : ''}
+      ${testimonialCount ? `<span class="card-stat">${testimonialCount} client reviews</span>` : ''}
+      <div class="card-actions">
+        ${phone ? `<a class="btn btn-primary" href="tel:${phone}">Call</a>` : ''}
+        ${phone ? `<a class="btn btn-ghost" href="sms:${phone}">Text</a>` : ''}
+        ${agent.email ? `<a class="btn btn-ghost" href="mailto:${esc(agent.email)}">Email</a>` : ''}
+      </div>
+      <button class="btn btn-ghost card-save" id="saveContact" type="button">Save ${esc(first)} to my contacts</button>
+    </section>
+
+    ${videoUrl ? `<section class="card-block">
+      <h2>Say hello</h2>
+      <video class="card-video" controls playsinline preload="metadata"><source src="${esc(videoUrl)}" type="video/mp4"></video>
+    </section>` : ''}
+
+    ${ABOUT.length ? `<section class="card-block">
+      <h2>About me</h2>
+      ${ABOUT.map(p => `<p>${esc(p)}</p>`).join('')}
+    </section>` : ''}
+
+    ${HIGHLIGHTS.length ? `<section class="card-block">
+      <h2>Why work with me</h2>
+      <ul class="card-bullets">${HIGHLIGHTS.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
+    </section>` : ''}
+
+    ${properties.length ? `<section class="card-block">
+      <h2>My listings</h2>
+      <div class="card-listings">${properties.map(p => `<a class="card-listing" href="/${agent.slug}/listing?id=${encodeURIComponent(p.id)}">
+        ${p.hero_photo_url ? `<img src="${esc(p.hero_photo_url)}" alt="" loading="lazy">` : ''}
+        <div><b>${esc(p.addr)}</b><span>${esc((p.city || '').split(',')[0].trim())}${p.price ? ' &middot; ' + esc(p.price) : ''}</span></div>
+      </a>`).join('')}</div>
+    </section>` : ''}
+
+    ${picks.length ? `<section class="card-block">
+      <h2>What clients say</h2>
+      <div class="card-quotes">${picks.map(t => `<div class="card-quote"><p>&ldquo;${esc(t.quote)}&rdquo;</p><div class="who">&mdash; ${esc(t.client_name)}</div></div>`).join('')}</div>
+      <a class="card-more" href="/${agent.slug}#testimonialsCarousel">Read more reviews &rarr;</a>
+    </section>` : ''}
+
+    <section class="card-block">
+      <h2>Let's talk about real estate</h2>
+      <p>Buying, selling or just curious what your home is worth &mdash; reach out any time.</p>
+      <div class="card-links">
+        ${phone ? `<a class="btn btn-primary" href="tel:${phone}">Call ${esc(Perch.formatPhone(phone))}</a>` : ''}
+        <a class="btn btn-ghost" href="/${agent.slug}">See my full website</a>
+        ${social.join('')}
+      </div>
+    </section>
+
+    <div class="card-foot">&copy; ${new Date().getFullYear()} ${esc(agent.brokerage_name || agent.display_name)}</div>
+  </main>`;
+
+  // "Save to contacts": builds a .vcf file on the fly so the visitor's phone
+  // offers to add the contact. Nothing is sent anywhere.
+  document.getElementById('saveContact').addEventListener('click', () => {
+    const parts = agent.display_name.trim().split(/\s+/);
+    const last = parts.length > 1 ? parts.pop() : '';
+    const firstName = parts.join(' ');
+    const lines = [
+      'BEGIN:VCARD', 'VERSION:3.0',
+      `N:${last};${firstName};;;`,
+      `FN:${agent.display_name}`,
+      agent.brokerage_name ? `ORG:${agent.brokerage_name}` : null,
+      'TITLE:REALTOR',
+      phone ? `TEL;TYPE=CELL:${phone}` : null,
+      agent.email ? `EMAIL:${agent.email}` : null,
+      `URL:${window.location.origin}/${agent.slug}`,
+      agent.address_line ? `NOTE:${agent.address_line}` : null,
+      'END:VCARD',
+    ].filter(Boolean);
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/vcard' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${agent.display_name.replace(/\s+/g, '-')}.vcf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  });
+})();
+</script>
+</body>
+</html>
