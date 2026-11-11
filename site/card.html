@@ -31,6 +31,9 @@
   .card-block p{margin:0 0 12px;}
   .card-block p:last-child{margin-bottom:0;}
   .card-video{width:100%;border-radius:10px;background:#000;max-height:70vh;display:block;}
+  .card-video-top{margin-top:20px;}
+  .card-hero.has-video{padding-top:26px;}
+  .card-save + .card-save{margin-top:10px;}
   .card-bullets{margin:0;padding:0;list-style:none;display:grid;gap:10px;}
   .card-bullets li{padding-left:28px;position:relative;}
   .card-bullets li::before{content:"";position:absolute;left:0;top:.45em;width:12px;height:12px;border-radius:50%;background:var(--maroon);}
@@ -84,13 +87,11 @@
   document.title = `${agent.display_name} | ${agent.brokerage_name || 'Real Estate'}`;
   Perch.applyBrand(agent);
 
-  const [propsRes, tCountRes, tRes, settingsRes] = await Promise.all([
-    sb.from('properties').select('id,addr,city,price,type,hero_photo_url,status,created_at').eq('agent_id', agent.id).neq('status', 'Sold').order('created_at', { ascending: true }),
+  const [tCountRes, tRes, settingsRes] = await Promise.all([
     sb.from('testimonials').select('id', { count: 'exact', head: true }).eq('agent_id', agent.id),
     sb.from('testimonials').select('*').eq('agent_id', agent.id).order('quote_length', { ascending: true }),
     sb.from('agent_settings').select('home_video_url').eq('agent_id', agent.id).maybeSingle(),
   ]);
-  const properties = propsRes.data || [];
   const testimonialCount = tCountRes.count || 0;
   const videoUrl = settingsRes.data && settingsRes.data.home_video_url;
 
@@ -108,7 +109,8 @@
   if (agent.facebook_url) social.push(`<a class="btn btn-ghost" href="${esc(agent.facebook_url)}" target="_blank" rel="noopener">Facebook</a>`);
 
   app.innerHTML = `<main class="card-page">
-    <section class="card-hero">
+    ${videoUrl ? `<video class="card-video card-video-top" controls playsinline preload="metadata"><source src="${esc(videoUrl)}" type="video/mp4"></video>` : ''}
+    <section class="card-hero${videoUrl ? ' has-video' : ''}">
       ${agent.headshot_url ? `<img class="card-photo" src="${esc(agent.headshot_url)}" alt="${esc(agent.display_name)}">` : ''}
       <h1>${esc(agent.display_name)}</h1>
       <p class="card-role">REALTOR&reg;${agent.brokerage_name ? ' &middot; ' + esc(agent.brokerage_name) : ''}</p>
@@ -120,12 +122,8 @@
         ${agent.email ? `<a class="btn btn-ghost" href="mailto:${esc(agent.email)}">Email</a>` : ''}
       </div>
       <button class="btn btn-ghost card-save" id="saveContact" type="button">Save ${esc(first)} to my contacts</button>
+      <a class="btn btn-primary card-save" href="/${agent.slug}">Visit my main page &rarr;</a>
     </section>
-
-    ${videoUrl ? `<section class="card-block">
-      <h2>Say hello</h2>
-      <video class="card-video" controls playsinline preload="metadata"><source src="${esc(videoUrl)}" type="video/mp4"></video>
-    </section>` : ''}
 
     ${ABOUT.length ? `<section class="card-block">
       <h2>About me</h2>
@@ -135,14 +133,6 @@
     ${HIGHLIGHTS.length ? `<section class="card-block">
       <h2>Why work with me</h2>
       <ul class="card-bullets">${HIGHLIGHTS.map(h => `<li>${esc(h)}</li>`).join('')}</ul>
-    </section>` : ''}
-
-    ${properties.length ? `<section class="card-block">
-      <h2>My listings</h2>
-      <div class="card-listings">${properties.map(p => `<a class="card-listing" href="/${agent.slug}/listing?id=${encodeURIComponent(p.id)}">
-        ${p.hero_photo_url ? `<img src="${esc(p.hero_photo_url)}" alt="" loading="lazy">` : ''}
-        <div><b>${esc(p.addr)}</b><span>${esc((p.city || '').split(',')[0].trim())}${p.price ? ' &middot; ' + esc(p.price) : ''}</span></div>
-      </a>`).join('')}</div>
     </section>` : ''}
 
     ${picks.length ? `<section class="card-block">

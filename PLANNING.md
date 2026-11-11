@@ -787,6 +787,9 @@ expansion, polished onboarding) until the beta says the product is real.
   name/brokerage/license, review count, Call/Text/Email buttons, a "Save to my
   contacts" button (builds a `.vcf` in the browser), the home welcome video,
   current listings, three random reviews, contact links.
+- **Revised same day (Scott's call):** listings list removed from the card; the
+  welcome video now sits at the very top; a prominent "Visit my main page"
+  button (to `/scott-bird`) sits under the contact buttons.
 - **Scott only, on purpose:** a single explicit `_redirects` rule for
   `/scott-bird/card`; other agents' `/<slug>/card` is NOT routed. If it becomes a
   feature for everyone, change the rule to `/:slug/card` and make the page's
