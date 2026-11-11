@@ -794,6 +794,15 @@ expansion, polished onboarding) until the beta says the product is real.
   for the card (`agent_settings.card_video_url`, schema 14b, 50 MB limit like all
   videos). `card.html` shows it at the top and falls back to the home page
   welcome video when none is uploaded.
+- **Same page on utahrealestate.us (2026-11-11):** the old single-tenant site
+  (`C:\Users\scott\Scotts QR`, repo `ScottBird8/Scotts-QR`, branch `master`, its
+  own Supabase project) got `site/card.html` at `/card`, plus a **Business Card**
+  admin tab (video + About + Why work with me) backed by new `site_settings`
+  columns `card_video_url`, `card_about`, `card_highlights` (its
+  `supabase/schema.sql`; SQL must be run in THAT project). Its QR form's
+  "Don't read the visitor's location" box must be ticked for the card's code so
+  it isn't hijacked by the nearest-listing check. Restore tag in that repo:
+  `restore-point-before-business-card`.
 - **Scott only, on purpose:** a single explicit `_redirects` rule for
   `/scott-bird/card`; other agents' `/<slug>/card` is NOT routed. If it becomes a
   feature for everyone, change the rule to `/:slug/card` and make the page's
