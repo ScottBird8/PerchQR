@@ -322,6 +322,18 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           Your photo, contact buttons, welcome video and reviews are filled in automatically. Write the rest here.
           To get a QR code for it, use the QR Codes tab with the destination <b>/scott-bird/card</b>.</p>
 
+        <div class="field" style="margin-bottom:22px;">
+          <label>Card video &mdash; 50 MB max</label>
+          <input type="file" id="cardVideoFile" accept="video/*">
+          <div class="field-hint" style="margin-top:6px;">Shown at the very top of your card page. Maximum file size: 50 MB. MP4 works best. If you don't upload one here, your home page welcome video is used instead.</div>
+          <div id="cardVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
+          <video id="cardVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
+          <div class="form-actions" style="justify-content:flex-start;margin-top:10px;">
+            <button class="btn-sm primary" id="cardVideoSaveBtn" type="button">Upload video</button>
+            <button class="btn-sm danger hidden" id="cardVideoRemoveBtn" type="button">Remove card video</button>
+          </div>
+        </div>
+
         <div class="field" style="margin-bottom:14px;">
           <label>About me</label>
           <textarea id="cardAbout" rows="7" placeholder="Tell people about yourself. Press Enter twice to start a new paragraph."></textarea>
@@ -1657,14 +1669,68 @@ document.getElementById('homeVideoSaveBtn').addEventListener('click', async () =
    Business card page text (owner-only) — agent_settings.card_about /
    card_highlights, read by site/card.html
    ============================================================ */
+let cardVideoFile = null;
+
 async function loadCardSettings() {
   const aboutEl = document.getElementById('cardAbout');
   const hiEl = document.getElementById('cardHighlights');
-  const { data, error } = await sb.from('agent_settings').select('card_about, card_highlights').eq('agent_id', AGENT_SELF.id).maybeSingle();
-  if (error) { console.error(error); toast('Could not load the business card text — has the SQL been run?'); return; }
+  const statusEl = document.getElementById('cardVideoStatus');
+  const previewEl = document.getElementById('cardVideoPreview');
+  const removeBtn = document.getElementById('cardVideoRemoveBtn');
+  const { data, error } = await sb.from('agent_settings').select('card_about, card_highlights, card_video_url').eq('agent_id', AGENT_SELF.id).maybeSingle();
+  if (error) { console.error(error); statusEl.textContent = 'Could not load.'; toast('Could not load the business card settings — has the SQL been run?'); return; }
   aboutEl.value = (data && data.card_about) || '';
   hiEl.value = (data && data.card_highlights) || '';
+  const url = data && data.card_video_url;
+  statusEl.textContent = url ? 'Currently set — preview below.' : 'No card video yet (your home page welcome video is used, if you have one).';
+  previewEl.classList.toggle('hidden', !url);
+  removeBtn.classList.toggle('hidden', !url);
+  if (url) previewEl.src = url; else previewEl.removeAttribute('src');
 }
+
+document.getElementById('cardVideoFile').addEventListener('change', (e) => {
+  cardVideoFile = e.target.files[0] || null;
+  if (cardVideoFile) document.getElementById('cardVideoStatus').textContent = `Selected: ${cardVideoFile.name} (${(cardVideoFile.size / 1024 / 1024).toFixed(1)} MB) — click Upload video.`;
+});
+
+document.getElementById('cardVideoSaveBtn').addEventListener('click', async () => {
+  const saveBtn = document.getElementById('cardVideoSaveBtn');
+  if (!cardVideoFile) { toast('Choose a video file first'); return; }
+  saveBtn.disabled = true; saveBtn.textContent = 'Uploading…';
+  try {
+    const url = await uploadFile('property-videos', 'business-card', 'video', cardVideoFile);
+    const { error } = await sb.from('agent_settings').upsert({ agent_id: AGENT_SELF.id, card_video_url: url });
+    if (error) throw error;
+    toast('Card video updated');
+    cardVideoFile = null;
+    document.getElementById('cardVideoFile').value = '';
+    await loadCardSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Upload failed — ' + friendlyUploadError(err));
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Upload video';
+  }
+});
+
+document.getElementById('cardVideoRemoveBtn').addEventListener('click', async () => {
+  if (!confirm('Remove the card video? The card will use your home page welcome video instead, if you have one.')) return;
+  const removeBtn = document.getElementById('cardVideoRemoveBtn');
+  removeBtn.disabled = true;
+  try {
+    const { error } = await sb.from('agent_settings').update({ card_video_url: null }).eq('agent_id', AGENT_SELF.id);
+    if (error) throw error;
+    cardVideoFile = null;
+    document.getElementById('cardVideoFile').value = '';
+    toast('Card video removed');
+    await loadCardSettings();
+  } catch (err) {
+    console.error(err);
+    toast('Could not remove the video — try again.');
+  } finally {
+    removeBtn.disabled = false;
+  }
+});
 
 document.getElementById('cardSaveBtn').addEventListener('click', async () => {
   const saveBtn = document.getElementById('cardSaveBtn');

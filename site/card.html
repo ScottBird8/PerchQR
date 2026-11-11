@@ -88,7 +88,9 @@
     sb.from('agent_settings').select('*').eq('agent_id', agent.id).maybeSingle(),
   ]);
   const testimonialCount = tCountRes.count || 0;
-  const videoUrl = settingsRes.data && settingsRes.data.home_video_url;
+  // The card's own video (uploaded in the dashboard's Business Card tab) wins;
+  // otherwise fall back to the home page welcome video.
+  const videoUrl = settingsRes.data && (settingsRes.data.card_video_url || settingsRes.data.home_video_url);
   // Text written in the dashboard's "Business Card" tab: a blank line starts a
   // new About paragraph; each line of the highlights box is one bullet.
   const cs = settingsRes.data || {};

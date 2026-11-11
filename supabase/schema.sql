@@ -888,3 +888,6 @@ create trigger properties_guard_location_verified_trg
 -- ============================================================
 alter table public.agent_settings add column if not exists card_about text;
 alter table public.agent_settings add column if not exists card_highlights text;
+
+-- 14b. Business card page: its own video (falls back to the home page video).
+alter table public.agent_settings add column if not exists card_video_url text;

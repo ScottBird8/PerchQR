@@ -790,6 +790,10 @@ expansion, polished onboarding) until the beta says the product is real.
 - **Revised same day (Scott's call):** listings list removed from the card; the
   welcome video now sits at the very top; a prominent "Visit my main page"
   button (to `/scott-bird`) sits under the contact buttons.
+- **Card video (2026-11-11):** the Business Card tab also uploads a video just
+  for the card (`agent_settings.card_video_url`, schema 14b, 50 MB limit like all
+  videos). `card.html` shows it at the top and falls back to the home page
+  welcome video when none is uploaded.
 - **Scott only, on purpose:** a single explicit `_redirects` rule for
   `/scott-bird/card`; other agents' `/<slug>/card` is NOT routed. If it becomes a
   feature for everyone, change the rule to `/:slug/card` and make the page's
