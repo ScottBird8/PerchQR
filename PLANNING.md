@@ -780,6 +780,23 @@ expansion, polished onboarding) until the beta says the product is real.
   becomes the agent's own landing page. Restore point:
   `restore-point-before-qr-edit`. Tested with stubbed data, not a real save.
 
+### Automatic photo shrinking (2026-11-11)
+
+- **Problem:** photos on 920 S 25 E were 2–3 MB each and up to 10,535 x 5,927 px
+  (panoramas), which slows page loads and decoding.
+- **New uploads:** `uploadFile()` in `app.html` now runs every `property-photos`
+  upload through `shrinkImage()` — longest side capped at 2000 px (headshot 1200,
+  logo 1000), re-saved as JPEG quality 0.82 (logos stay PNG so transparency
+  survives). Small files, undecodable ones (e.g. HEIC) and results that wouldn't
+  be smaller are uploaded untouched. Done in the browser, so no server cost.
+- **Already-saved photos:** a **Shrink saved photos** button in the property form
+  downloads each oversized saved photo, shrinks it, uploads it as a new file and
+  swaps the URL in the form; takes effect on Save. The old big files stay in
+  storage (nothing is deleted).
+- **Not touched:** MLS autofill photos (the function already pulls Spark's
+  1600 px size); videos (50 MB limit instead).
+- Restore point: `restore-point-before-photo-shrink`.
+
 ### Business-card page — Scott's account only (2026-11-11)
 
 - **What:** `site/card.html`, reached at `perchqr.com/scott-bird/card`. A

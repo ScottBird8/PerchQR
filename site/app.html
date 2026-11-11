@@ -405,6 +405,11 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <label>Additional photos (up to 10 total)</label>
         <input type="file" id="f_gallery" accept="image/*" multiple>
         <div id="galleryPreview" class="thumb-strip"></div>
+        <div class="field-hint" style="margin-top:8px;">New photos are shrunk automatically when you save, so they load fast. Photos you saved earlier can be shrunk with the button below (then click Save).</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button type="button" class="btn-sm" id="optimizePhotosBtn">Shrink saved photos</button>
+          <span id="optimizePhotosStatus" class="field-hint"></span>
+        </div>
       </div>
       <div class="field full">
         <label>Video (optional) &mdash; 50 MB max</label>
@@ -811,7 +816,39 @@ function friendlyUploadError(err) {
   return msg ? `${msg}.` : 'check your connection and try again.';
 }
 
+// Shrinks a photo in the browser before it is uploaded: longest side capped at
+// maxEdge pixels, re-saved as a JPEG (or PNG when keepPng is set and the file is
+// a PNG, so logos keep their transparent background). Small files, files the
+// browser can't decode (e.g. HEIC) and results that wouldn't actually be
+// smaller are returned untouched, so this can never make a photo worse.
+const PHOTO_MAX_EDGE = 2000;       // plenty for a full-screen listing photo
+const PHOTO_SMALL_ENOUGH = 600 * 1024;
+async function shrinkImage(file, maxEdge, opts = {}) {
+  if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) { return file; }
+  const scale = Math.min(1, maxEdge / Math.max(bmp.width, bmp.height));
+  if (scale === 1 && file.size <= PHOTO_SMALL_ENOUGH) { bmp.close(); return file; }
+  const w = Math.max(1, Math.round(bmp.width * scale));
+  const h = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const asPng = !!opts.keepPng && file.type === 'image/png';
+  if (!asPng) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, asPng ? 'image/png' : 'image/jpeg', 0.82));
+  if (!blob || blob.size >= file.size) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, '') + (asPng ? '.png' : '.jpg'), { type: blob.type });
+}
+
 async function uploadFile(bucket, propId, kind, file) {
+  if (bucket === 'property-photos') {
+    file = await shrinkImage(file, kind === 'headshot' ? 1200 : kind === 'logo' ? 1000 : PHOTO_MAX_EDGE, { keepPng: kind === 'logo' });
+  }
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
   const path = `${AGENT.id}/${propId}/${kind}-${Date.now()}-${randSuffix()}.${ext}`;
   const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type || undefined });
@@ -1155,6 +1192,7 @@ function resetPropertyForm() {
   heroFile = null; heroExistingUrl = null;
   galleryFiles = [];
   videoFile = null; videoExistingUrl = null; videoRemoved = false;
+  document.getElementById('optimizePhotosStatus').textContent = '';
   renderHeroPreview(); renderGalleryPreview(); renderVideoPreview();
 }
 
@@ -1190,6 +1228,41 @@ document.getElementById('f_gallery').addEventListener('change', (e) => {
   picked.forEach(file => galleryFiles.push({ file }));
   e.target.value = '';
   renderGalleryPreview();
+});
+// Shrinks photos that were saved BEFORE automatic shrinking existed. Each
+// oversized photo is downloaded, shrunk, uploaded as a new file and swapped into
+// the form; nothing changes for visitors until the property is saved. Photos
+// that are already small are left alone. (The old big files stay in storage.)
+document.getElementById('optimizePhotosBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('optimizePhotosBtn');
+  const statusEl = document.getElementById('optimizePhotosStatus');
+  const targets = [];
+  if (heroExistingUrl && !heroFile) targets.push({ kind: 'hero', get: () => heroExistingUrl, set: u => { heroExistingUrl = u; } });
+  galleryFiles.forEach(g => { if (g.url) targets.push({ kind: 'gallery', get: () => g.url, set: u => { g.url = u; } }); });
+  if (!targets.length) { statusEl.textContent = 'No saved photos to shrink.'; return; }
+  btn.disabled = true;
+  let done = 0, saved = 0, failed = 0;
+  for (let i = 0; i < targets.length; i++) {
+    statusEl.textContent = `Checking photo ${i + 1} of ${targets.length}…`;
+    const t = targets[i];
+    try {
+      const res = await fetch(t.get());
+      if (!res.ok) throw new Error('download failed');
+      const blob = await res.blob();
+      const original = new File([blob], 'photo', { type: blob.type });
+      const small = await shrinkImage(original, PHOTO_MAX_EDGE);
+      if (small === original) continue; // already small enough
+      const url = await uploadFile('property-photos', editingId || 'photos', t.kind, small);
+      t.set(url);
+      saved += original.size - small.size;
+      done++;
+    } catch (err) { console.error(err); failed++; }
+  }
+  btn.disabled = false;
+  renderHeroPreview(); renderGalleryPreview();
+  statusEl.textContent = done
+    ? `Shrunk ${done} photo${done === 1 ? '' : 's'}, saving ${(saved / 1024 / 1024).toFixed(1)} MB. Click Save to keep the change.${failed ? ` (${failed} could not be shrunk.)` : ''}`
+    : (failed ? `Couldn't shrink ${failed} photo${failed === 1 ? '' : 's'} — try again.` : 'All saved photos are already small.');
 });
 document.getElementById('f_video').addEventListener('change', (e) => {
   const file = e.target.files[0];
