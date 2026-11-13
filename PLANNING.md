@@ -478,6 +478,21 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-13 — Custom SMTP (Resend) is ON; "Confirm email" deliberately OFF
+  until ~10 users.** Resend domain `flyerbox.net` verified via 3 GoDaddy DNS
+  records (TXT `resend._domainkey`, CNAME `send`, CNAME `rsend`; receiving off).
+  Supabase SMTP: smtp.resend.com:465, user `resend`, API key as password
+  (key lives only in Supabase/Resend, never in the repo), sender
+  `noreply@flyerbox.net` / "FlyerBox". Verified by sending a password-recovery
+  email from Authentication -> Users. Supabase "Confirm email" is OFF for the
+  beta (signup logs the agent straight in; no email). **REMINDER (Scott asked):**
+  once there are ~10 users, turn "Confirm email" ON (Authentication -> Sign In /
+  Providers -> Email) and retest signup with a brand-new address (a duplicate
+  email returns 422 "User already registered" and sends nothing). Email
+  templates can now be edited (Authentication -> Emails -> Templates) — Scott
+  to paste the FlyerBox wording. No inbox exists for noreply@flyerbox.net;
+  consider a forwarding address (support@) later.
+
 - **2026-11-13 — FlyerBox rename is LIVE.** Netlify primary domain = flyerbox.net;
   perchqr.com / www.perchqr.com / flyerbox.ai / www.flyerbox.ai 301 to it
   (verified, path + query kept, incl. /q/<id> and the Flexmls callback). Gotchas
