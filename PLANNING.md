@@ -478,6 +478,20 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-13 — Business email on flyerbox.net (free).** Incoming: ImprovMX free
+  forwarding (domain flyerbox.net; aliases scott@, info@, support@ -> Scott's
+  Gmail; add more aliases in ImprovMX any time). GoDaddy DNS at `@`: MX
+  mx1.improvmx.com (10), MX mx2.improvmx.com (20), TXT `v=spf1
+  include:spf.improvmx.com ~all` — these do not touch the Netlify A record or
+  the Resend records (`send`, `rsend`, `resend._domainkey`). Outgoing: Gmail
+  "Send mail as" for scott@ and info@ through Resend SMTP (smtp.resend.com:465,
+  user `resend`, a dedicated Resend API key named `gmail`, kept only in
+  Gmail/Resend). Gotchas: mail Gmail sends to a forwarded alias that points back
+  to the same Gmail lands in spam (loop detection) — mark "Not spam"; test with a
+  different sender. Resend free plan = 100 emails/day shared with Supabase auth
+  emails. Upgrade to a real mailbox (Workspace/M365/Zoho) after the beta if
+  needed. All working as of 2026-11-13.
+
 - **2026-11-13 — Custom SMTP (Resend) is ON; "Confirm email" deliberately OFF
   until ~10 users.** Resend domain `flyerbox.net` verified via 3 GoDaddy DNS
   records (TXT `resend._domainkey`, CNAME `send`, CNAME `rsend`; receiving off).
