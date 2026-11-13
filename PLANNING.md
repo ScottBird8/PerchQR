@@ -471,6 +471,23 @@ expansion, polished onboarding) until the beta says the product is real.
     PLANNING.md; repo name optional. (4) Cutover: `perchqr.com/*` 301s to the new
     domain keeping paths, with `/q/*` guaranteed to keep resolving. (5) Tell the
     agents (old links keep working), update social handles, file the trademark.
+  - **DECISIONS 2026-11-11 to 2026-11-13 (Scott):** go ahead with the rename.
+    **Primary domain = `flyerbox.net`** (overrides the `.ai` suggestion above;
+    `flyerbox.ai` kept as a redirect, `perchqr.com` kept forever for printed QR
+    codes). **Logo = option A** (QR corner marks + "Flyer**Box**"; slate #3B4A5A
+    with cedar #B75A26 "Box"); **favicon** = one finder square with a solid box
+    inside. Mockups (landing, sign-up, dashboard, agent page, logo sheet) approved
+    — kept in the Claude artifact "FlyerBox Mockups". Site keeps its current
+    colors/fonts; dashboard stays maroon for now; optional "Made with FlyerBox"
+    footer credit on agent pages was proposed (not yet decided).
+  - **Sequence agreed:** (1) email FBS to add `https://flyerbox.net/oauth/spark/callback`
+    as a second redirect URI (keep the perchqr.com one) and rename the app to
+    FlyerBox; (2) Scott adds flyerbox.net/.ai in Netlify + DNS and allows the new
+    domain in Supabase Auth; (3) ONLY after FBS confirms, implement the site rename.
+    Why wait: the MLS sign-in returns to the callback's domain, and the browser
+    login session is per-domain, so connecting an MLS from flyerbox.net would fail
+    until FBS adds that redirect URI. Visible rename on perchqr.com alone was
+    offered as an earlier option; Scott chose to wait.
   - **Effort:** text rename + domain setup ~ half a day; FBS change takes days;
     the real work is the logo. Cost of delay grows with every sign printed and
     agent onboarded — decide before the beta agents print at scale.
