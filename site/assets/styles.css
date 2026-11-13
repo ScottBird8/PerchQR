@@ -1,4 +1,4 @@
-/* PerchQR shared stylesheet — ported verbatim from the proven single-tenant
+/* FlyerBox shared stylesheet — ported verbatim from the proven single-tenant
    design (C:\Users\scott\Scotts QR\site\assets\styles.css). This is one
    shared visual theme for every beta agent for now; per-agent branding
    (colors/fonts) is out of scope for the beta — see PLANNING.md. */
@@ -80,7 +80,7 @@ main.content{min-width:0;}
 
 /* ---- home hero ---- */
 .hero{display:grid;grid-template-columns:1.3fr 0.7fr;gap:28px;align-items:stretch;margin-bottom:12px;}
-/* PerchQR addition: no per-agent welcome video configured -> collapse to a
+/* FlyerBox addition: no per-agent welcome video configured -> collapse to a
    single column instead of reserving empty space for the video panel. */
 .hero.no-video{grid-template-columns:1fr;}
 
@@ -422,10 +422,10 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
   .fact-grid{grid-template-columns:1fr;}
   nav.site-nav{display:none;}
 }
-/* ---- perchqr.com root landing page — PerchQR's OWN brand: "Fieldstone" ----
+/* ---- flyerbox.net root landing page — FlyerBox's OWN brand: "Fieldstone" ----
    Deliberately a different system than the maroon theme above: that theme is
    the agent-site template (Stratum-derived), which belongs to individual
-   agents, not to PerchQR the company. Grounded in a listing's actual
+   agents, not to FlyerBox the company. Grounded in a listing's actual
    materials — slate, cedar, mortar-line rules — for a quiet, title-company
    read rather than a startup one. Tokens + fonts scoped to `.landing` so
    they never leak into tenant pages or the admin panel. Picked from three
@@ -459,6 +459,7 @@ footer.site-footer{max-width:1000px;margin:0 auto;padding:24px 28px 40px;border-
 .landing-header{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:20px 28px;border-bottom:1px solid var(--pq-line);}
 .landing-brand{display:flex;align-items:center;gap:10px;}
 .landing-logo{color:var(--pq-slate);flex-shrink:0;}
+.landing-wordmark .wm-box{color:var(--pq-cedar);}
 .landing-wordmark{font-family:var(--pq-display);font-weight:600;font-size:20px;color:var(--pq-slate);}
 .landing-nav{display:flex;align-items:center;gap:22px;}
 .landing-nav a:not(.btn){font-family:var(--pq-body);font-weight:600;font-size:14px;color:var(--pq-sub);}

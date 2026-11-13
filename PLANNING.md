@@ -441,6 +441,43 @@ expansion, polished onboarding) until the beta says the product is real.
   gives a new id — regenerate only for codes not yet printed. Rule of thumb
   surfaced to agents: scanning distance ≈ 10× the code's printed width.
 
+- **2026-11-13 — FlyerBox rename IMPLEMENTED in code (cutover no longer waits on FBS).**
+  FBS (Forrest Pinson, Developer Support) replied: only ONE redirect URI per key,
+  so a second flyerbox.net URI can't be added alongside perchqr.com. They'll
+  switch the URI and/or app name within 1-2 business days of a request, and
+  changing either does NOT invalidate existing Flexmls sessions. New approach:
+  perchqr.com (and flyerbox.ai, www.*) 301 to flyerbox.net keeping path + query
+  string (top of `site/_redirects`). Flexmls still returns to the registered
+  perchqr.com/oauth/spark/callback, the 301 carries code/state to flyerbox.net
+  (where the agent's session lives), and the token exchange still sends the
+  registered perchqr.com URI from the `SPARK_OIDC_REDIRECT_URI` secret — so MLS
+  connect works across the move with no gap. Done in code: all visible
+  "PerchQR"/"perchqr.com" text -> "FlyerBox"/"flyerbox.net"; wordmark
+  `Flyer<span class="wm-box">Box</span>` (cedar "Box" on the landing page,
+  dashboards stay single-colour maroon); new favicon (finder square + cedar box);
+  new QR codes and default links always encode `SITE_ORIGIN = https://flyerbox.net`
+  (app.html) instead of `window.location.origin`; QR download names `flyerbox-*`.
+  Left alone on purpose: internal identifiers (`PERCHQR_OWNER_ID`,
+  `is_perchqr_owner()`, `Perch.*`, `assets/perch.js`), the DB schema, the repo
+  name. **Why no redirect-URI flip is needed:** the OIDC `state` is signed
+  server-side (spark-oidc `makeState`/`stateIsValid`, bound to the agent id) and
+  nothing is kept in the browser, so the sign-in can start on flyerbox.net, come
+  back to the registered perchqr.com callback, 301 to flyerbox.net with
+  code+state intact, and finish there. Keep `SPARK_OIDC_REDIRECT_URI` =
+  perchqr.com as long as FBS has that registered. The URI flip is optional
+  and cosmetic (Flexmls's address bar briefly shows perchqr.com).
+  **Plan (decided 2026-11-13):** FBS rename of the app to FlyerBox requested
+  Mon 2026-11-16 morning (no impact on sessions). Cutover (Scott, after the code
+  is merged to main): (1) Supabase Auth -> URL Configuration: Site URL
+  `https://flyerbox.net`, add `https://flyerbox.net/**` to Redirect URLs (keep
+  perchqr.com) — can be done any time before. (2) Netlify: make flyerbox.net the
+  primary domain (perchqr.com / flyerbox.ai / www.* stay as aliases with SSL).
+  (3) Merge branch `flyerbox-rename` into main + push (Netlify deploys). (4)
+  Test: perchqr.com/q/<id> lands on flyerbox.net, sign-in, Connect Flexmls,
+  new QR code encodes flyerbox.net/q/<id>. (5) Supabase email templates:
+  replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
+  (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
+
 - **2026-11-10 — Possible rename PerchQR -> FlyerBox: research + plan (NOT started;
   discussion only — Scott will decide).** Scott owns `flyerbox.ai` and
   `flyerbox.net`. Opinion given: FlyerBox is the stronger name for agents (the
@@ -859,7 +896,7 @@ expansion, polished onboarding) until the beta says the product is real.
 Resurface these at the start of planning sessions until each is closed.
 
 ### Domain / brand
-1. ~~Product name + domain~~ — **DECIDED: PerchQR / `perchqr.com`** (see log).
+1. ~~Product name + domain~~ — **DECIDED: PerchQR / `perchqr.com`**, renamed 2026-11-13 to **FlyerBox / `flyerbox.net`** (see log).
 2. ~~"Realtor" in the name~~ — avoided.
 3. ~~One domain or two?~~ — one domain; app at `perchqr.com/app` for v1.
 4. ~~Tenant URL shape~~ — **DECIDED: path-based `perchqr.com/<slug>`** (see log).

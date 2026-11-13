@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <rect width="24" height="24" rx="5" fill="#3B4A5A"/>
-  <g transform="translate(4.5,4.5) scale(0.625)" fill="none" stroke="#EFF0EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3" y="3" width="7" height="7" rx="1"/>
-    <rect x="14" y="3" width="7" height="7" rx="1"/>
-    <rect x="3" y="14" width="7" height="7" rx="1"/>
-    <path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/>
-  </g>
+  <!-- FlyerBox favicon: a QR finder square with a solid box inside (approved logo sheet, 32px weight). -->
+  <rect x="2.5" y="2.5" width="19" height="19" rx="3.5" fill="#FFFFFF" stroke="#3B4A5A" stroke-width="2.6"/>
+  <rect x="7.5" y="7.5" width="9" height="9" rx="1.2" fill="#B75A26"/>
 </svg>

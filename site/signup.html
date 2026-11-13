@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign up — PerchQR</title>
+<title>Sign up — FlyerBox</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/styles.css">
 <style>
-/* Signup is a PerchQR product page (like the admin), not an agent-branded
+/* Signup is a FlyerBox product page (like the admin), not an agent-branded
    page — same Fieldstone override technique as app.html: redefine the
    shared theme's variable NAMES so styles.css's base rules pick up
-   PerchQR's own palette/type without needing their own stylesheet. */
+   FlyerBox's own palette/type without needing their own stylesheet. */
 :root{
   --bg:#EFF0EB;
   --panel:#FFFFFF;
@@ -58,7 +58,7 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
   <div class="card">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      PerchQR
+      Flyer<span class="wm-box">Box</span>
     </div>
 
     <div id="formState">
@@ -72,7 +72,7 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
       <div class="field">
         <label>Set up your URL name (web page address)</label>
         <input id="su_slug" placeholder="jane-doe">
-        <div class="slug-preview" id="slugPreview">perchqr.com/&hellip;</div>
+        <div class="slug-preview" id="slugPreview">flyerbox.net/&hellip;</div>
       </div>
 
       <div class="field">
@@ -178,18 +178,18 @@ async function findAvailableSlug(base) {
 function checkSlug() {
   clearTimeout(slugCheckTimer);
   const slug = slugEl.value;
-  if (!slug) { previewEl.textContent = 'perchqr.com/…'; previewEl.className = 'slug-preview'; return; }
+  if (!slug) { previewEl.textContent = 'flyerbox.net/…'; previewEl.className = 'slug-preview'; return; }
   if (!slugFormatOk(slug)) {
     previewEl.textContent = 'Use 3+ lowercase letters, numbers, and hyphens only.';
     previewEl.className = 'slug-preview bad';
     return;
   }
   if (RESERVED_SLUGS.has(slug)) {
-    previewEl.textContent = `perchqr.com/${slug} — that address is reserved.`;
+    previewEl.textContent = `flyerbox.net/${slug} — that address is reserved.`;
     previewEl.className = 'slug-preview bad';
     return;
   }
-  previewEl.textContent = `perchqr.com/${slug} — checking…`;
+  previewEl.textContent = `flyerbox.net/${slug} — checking…`;
   previewEl.className = 'slug-preview';
   slugCheckTimer = setTimeout(async () => {
     if (slugEl.value !== slug) return;
@@ -198,7 +198,7 @@ function checkSlug() {
     if (data) {
       const alt = await findAvailableSlug(slug);
       if (slugEl.value !== slug) return;
-      previewEl.innerHTML = `perchqr.com/${slug} — already taken.` +
+      previewEl.innerHTML = `flyerbox.net/${slug} — already taken.` +
         (alt ? ` <a href="#" id="slugAltLink" style="color:var(--maroon);font-weight:600;">Try ${alt} instead &rarr;</a>` : '');
       previewEl.className = 'slug-preview bad';
       const altLink = document.getElementById('slugAltLink');
@@ -209,7 +209,7 @@ function checkSlug() {
         checkSlug();
       });
     } else {
-      previewEl.textContent = `perchqr.com/${slug} — available.`;
+      previewEl.textContent = `flyerbox.net/${slug} — available.`;
       previewEl.className = 'slug-preview ok';
     }
   }, 400);
@@ -270,7 +270,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
     document.getElementById('formState').classList.add('hidden');
     document.getElementById('doneHeading').textContent = 'Check your email';
     document.getElementById('doneText').textContent =
-      `We sent a confirmation link to ${email}. Click it, then come back and sign in at perchqr.com/${slug}/access.`;
+      `We sent a confirmation link to ${email}. Click it, then come back and sign in at flyerbox.net/${slug}/access.`;
     document.getElementById('doneState').classList.remove('hidden');
   } catch (err) {
     console.error(err);

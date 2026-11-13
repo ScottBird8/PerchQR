@@ -1,4 +1,23 @@
-# PerchQR routing.
+# FlyerBox routing (formerly PerchQR).
+#
+# ---- Domain moves: everything lands on https://flyerbox.net ----------------
+# perchqr.com stays registered FOREVER: every printed QR code before the rename
+# encodes perchqr.com/q/<id>, and these 301s keep the path (/:splat) and the
+# query string (Netlify passes it through), so /q/<id> and the Flexmls sign-in
+# return (/oauth/spark/callback?code=...&state=...) keep working.
+# Requires flyerbox.net as the site's primary domain in Netlify, with
+# perchqr.com, flyerbox.ai and the www. names added as domain aliases.
+# These must stay ABOVE every other rule, and the "!" forces them even when a
+# real file exists at the path.
+http://perchqr.com/*        https://flyerbox.net/:splat  301!
+https://perchqr.com/*       https://flyerbox.net/:splat  301!
+http://www.perchqr.com/*    https://flyerbox.net/:splat  301!
+https://www.perchqr.com/*   https://flyerbox.net/:splat  301!
+http://flyerbox.ai/*        https://flyerbox.net/:splat  301!
+https://flyerbox.ai/*       https://flyerbox.net/:splat  301!
+http://www.flyerbox.ai/*    https://flyerbox.net/:splat  301!
+https://www.flyerbox.ai/*   https://flyerbox.net/:splat  301!
+https://www.flyerbox.net/*  https://flyerbox.net/:splat  301!
 #
 # Netlify checks for a real file/folder at the requested path BEFORE applying
 # any rule below, so /assets/*, /favicon.ico, etc. are served directly and
@@ -13,7 +32,14 @@
 /q/:id           /q.html?id=:id       200
 
 # Flexmls (Spark OIDC) sign-in return page — see site/oauth-callback.html.
-# Registered with FBS as the key's Redirect URI, so this exact path must stay.
+# Registered with FBS as the key's Redirect URI (FBS allows only ONE per key),
+# so this exact path must stay. The key still says perchqr.com, so Flexmls
+# returns to perchqr.com/oauth/spark/callback; the 301s above carry code+state
+# to flyerbox.net, where the agent's session lives. That works because the
+# `state` is signed server-side (nothing is kept in the browser), and the
+# token exchange still sends the registered perchqr.com URI (secret
+# SPARK_OIDC_REDIRECT_URI). If FBS ever moves the key to flyerbox.net, change
+# that secret to match.
 /oauth/spark/callback  /oauth-callback.html  200
 
 # Business-card page — Scott's account only (not a feature for other agents).

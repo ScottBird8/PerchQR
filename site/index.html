@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerchQR</title>
+<title>FlyerBox</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +28,7 @@
   const slug = segments[0] || null;
 
   if (!slug) {
-    document.title = 'PerchQR — Let buyers meet you before they call';
+    document.title = 'FlyerBox | Let buyers meet you before they call';
     const { data: siteSettings } = await sb.from('site_settings').select('landing_video_url').eq('id', 1).maybeSingle();
     const landingVideoUrl = siteSettings && siteSettings.landing_video_url;
     // QR-corner-mark logo (liked from the "Signal" direction), recolored
@@ -46,7 +46,7 @@
 
     app.innerHTML = `<div class="landing">
   <header class="landing-header">
-    <div class="landing-brand">${logo}<span class="landing-wordmark">PerchQR</span></div>
+    <div class="landing-brand">${logo}<span class="landing-wordmark">Flyer<span class="wm-box">Box</span></span></div>
     <nav class="landing-nav">
       <a href="/app" class="landing-nav-login">Log in</a>
       <a class="btn btn-primary" href="/signup">Create account</a>
@@ -86,7 +86,7 @@
       <div class="landing-step">
         <div class="landing-step-num">01</div>
         <h3>Connect your MLS</h3>
-        <p>Link your free Spark access token once — takes about five minutes.</p>
+        <p>Sign in to Flexmls once and approve FlyerBox — one click, about a minute.</p>
       </div>
       <div class="landing-step">
         <div class="landing-step-num">02</div>
@@ -128,8 +128,8 @@
   </section>
 
   <footer class="landing-footer">
-    <span class="landing-wordmark small">PerchQR</span>
-    <span>&copy; ${new Date().getFullYear()} PerchQR. Free during the private beta.</span>
+    <span class="landing-wordmark small">Flyer<span class="wm-box">Box</span></span>
+    <span>&copy; ${new Date().getFullYear()} FlyerBox. Free during the private beta.</span>
   </footer>
 </div>`;
     if (landingVideoUrl) Perch.initHomeVideo({ keepSize: true });

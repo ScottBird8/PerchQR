@@ -1,7 +1,7 @@
 // DEPLOYED AS "dynamic-handler": the dashboard gave it that slug (URL /functions/v1/dynamic-handler)
 // and slugs cannot be renamed; the site calls it by that slug (SPARK_OIDC_FN in app.html and
 // oauth-callback.html). This file is its source of truth either way.
-// Connects an agent's Flexmls account to PerchQR using Spark's OpenID Connect
+// Connects an agent's Flexmls account to FlyerBox (formerly PerchQR) using Spark's OpenID Connect
 // flow ("Connect your Flexmls account" on the dashboard's Connect MLS tab),
 // replacing the old copy-and-paste-an-access-token step.
 //
@@ -20,6 +20,14 @@
 //   SPARK_AUTH_BASE=https://sparkplatform.com
 //   SPARK_API_BASE=https://replication.sparkapi.com
 //   SPARK_OIDC_REDIRECT_URI=https://perchqr.com/oauth/spark/callback
+//   ^ FBS allows ONE redirect URI per key, and the URI sent here must match the
+//     registered one exactly, in both "start" and "callback". It stays the
+//     perchqr.com address: Flexmls returns there, perchqr.com 301s to
+//     flyerbox.net (path + query kept), and the callback page finishes the
+//     sign-in on flyerbox.net. That works because `state` is signed here
+//     (nothing is kept in the browser). If FBS ever moves the key to
+//     https://flyerbox.net/oauth/spark/callback, set this secret to that value
+//     at the same moment (no function redeploy needed).
 //
 // Like mls-lookup, this verifies the caller's own Supabase session, only ever
 // touches that same agent's rows, and runs with the service role (the token

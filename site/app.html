@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerchQR User Access</title>
+<title>FlyerBox User Access</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/styles.css">
 <style>
-/* The admin panel is PerchQR's own product surface, not an agent-branded
-   page — it should look like PerchQR (Fieldstone), not like the shared
+/* The admin panel is FlyerBox's own product surface, not an agent-branded
+   page — it should look like FlyerBox (Fieldstone), not like the shared
    agent-site theme it happens to reuse component styles from. Every rule
    below still references the theme's variable NAMES (--maroon, --charcoal,
    etc.); redefining them here reskins the whole page without touching
@@ -129,7 +129,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="gate" class="gate">
   <div class="gate-card">
-    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>Flyer<span class="wm-box">Box</span></div>
     <h2>Sign in</h2>
     <input id="loginEmail" type="email" placeholder="Email" autocomplete="username">
     <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
@@ -141,15 +141,15 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="notAnAgent" class="gate hidden">
   <div class="gate-card">
-    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
-    <p>You're signed in, but there's no PerchQR agent profile set up for this account yet. Ask Scott to add you.</p>
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>Flyer<span class="wm-box">Box</span></div>
+    <p>You're signed in, but there's no FlyerBox agent profile set up for this account yet. Ask Scott to add you.</p>
     <button class="btn-sm" id="notAgentSignOutBtn" style="width:100%;">Sign out</button>
   </div>
 </div>
 
 <div id="accountBlocked" class="gate hidden">
   <div class="gate-card">
-    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>PerchQR</div>
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>Flyer<span class="wm-box">Box</span></div>
     <p id="accountBlockedText">Your account is not currently active.</p>
     <button class="btn-sm" id="accountBlockedSignOutBtn" style="width:100%;">Sign out</button>
   </div>
@@ -157,7 +157,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
 <div id="adminApp" class="hidden">
   <div class="admin-header">
-    <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">PerchQR User Access</h1></div>
+    <div class="brand"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><h1 id="adminTitle">FlyerBox User Access</h1></div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div id="agentSwitcherWrap" class="hidden" style="display:flex;align-items:center;gap:8px;">
         <label style="font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--charcoal-soft);">Viewing</label>
@@ -242,7 +242,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
         <div id="mlsOidcBox" style="margin-bottom:18px;">
           <p class="field-hint" style="margin-bottom:12px;">
             Connect your Flexmls account to fill in a listing from its MLS number.
-            You'll sign in to Flexmls and approve PerchQR — one click, nothing to copy or paste.
+            You'll sign in to Flexmls and approve FlyerBox — one click, nothing to copy or paste.
           </p>
           <div class="form-actions" style="justify-content:flex-start;gap:8px;">
             <button class="btn-sm primary" id="mlsConnectBtn">Connect your Flexmls account</button>
@@ -265,7 +265,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <div class="field" style="margin-bottom:12px;"><label>Your Flexmls username (optional, for reference)</label><input id="mls_flexmls_username"></div>
           <div class="field" style="margin-bottom:12px;"><label>Access Token</label><input id="mls_access_token" type="password" placeholder="Paste the token from Spark Datamart"></div>
           <div class="field" style="margin-bottom:16px;"><label>API Feed ID (optional)</label><input id="mls_api_feed_id" placeholder="Only needed if support ever asks for it"></div>
-          <div class="field-hint" style="margin-bottom:16px;">Treat this token like a password — it's stored so only you (and PerchQR's server-side lookup) can use it, never shown publicly.</div>
+          <div class="field-hint" style="margin-bottom:16px;">Treat this token like a password — it's stored so only you (and FlyerBox's server-side lookup) can use it, never shown publicly.</div>
 
           <div class="form-actions" style="justify-content:flex-start;">
             <button class="btn-sm primary" id="mlsSaveBtn">Save connection</button>
@@ -318,7 +318,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
       <div class="overlay-card" style="max-width:620px;padding:24px;">
         <h2 style="font-size:16px;">Business card page</h2>
         <p class="field-hint" style="margin-bottom:16px;">The page people reach when they scan the QR code on your business card:
-          <a href="/scott-bird/card" target="_blank" rel="noopener" style="text-decoration:underline;">perchqr.com/scott-bird/card</a>.
+          <a href="/scott-bird/card" target="_blank" rel="noopener" style="text-decoration:underline;">flyerbox.net/scott-bird/card</a>.
           Your photo, contact buttons, welcome video and reviews are filled in automatically. Write the rest here.
           To get a QR code for it, use the QR Codes tab with the destination <b>/scott-bird/card</b>.</p>
 
@@ -354,8 +354,8 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 
     <div class="tab-panel" id="tab-sitesettings">
       <div class="overlay-card" style="max-width:560px;padding:24px;">
-        <h2 style="font-size:16px;">perchqr.com landing page</h2>
-        <p class="field-hint" style="margin-bottom:16px;">Only visible to you — this is the company site, not an agent page. Optional intro video shown at the top of perchqr.com itself.</p>
+        <h2 style="font-size:16px;">flyerbox.net landing page</h2>
+        <p class="field-hint" style="margin-bottom:16px;">Only visible to you — this is the company site, not an agent page. Optional intro video shown at the top of flyerbox.net itself.</p>
 
         <div class="field" style="margin-bottom:8px;">
           <label>Intro video &mdash; 50 MB max</label>
@@ -567,7 +567,7 @@ const adminApp = document.getElementById('adminApp');
 let AGENT = null;
 let AGENT_SELF = null;
 
-// PerchQR-the-company settings (the perchqr.com landing page, and full
+// FlyerBox-the-company settings (the flyerbox.net landing page, and full
 // read/write access to every agent's data) aren't per-agent, so there's no
 // real "owner" role system yet — just check against Scott's own agent id.
 // Revisit with real admin roles if this ever needs more than one privileged
@@ -622,7 +622,7 @@ async function refreshAdminTodo() {
   btn.title = n > 0 ? `${n} ${n === 1 ? 'property needs its location checked' : 'properties need their locations checked'}` : '';
 }
 
-// The perchqr.com landing-page video belongs to the owner alone. Its tab shows
+// The flyerbox.net landing-page video belongs to the owner alone. Its tab shows
 // only when the signed-in user is the owner AND is looking at their own
 // account — never for other agents, and not while the owner is viewing
 // someone else's account (so it can't be mistaken for that agent's setting).
@@ -696,7 +696,7 @@ async function checkAuth() {
       notAnAgent.classList.add('hidden');
       adminApp.classList.add('hidden');
       document.getElementById('accountBlockedText').textContent =
-        `Your PerchQR account is currently ${st.name.toLowerCase()}, so the dashboard isn't available. Your information has not been deleted. Please contact PerchQR to have access restored.`;
+        `Your FlyerBox account is currently ${st.name.toLowerCase()}, so the dashboard isn't available. Your information has not been deleted. Please contact FlyerBox to have access restored.`;
       blockedEl.classList.remove('hidden');
       return;
     }
@@ -1826,7 +1826,7 @@ document.getElementById('cardSaveBtn').addEventListener('click', async () => {
 });
 
 /* ============================================================
-   perchqr.com landing page settings (owner-only — see PERCHQR_OWNER_ID)
+   flyerbox.net landing page settings (owner-only — see PERCHQR_OWNER_ID)
    ============================================================ */
 let landingVideoFile = null;
 
@@ -1844,7 +1844,7 @@ async function loadLandingSettings() {
 }
 
 document.getElementById('landingVideoRemoveBtn').addEventListener('click', async () => {
-  if (!confirm('Remove the intro video from perchqr.com?')) return;
+  if (!confirm('Remove the intro video from flyerbox.net?')) return;
   const removeBtn = document.getElementById('landingVideoRemoveBtn');
   removeBtn.disabled = true;
   try {
@@ -2295,9 +2295,15 @@ function canvasToPng(canvas) {
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }
 
+// Every new QR code and default link uses the primary domain, wherever the
+// dashboard happens to be open (flyerbox.ai, perchqr.com and www. all 301 here).
+// Old printed codes (perchqr.com/q/<id>) keep working through that 301.
+const SITE_ORIGIN = 'https://flyerbox.net';
+const OUR_HOSTS = ['flyerbox.net', 'www.flyerbox.net', 'flyerbox.ai', 'www.flyerbox.ai', 'perchqr.com', 'www.perchqr.com'];
+
 function openQrForm() {
   document.getElementById('qr_label').value = '';
-  document.getElementById('qr_url').value = window.location.origin + '/' + AGENT.slug;
+  document.getElementById('qr_url').value = SITE_ORIGIN + '/' + AGENT.slug;
   document.getElementById('qr_logo').value = '';
   document.getElementById('qrResultWrap').style.display = 'none';
   document.getElementById('qrCodeContainer').innerHTML = '';
@@ -2310,14 +2316,17 @@ document.getElementById('qrNewBtn').addEventListener('click', openQrForm);
 document.getElementById('qrFormCancelBtn').addEventListener('click', () => qrFormOverlay.classList.remove('open'));
 
 // Cleans up a QR destination as typed: a path like "/kendall" gets this site's
-// address in front, and a bare perchqr.com (the marketing site) becomes the
+// address in front, and a bare flyerbox.net (the marketing site) becomes the
 // agent's own landing page. Used when creating and when editing a code.
 function normalizeQrDestination(raw) {
   let url = String(raw || '').trim();
-  if (!/^https?:\/\//i.test(url)) url = window.location.origin + (url.startsWith('/') ? url : '/' + url);
+  if (!/^https?:\/\//i.test(url)) url = SITE_ORIGIN + (url.startsWith('/') ? url : '/' + url);
   try {
     const u = new URL(url);
-    if (u.origin === window.location.origin && u.pathname === '/') url = u.origin + '/' + AGENT.slug;
+    if (OUR_HOSTS.includes(u.hostname) || u.origin === window.location.origin) {
+      // Any of our own domains -> rewrite onto the primary one.
+      url = SITE_ORIGIN + (u.pathname === '/' ? '/' + AGENT.slug : u.pathname) + u.search + u.hash;
+    }
   } catch (e) { /* leave as typed */ }
   return url;
 }
@@ -2369,7 +2378,7 @@ document.getElementById('qrGenerateBtn').addEventListener('click', async () => {
   // directly, so printed signs survive the destination (or the agent's slug)
   // changing later — the redirector just looks up this id's current "url".
   const qrId = crypto.randomUUID();
-  const trackedUrl = window.location.origin + '/q/' + qrId;
+  const trackedUrl = SITE_ORIGIN + '/q/' + qrId;
 
   let logo = null;
   const logoFile = document.getElementById('qr_logo').files[0];
@@ -2437,7 +2446,7 @@ document.getElementById('qrSaveBtn').addEventListener('click', async () => {
     const { error: dbErr } = await sb.from('qr_codes').insert({ id: previewedId, agent_id: AGENT.id, label, url, image_url: signed.signedUrl });
     if (dbErr) throw dbErr;
 
-    const name = `perchqr-${slugify(label)}`;
+    const name = `flyerbox-${slugify(label)}`;
     downloadBlob(bigBlob, `${name}-${QR_SIZES.sign4x4.file}.png`);
     setTimeout(() => downloadBlob(yardBlob, `${name}-${QR_SIZES.yard.file}.png`), 500);
     setTimeout(() => downloadBlob(svgBlob, `${name}.svg`), 1000);
@@ -2477,7 +2486,7 @@ async function downloadSavedQr(id, kind) {
     }
     const res = await fetch(url);
     if (!res.ok) throw new Error('fetch failed');
-    const base = `perchqr-${slugify(q.label)}`;
+    const base = `flyerbox-${slugify(q.label)}`;
     const raw = await res.blob();
     const blob = new Blob([raw], { type: kind === 'svg' ? 'image/svg+xml' : 'image/png' });
     if (win) win.location.href = URL.createObjectURL(blob);

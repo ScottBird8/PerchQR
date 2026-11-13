@@ -1,4 +1,4 @@
-// Shared markup + behavior reused across every PerchQR page. This is the
+// Shared markup + behavior reused across every FlyerBox page. This is the
 // multi-tenant descendant of the single-tenant "Stratum" helper object from
 // C:\Users\scott\Scotts QR\site\assets\site.js — same UI behaviors (video
 // state machines, gallery, Matterport toggle), but every piece of agent
@@ -141,7 +141,7 @@ const Perch = (function () {
   // Homepage welcome video: click-to-play. Only called when there is actually
   // a video to show. By default it shrinks to a fixed top-right box 5s after
   // starting, or immediately on click-to-skip/pause. With { keepSize: true }
-  // (now used by the perchqr.com landing page AND every agent's homepage) it
+  // (now used by the flyerbox.net landing page AND every agent's homepage) it
   // never shrinks: clicking just plays / pauses it in place, and pausing
   // then clicking again continues from where it stopped.
   function initHomeVideo(opts = {}) {

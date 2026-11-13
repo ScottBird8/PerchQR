@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerchQR Administrator</title>
+<title>FlyerBox Administrator</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,7 +145,7 @@ table.users tr:last-child td{border-bottom:none;}
   <div class="console-bar">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      PerchQR Administrator
+      Flyer<span class="wm-box">Box</span> Administrator
     </div>
     <div class="console-bar-actions">
       <a class="btn-sm" href="/app">User dashboard</a>
@@ -190,7 +190,7 @@ table.users tr:last-child td{border-bottom:none;}
   <div class="gate-card">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      PerchQR
+      Flyer<span class="wm-box">Box</span>
     </div>
     <div class="eyebrow">Administrator</div>
     <h2>Sign in</h2>
@@ -221,7 +221,7 @@ async function attemptLogin() {
     if (error) throw error;
     if (data.user.id !== PERCHQR_OWNER_ID) {
       await sb.auth.signOut();
-      throw new Error('This sign-in is for the PerchQR administrator only.');
+      throw new Error('This sign-in is for the FlyerBox administrator only.');
     }
     await showConsole();
   } catch (err) {
@@ -442,7 +442,7 @@ async function openProfile(id) {
   view.innerHTML = `
     <button class="back-link" id="backBtn">&larr; Back to users</button>
     <h1>${esc(a.display_name)} <span class="badge st-${esc(a.status_id)}" style="vertical-align:middle;">${esc(statusName(a.status_id))}</span></h1>
-    <p class="console-sub"><a href="/${esc(a.slug)}" target="_blank" rel="noopener" style="color:var(--maroon);">perchqr.com/${esc(a.slug)}</a>
+    <p class="console-sub"><a href="/${esc(a.slug)}" target="_blank" rel="noopener" style="color:var(--maroon);">flyerbox.net/${esc(a.slug)}</a>
       &middot; <a href="/${esc(a.slug)}/access" style="color:var(--maroon);">Open in user dashboard</a></p>
 
     <div class="card">
@@ -478,7 +478,7 @@ async function openProfile(id) {
 
     <div class="card">
       <h3>Page address</h3>
-      <div class="muted">perchqr.com/${esc(a.slug)} <button class="btn-sm" id="changeSlugBtn" style="margin-left:10px;">Change page address</button></div>
+      <div class="muted">flyerbox.net/${esc(a.slug)} <button class="btn-sm" id="changeSlugBtn" style="margin-left:10px;">Change page address</button></div>
       <div class="slug-editor hidden" id="editor-${esc(a.id)}"></div>
     </div>
 
@@ -603,7 +603,7 @@ function openEditor(agentId) {
   const nQr = (QR_BY_AGENT[agentId] || []).length;
   box.classList.remove('hidden');
   box.innerHTML = `<div class="slug-editor-line">
-      <span class="prefix">perchqr.com/</span>
+      <span class="prefix">flyerbox.net/</span>
       <input id="slugInput-${esc(agentId)}" value="${esc(a.slug)}" autocomplete="off" spellcheck="false">
       <button class="btn-sm primary" id="slugSave-${esc(agentId)}">Save</button>
       <button class="btn-sm" id="slugCancel-${esc(agentId)}">Cancel</button>
@@ -627,8 +627,8 @@ function openEditor(agentId) {
     timer = setTimeout(async () => {
       const { data } = await sb.from('agents').select('id').eq('slug', s).maybeSingle();
       if (input.value !== s) return;
-      if (data) { status.textContent = `perchqr.com/${s} is already taken.`; status.className = 'slug-status bad'; return; }
-      status.textContent = `perchqr.com/${s} is available.`; status.className = 'slug-status ok';
+      if (data) { status.textContent = `flyerbox.net/${s} is already taken.`; status.className = 'slug-status bad'; return; }
+      status.textContent = `flyerbox.net/${s} is available.`; status.className = 'slug-status ok';
       valid = true; save.disabled = false;
     }, 250);
   }
@@ -644,13 +644,13 @@ function openEditor(agentId) {
 // printed signs never need to change.)
 async function changeSlug(agent, newSlug, saveBtn) {
   const oldSlug = agent.slug;
-  if (!confirm(`Change ${agent.display_name}'s page address?\n\nperchqr.com/${oldSlug}\n→ perchqr.com/${newSlug}\n\nThe old address will stop working.`)) return;
+  if (!confirm(`Change ${agent.display_name}'s page address?\n\nflyerbox.net/${oldSlug}\n→ flyerbox.net/${newSlug}\n\nThe old address will stop working.`)) return;
   saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
   showMsg('');
   const { error } = await sb.from('agents').update({ slug: newSlug }).eq('id', agent.id);
   if (error) {
     console.error(error);
-    showMsg(error.code === '23505' ? `perchqr.com/${esc(newSlug)} was just taken — pick another.` : 'The change failed: ' + esc(error.message), true);
+    showMsg(error.code === '23505' ? `flyerbox.net/${esc(newSlug)} was just taken — pick another.` : 'The change failed: ' + esc(error.message), true);
     saveBtn.disabled = false; saveBtn.textContent = 'Save';
     return;
   }
@@ -663,7 +663,7 @@ async function changeSlug(agent, newSlug, saveBtn) {
   }
   await loadAll();
   if (currentProfileId === agent.id) await openProfile(agent.id);
-  let text = `Done. ${esc(agent.display_name)} is now at <strong>perchqr.com/${esc(newSlug)}</strong>.`;
+  let text = `Done. ${esc(agent.display_name)} is now at <strong>flyerbox.net/${esc(newSlug)}</strong>.`;
   if (updated) text += ` Updated ${updated} QR code destination${updated === 1 ? '' : 's'}.`;
   if (failed) { showMsg(text + ` ${failed} QR code destination${failed === 1 ? '' : 's'} could not be updated — the agent should check the QR Codes tab.`, true); return; }
   showMsg(text);

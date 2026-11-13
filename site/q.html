@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PerchQR</title>
+<title>FlyerBox</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
 <!--
-  QR redirector. Every QR code PerchQR generates encodes /q/<qr_codes.id>,
+  QR redirector. Every QR code FlyerBox generates encodes /q/<qr_codes.id>,
   NEVER an agent's slug or a specific listing URL directly — see PLANNING.md
   "Tenant URL shape". This page resolves that id, logs the scan, and forwards
   the visitor to the code's stored destination. Printed signs stay valid even
@@ -50,14 +50,18 @@
     return;
   }
 
-  // The agent's own landing page (perchqr.com/<slug>) is where a code falls
-  // back to — never the perchqr.com marketing homepage. A code saved with
+  // The agent's own landing page (flyerbox.net/<slug>) is where a code falls
+  // back to — never the flyerbox.net marketing homepage. A code saved with
   // just the site root is treated as "my landing page".
   const { data: agent } = await sb.from('agents').select('slug').eq('id', qr.agent_id).maybeSingle();
   let destination = qr.url;
   try {
     const u = new URL(qr.url, window.location.origin);
-    if (agent && u.origin === window.location.origin && (u.pathname === '/' || u.pathname === '')) {
+    // "Ours" = this site, or any of its older/alternate domains (a code saved
+    // before the rename may hold a perchqr.com address).
+    const ours = u.origin === window.location.origin ||
+      ['flyerbox.net', 'www.flyerbox.net', 'flyerbox.ai', 'www.flyerbox.ai', 'perchqr.com', 'www.perchqr.com'].includes(u.hostname);
+    if (agent && ours && (u.pathname === '/' || u.pathname === '')) {
       destination = '/' + agent.slug;
     }
   } catch (e) { /* bad url: plain redirect */ }

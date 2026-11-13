@@ -4,19 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<title>Connecting Flexmls — PerchQR</title>
+<title>Connecting Flexmls — FlyerBox</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
 <!--
-  Where Flexmls (Spark) sends an agent back after they approve PerchQR:
-  https://perchqr.com/oauth/spark/callback?code=...&state=...
+  Where Flexmls (Spark) sends an agent back after they approve FlyerBox:
+  https://perchqr.com/oauth/spark/callback?code=...&state=...  (the address FBS
+  has registered; perchqr.com 301s it to https://flyerbox.net/oauth/spark/callback
+  with the query string intact, so this page runs on flyerbox.net)
   (reached via "/oauth/spark/callback -> /oauth-callback.html" in _redirects —
   a 200 rewrite, so the browser keeps the original URL and its query string).
 
   This page never sees a token. It hands the one-time `code` and the signed
-  `state` to the spark-oidc Edge Function, along with the agent's own PerchQR
+  `state` to the spark-oidc Edge Function, along with the agent's own FlyerBox
   session; the function swaps the code for tokens server-side (that step needs
   the client secret) and stores them where no browser can read them.
 -->
@@ -53,7 +55,7 @@
 
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
-    fail('Please sign in to PerchQR first, then connect your Flexmls account from the Connect MLS tab.');
+    fail('Please sign in to FlyerBox first, then connect your Flexmls account from the Connect MLS tab.');
     return;
   }
 

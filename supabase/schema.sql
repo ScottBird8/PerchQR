@@ -17,7 +17,7 @@
 -- ============================================================
 create table if not exists public.agents (
   id                uuid primary key references auth.users(id) on delete cascade,
-  slug              text not null unique,       -- perchqr.com/<slug> — lowercase [a-z0-9-], 3-40 chars, reserved-word-checked in app code
+  slug              text not null unique,       -- flyerbox.net/<slug> — lowercase [a-z0-9-], 3-40 chars, reserved-word-checked in app code
   display_name      text not null,               -- "Scott Bird"
   brokerage_name    text,                        -- "Stratum Real Estate Group"
   phone             text,                        -- digits only, e.g. "4355907106" — perch.js formats for display
@@ -210,7 +210,7 @@ create policy "properties_agent_write"
 
 -- ============================================================
 -- 4. qr_codes table — admin-only. QR images encode a stable redirector
---    (perchqr.com/q/<id>), never the agent's slug, so printed signs survive
+--    (perchqr.com/q/<id> before the rename, flyerbox.net/q/<id> since), never the agent's slug, so printed signs survive
 --    slug changes. See PLANNING.md "Tenant URL shape".
 -- ============================================================
 create table if not exists public.qr_codes (
@@ -389,8 +389,8 @@ create policy "qr_scans_agent_delete"
   using (agent_id = auth.uid() or public.is_perchqr_owner());
 
 -- ============================================================
--- 9. site_settings — PerchQR's own COMPANY-wide settings (not
---    per-agent, not per-tenant). Currently just the perchqr.com
+-- 9. site_settings — FlyerBox's own COMPANY-wide settings (not
+--    per-agent, not per-tenant). Currently just the flyerbox.net
 --    landing page's intro video. Singleton row (id = 1).
 --
 --    Write access is hardcoded to Scott's own agent id — there's no
