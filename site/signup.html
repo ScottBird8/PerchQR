@@ -20,6 +20,8 @@
   --maroon:#3B4A5A;
   --maroon-bright:#4E6178;
   --maroon-wash:#E3E7E9;
+  --error:#C62828;
+  --error-wash:#FDECEC;
   --charcoal:#23262B;
   --charcoal-soft:#585F5C;
   --line:#DBDDD5;
@@ -40,12 +42,21 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
 .field input,.field select{width:100%;padding:11px 13px;border:1px solid var(--line-bright);border-radius:8px;font-family:var(--body);font-size:14px;background:#fff;color:var(--charcoal);}
 .slug-preview{font-family:var(--mono);font-size:12px;color:var(--charcoal-soft);margin-top:5px;}
 .slug-preview.ok{color:#2a7a3b;}
-.slug-preview.bad{color:var(--maroon);}
+.slug-preview.bad{color:var(--error);font-weight:600;}
 .field-hint{font-size:11.5px;color:var(--charcoal-soft);margin-top:5px;}
 .btn-block{width:100%;font-family:var(--body);font-weight:600;font-size:14.5px;padding:12px;border-radius:6px;border:none;background:var(--maroon);color:#fff;cursor:pointer;margin-top:8px;}
 .btn-block:hover{background:var(--maroon-bright);}
 .btn-block:disabled{opacity:0.6;cursor:default;}
-.error-msg{color:var(--maroon);font-size:13px;margin-top:12px;text-align:center;}
+/* Problems are always red so they can't be missed. */
+.error-msg{color:var(--error);background:var(--error-wash);border:1px solid var(--error);border-radius:8px;font-size:13.5px;font-weight:600;margin-top:12px;padding:10px 12px;text-align:center;}
+.field-error{display:none;color:var(--error);font-size:12.5px;font-weight:700;margin-top:5px;}
+.field.has-error .field-error{display:block;}
+.field.has-error label{color:var(--error);}
+.field.has-error input,.field.has-error select{border-color:var(--error);background:var(--error-wash);box-shadow:0 0 0 3px rgba(198,40,40,0.16);}
+.field.has-error .field-hint{display:none;}
+.field-error:empty{display:none!important;}
+/* A page address that is invalid, reserved or taken also turns its box red. */
+.field:has(.slug-preview.bad) input{border-color:var(--error);background:var(--error-wash);box-shadow:0 0 0 3px rgba(198,40,40,0.16);}
 .done-msg{text-align:center;}
 .done-msg p{color:var(--charcoal-soft);font-size:14.5px;line-height:1.6;}
 .foot-link{text-align:center;margin-top:18px;font-size:13px;color:var(--charcoal-soft);}
@@ -58,7 +69,7 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
   <div class="card">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      Flyer<span class="wm-box">Box</span>
+      <span>Flyer<span class="wm-box">Box</span></span>
     </div>
 
     <div id="formState">
@@ -67,17 +78,20 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
       <div class="field">
         <label>Full name</label>
         <input id="su_name" placeholder="Jane Doe" autocomplete="name">
+        <div class="field-error"></div>
       </div>
 
       <div class="field">
         <label>Set up your URL name (web page address)</label>
         <input id="su_slug" placeholder="jane-doe">
         <div class="slug-preview" id="slugPreview">flyerbox.net/&hellip;</div>
+        <div class="field-error"></div>
       </div>
 
       <div class="field">
         <label>Phone</label>
         <input id="su_phone" type="tel" autocomplete="tel">
+        <div class="field-error"></div>
         <div class="field-hint">Shown on your page so buyers can call or text you.</div>
       </div>
 
@@ -93,11 +107,13 @@ h2{font-family:var(--display);font-weight:600;font-size:20px;text-align:center;m
       <div class="field">
         <label>Email</label>
         <input id="su_email" type="email" autocomplete="email">
+        <div class="field-error"></div>
       </div>
 
       <div class="field">
         <label>Password</label>
         <input id="su_password" type="password" autocomplete="new-password">
+        <div class="field-error"></div>
         <div class="field-hint">At least 6 characters.</div>
       </div>
 
@@ -222,21 +238,27 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   const phone = document.getElementById('su_phone').value.replace(/\D/g, '');
   const password = document.getElementById('su_password').value;
   const mls = chosenMls();
-  const errEl = document.getElementById('signupError');
-  errEl.classList.add('hidden');
+  clearErrors();
 
-  if (!name) { showError('Enter your full name'); return; }
-  if (!slugFormatOk(slug)) { showError('Choose a valid page address first'); return; }
-  if (RESERVED_SLUGS.has(slug)) { showError('That page address is reserved — choose another'); return; }
-  if (phone.length < 10) { showError('Enter a 10-digit phone number'); return; }
-  if (!email) { showError('Enter your email'); return; }
-  if (!password || password.length < 6) { showError('Password must be at least 6 characters'); return; }
+  // Check every field and mark ALL the problems in red at once, then jump to
+  // the first one.
+  const problems = [];
+  if (!name) problems.push(['su_name', 'Enter your full name.']);
+  if (!slug) problems.push(['su_slug', 'Choose a web page address.']);
+  else if (!slugFormatOk(slug)) problems.push(['su_slug', 'Use 3+ lowercase letters, numbers and hyphens only.']);
+  else if (RESERVED_SLUGS.has(slug)) problems.push(['su_slug', 'That page address is reserved — choose another.']);
+  if (phone.length < 10) problems.push(['su_phone', 'Enter a 10-digit phone number.']);
+  if (!email) problems.push(['su_email', 'Enter your email.']);
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) problems.push(['su_email', 'That email address doesn\'t look right.']);
+  if (!password) problems.push(['su_password', 'Enter a password.']);
+  else if (password.length < 6) problems.push(['su_password', 'Password is too short — use at least 6 characters.']);
+  if (problems.length) { problems.forEach(([id, msg]) => fieldError(id, msg)); focusFirstError(); return; }
 
   const btn = document.getElementById('signupBtn');
   btn.disabled = true; btn.textContent = 'Creating account…';
   try {
     const { data: existing } = await sb.from('agents').select('id').eq('slug', slug).maybeSingle();
-    if (existing) { showError('That page address was just taken — choose another'); return; }
+    if (existing) { fieldError('su_slug', 'That page address was just taken — choose another.'); focusFirstError(); return; }
 
     const { data, error } = await sb.auth.signUp({
       email, password,
@@ -275,19 +297,62 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     const msg = err.message || '';
-    if (msg.includes('already registered')) showError('An account with that email already exists.');
-    else if (msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('unique')) showError('That page address was just taken — go back and choose another.');
-    else showError(msg || 'Something went wrong — try again.');
+    const low = msg.toLowerCase();
+    if (low.includes('already registered') || low.includes('already been registered')) {
+      fieldError('su_email', 'An account with that email already exists. Sign in instead, or use a different email.');
+    } else if (low.includes('duplicate') || low.includes('unique')) {
+      fieldError('su_slug', 'That page address was just taken — choose another.');
+    } else if (low.includes('password')) {
+      fieldError('su_password', msg);
+    } else if (low.includes('email')) {
+      fieldError('su_email', msg);
+    } else if (low.includes('rate limit') || low.includes('too many')) {
+      showError('Too many attempts. Wait a minute and try again.');
+    } else {
+      showError(msg || 'Something went wrong — try again.');
+    }
+    focusFirstError();
   } finally {
     btn.disabled = false; btn.textContent = 'Create account';
   }
 });
 
+// ---- Errors: always red, on the field that needs fixing ----
+function clearErrors() {
+  document.querySelectorAll('.field.has-error').forEach(f => f.classList.remove('has-error'));
+  document.querySelectorAll('.field-error').forEach(e => { e.textContent = ''; });
+  document.getElementById('signupError').classList.add('hidden');
+}
+function fieldError(inputId, msg) {
+  const field = document.getElementById(inputId).closest('.field');
+  field.classList.add('has-error');
+  field.querySelector('.field-error').textContent = msg;
+}
+// A general (not tied to one field) problem: red box above the button.
 function showError(msg) {
   const errEl = document.getElementById('signupError');
   errEl.textContent = msg;
   errEl.classList.remove('hidden');
+  errEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
+function focusFirstError() {
+  const first = document.querySelector('.field.has-error, .field:has(.slug-preview.bad)');
+  if (!first) return;
+  first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  const input = first.querySelector('input, select');
+  if (input) input.focus({ preventScroll: true });
+}
+// Typing in a field clears its own red marking.
+document.querySelectorAll('.field input, .field select').forEach(el => {
+  const clear = () => {
+    const f = el.closest('.field');
+    f.classList.remove('has-error');
+    const fe = f.querySelector('.field-error');
+    if (fe) fe.textContent = '';
+  };
+  el.addEventListener('input', clear);
+  el.addEventListener('change', clear);
+});
 
 // Coming from the landing page's "Request beta access" form: it passes the
 // name and email along so they don't have to be typed twice.

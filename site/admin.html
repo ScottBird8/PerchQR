@@ -43,7 +43,9 @@ input{width:100%;padding:11px 14px;border:1px solid var(--line-bright);border-ra
 button{width:100%;margin-top:6px;font-family:var(--body);font-weight:600;font-size:14.5px;padding:12px;border-radius:6px;border:none;background:var(--maroon);color:#fff;cursor:pointer;}
 button:hover{background:var(--maroon-bright);}
 button:disabled{opacity:0.6;cursor:default;}
-.gate-error{color:var(--maroon);font-size:13px;margin-top:12px;}
+/* Sign-in problems are always red so they can't be missed. */
+.gate-error{color:#C62828;background:#FDECEC;border:1px solid #C62828;border-radius:8px;font-size:13.5px;font-weight:600;margin-top:12px;padding:10px 12px;}
+.gate-card input.invalid{border-color:#C62828;background:#FDECEC;box-shadow:0 0 0 3px rgba(198,40,40,0.16);}
 .hidden{display:none!important;}
 
 /* Signed-in administrator console (shown in place of the gate). */
@@ -145,7 +147,7 @@ table.users tr:last-child td{border-bottom:none;}
   <div class="console-bar">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      Flyer<span class="wm-box">Box</span> Administrator
+      <span>Flyer<span class="wm-box">Box</span> Administrator</span>
     </div>
     <div class="console-bar-actions">
       <a class="btn-sm" href="/app">User dashboard</a>
@@ -190,7 +192,7 @@ table.users tr:last-child td{border-bottom:none;}
   <div class="gate-card">
     <div class="wordmark">
       <svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-      Flyer<span class="wm-box">Box</span>
+      <span>Flyer<span class="wm-box">Box</span></span>
     </div>
     <div class="eyebrow">Administrator</div>
     <h2>Sign in</h2>
@@ -214,11 +216,27 @@ async function attemptLogin() {
   const password = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
   const btn = document.getElementById('loginBtn');
+  const emailEl = document.getElementById('loginEmail');
+  const passEl = document.getElementById('loginPassword');
   errEl.classList.add('hidden');
+  emailEl.classList.remove('invalid'); passEl.classList.remove('invalid');
+  const mark = (msg, ...inputs) => {
+    errEl.textContent = msg; errEl.classList.remove('hidden');
+    inputs.forEach(i => i.classList.add('invalid'));
+  };
+  if (!email) { mark('Enter your email.', emailEl); emailEl.focus(); return; }
+  if (!password) { mark('Enter your password.', passEl); passEl.focus(); return; }
   btn.disabled = true; btn.textContent = 'Signing in…';
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      if (/invalid login credentials/i.test(error.message || '')) {
+        mark('That email or password isn\'t right. Check them and try again.', emailEl, passEl);
+        btn.disabled = false; btn.textContent = 'Sign in';
+        return;
+      }
+      throw error;
+    }
     if (data.user.id !== PERCHQR_OWNER_ID) {
       await sb.auth.signOut();
       throw new Error('This sign-in is for the FlyerBox administrator only.');
@@ -232,6 +250,7 @@ async function attemptLogin() {
 }
 
 document.getElementById('loginBtn').addEventListener('click', attemptLogin);
+['loginEmail', 'loginPassword'].forEach(id => document.getElementById(id).addEventListener('input', (e) => e.target.classList.remove('invalid')));
 document.getElementById('loginPassword').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') attemptLogin();
 });
