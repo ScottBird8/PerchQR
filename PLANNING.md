@@ -478,6 +478,24 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-13 — FlyerBox rename is LIVE.** Netlify primary domain = flyerbox.net;
+  perchqr.com / www.perchqr.com / flyerbox.ai / www.flyerbox.ai 301 to it
+  (verified, path + query kept, incl. /q/<id> and the Flexmls callback). Gotchas
+  hit on cutover: (a) switching the primary domain made Netlify re-issue its
+  cert WITHOUT perchqr.com -> browser cert errors on printed QR codes until the
+  bare `perchqr.com` alias was re-added and "Renew certificate" run (cert now
+  covers all 6 names); keep both perchqr.com and www.perchqr.com as aliases
+  forever. (b) the Netlify domain list can show `www.flyerbox.net` twice (auto
+  + manual alias) — harmless. Scott connected his MLS from flyerbox.net
+  successfully (redirect via perchqr.com callback works). FBS (Forrest) asked to
+  rename the app to "FlyerBox" on the key; redirect URI stays perchqr.com
+  (optional later). Supabase Auth Site URL + Redirect URLs updated. Supabase
+  email templates can't be edited without custom SMTP, but the default text is
+  brand-neutral, so nothing says PerchQR. **Still open:** FBS name-change
+  confirmation; tell the agents (draft note written); custom SMTP (e.g. Resend)
+  before many agents sign up (default sender is low-limit, "Supabase Auth",
+  spam-prone); trademark/TESS check; old utahrealestate.us is unaffected.
+
 - **2026-11-10 — Possible rename PerchQR -> FlyerBox: research + plan (NOT started;
   discussion only — Scott will decide).** Scott owns `flyerbox.ai` and
   `flyerbox.net`. Opinion given: FlyerBox is the stronger name for agents (the
