@@ -478,6 +478,13 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-16 — FBS confirmed (James Richards, Developer Support):** company name
+  on the Spark developer account is now "FlyerBox"; the OIDC key's redirect URI
+  stays https://perchqr.com/oauth/spark/callback (no change needed on our side).
+  **To verify:** the Flexmls approval screen shows "FlyerBox" — if it still says
+  PerchQR, ask FBS to change the application name on the OIDC key itself
+  (they said "company name").
+
 - **2026-11-13 — Business email on flyerbox.net (free).** Incoming: ImprovMX free
   forwarding (domain flyerbox.net; aliases scott@, info@, support@ -> Scott's
   Gmail; add more aliases in ImprovMX any time). GoDaddy DNS at `@`: MX
