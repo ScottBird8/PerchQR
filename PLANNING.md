@@ -478,6 +478,19 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-16 — Forgot-password flow + red form errors + footer changes (all live,
+  tested by Scott).** `/app` sign-in has "Forgot your password?" (emails a reset link
+  via Supabase `resetPasswordForEmail`, redirect `flyerbox.net/app`); the link opens a
+  "Choose a new password" screen (`recoveryGate` in app.html; the `#…type=recovery`
+  hash is captured by a tiny script in `<head>` before supabase-js clears it);
+  expired links give a red message. Sign-up and sign-in problems show in red on the
+  field (signup.html, app.html, admin.html). Agent-page footer now reads
+  "© <year> FlyerBox" (shared `Perch.renderFooter`); the license number moved from the
+  footer into the contact card under the agent's name; brokerage name stays in the
+  header and contact card (advertising rules). Fixed a split "Flyer Box" wordmark.
+  **Still to do:** paste FlyerBox wording into the Supabase email templates
+  (Reset password first — agents now receive it).
+
 - **2026-11-16 — FBS confirmed (James Richards, Developer Support):** company name
   on the Spark developer account is now "FlyerBox"; the OIDC key's redirect URI
   stays https://perchqr.com/oauth/spark/callback (no change needed on our side).
