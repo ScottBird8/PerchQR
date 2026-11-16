@@ -98,9 +98,11 @@ const Perch = (function () {
   }
 
   function renderFooter(agent) {
-    const company = esc(agent.brokerage_name || agent.display_name);
+    // The site and its contents belong to FlyerBox (the agent supplies the
+    // information), so the copyright line names FlyerBox, not the brokerage.
+    // The brokerage name still appears in the page header and contact section.
     return `<footer class="site-footer">
-  <span>&copy; ${new Date().getFullYear()} ${company}. Information deemed reliable but not guaranteed.</span>
+  <span>&copy; ${new Date().getFullYear()} FlyerBox. Information deemed reliable but not guaranteed.</span>
   ${agent.license_number ? `<span>License #${esc(agent.license_number)}</span>` : '<span></span>'}
 </footer>`;
   }
