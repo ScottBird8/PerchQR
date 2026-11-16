@@ -478,6 +478,21 @@ expansion, polished onboarding) until the beta says the product is real.
   replace "PerchQR" text. (6) Tell agents; they sign in once on flyerbox.net
   (browser logins are per-domain). Rollback: `restore-point-before-flyerbox-rename`.
 
+- **2026-11-16 — FlyerBox trademark screening (web search only; NOT legal advice,
+  NOT an official USPTO search).** No exact "FLYERBOX"/"FLYER BOX" mark found in
+  aggregator sites. Closest: FLYBOX, Reg. 8043990 (Flybox Services, LLC, FL;
+  registered 2025-11-25; classes 9/42/45/16; software for tracking household
+  belongings/storage — different field, but one letter off and also software);
+  FLYER, Reg. 7249433 (Flyer Next LLC; classes 39/42/35). No real-estate product
+  named FlyerBox found (competitors: FLYR, Zip Your Flyer, FlyerCo, Realtor
+  Listing Pro). Main concern is strength, not conflict: "flyer box" is the common
+  name of the box on a yard sign, so the mark is descriptive/weak for real estate
+  (hard to register on the Principal Register, little exclusivity). Earlier note:
+  UK leaflet company named FlyerBox; flyerbox.com is owned by someone else.
+  **Before spending real money on branding/printing:** run the official USPTO
+  Trademark Search (tmsearch.uspto.gov) for FLYERBOX, FLYER BOX, FLYBOX in classes
+  9/35/42, and consider a one-time attorney clearance search.
+
 - **2026-11-16 — Forgot-password flow + red form errors + footer changes (all live,
   tested by Scott).** `/app` sign-in has "Forgot your password?" (emails a reset link
   via Supabase `resetPasswordForEmail`, redirect `flyerbox.net/app`); the link opens a
