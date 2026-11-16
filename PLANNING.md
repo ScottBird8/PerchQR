@@ -488,8 +488,10 @@ expansion, polished onboarding) until the beta says the product is real.
   "© <year> FlyerBox" (shared `Perch.renderFooter`); the license number moved from the
   footer into the contact card under the agent's name; brokerage name stays in the
   header and contact card (advertising rules). Fixed a split "Flyer Box" wordmark.
-  **Still to do:** paste FlyerBox wording into the Supabase email templates
-  (Reset password first — agents now receive it).
+  **Done since:** FlyerBox wording (plus a "Questions? support@flyerbox.net" line) is
+  in all Supabase email templates; scott@, info@ and support@flyerbox.net all
+  receive (ImprovMX) and send (Gmail "Send mail as" via Resend); a "Need help?
+  support@flyerbox.net" line is on the sign-in and sign-up pages.
 
 - **2026-11-16 — FBS confirmed (James Richards, Developer Support):** company name
   on the Spark developer account is now "FlyerBox"; the OIDC key's redirect URI
