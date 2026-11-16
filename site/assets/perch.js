@@ -103,7 +103,6 @@ const Perch = (function () {
     // The brokerage name still appears in the page header and contact section.
     return `<footer class="site-footer">
   <span>&copy; ${new Date().getFullYear()} FlyerBox. Information deemed reliable but not guaranteed.</span>
-  ${agent.license_number ? `<span>License #${esc(agent.license_number)}</span>` : '<span></span>'}
 </footer>`;
   }
 
@@ -130,6 +129,7 @@ const Perch = (function () {
       ${headshot}
       <div>
         <h3>${esc(agent.display_name)}</h3>
+        ${agent.license_number ? `<div class="contact-line">License #${esc(agent.license_number)}</div>` : ''}
         ${agent.brokerage_name ? `<div class="role">${esc(agent.brokerage_name)}</div>` : ''}
         ${agent.address_line ? `<div class="contact-line">${esc(agent.address_line)}</div>` : ''}
         ${agent.phone ? `<div class="contact-line"><a href="tel:${esc(agent.phone)}">${esc(formatPhone(agent.phone))}</a></div>` : ''}
