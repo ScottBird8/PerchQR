@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+/* Password-reset emails land here as /app#access_token=...&type=recovery. The
+   Supabase library removes that from the address bar as soon as it loads, so
+   remember it now, before any other script runs. */
+window.__AUTH_HASH = window.location.hash || '';
+</script>
 <title>FlyerBox User Access</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,6 +50,9 @@ body{background:var(--bg);}
 .gate-card button{width:100%;margin-top:6px;}
 /* Sign-in problems are always red so they can't be missed. */
 .gate-error{color:#C62828;background:#FDECEC;border:1px solid #C62828;border-radius:8px;font-size:13.5px;font-weight:600;margin-top:10px;padding:10px 12px;}
+.gate-ok{color:#1E6B34;background:#E8F5EC;border:1px solid #1E6B34;border-radius:8px;font-size:13.5px;font-weight:600;margin-top:10px;padding:10px 12px;}
+.gate-card .gate-link{width:auto;margin:0;}
+.gate-link{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--maroon);font-weight:600;text-decoration:underline;cursor:pointer;}
 .gate-card input.invalid{border-color:#C62828;background:#FDECEC;box-shadow:0 0 0 3px rgba(198,40,40,0.16);}
 
 /* ---- admin shell ---- */
@@ -137,7 +146,21 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
     <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn-sm primary" id="loginBtn" style="width:100%;">Sign in</button>
     <div class="gate-error hidden" id="loginError"></div>
-    <p style="font-size:13px;color:var(--charcoal-soft);margin-top:16px;">New agent? <a href="/signup" style="color:var(--maroon);font-weight:600;">Create an account</a></p>
+    <div class="gate-ok hidden" id="loginInfo"></div>
+    <p style="font-size:13px;margin-top:14px;"><button type="button" class="gate-link" id="forgotBtn">Forgot your password?</button></p>
+    <p style="font-size:13px;color:var(--charcoal-soft);margin-top:10px;">New agent? <a href="/signup" style="color:var(--maroon);font-weight:600;">Create an account</a></p>
+  </div>
+</div>
+
+<!-- Shown when someone opens the link in a password-reset email. -->
+<div id="recoveryGate" class="gate hidden">
+  <div class="gate-card">
+    <div class="wordmark"><svg class="wordmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg><span>Flyer<span class="wm-box">Box</span></span></div>
+    <h2>Choose a new password</h2>
+    <input id="newPassword" type="password" placeholder="New password (at least 6 characters)" autocomplete="new-password">
+    <input id="newPassword2" type="password" placeholder="Type it again" autocomplete="new-password">
+    <button class="btn-sm primary" id="newPasswordBtn" style="width:100%;">Save new password</button>
+    <div class="gate-error hidden" id="recoveryError"></div>
   </div>
 </div>
 
@@ -569,6 +592,12 @@ const adminApp = document.getElementById('adminApp');
 let AGENT = null;
 let AGENT_SELF = null;
 
+// Password-reset link handling (see the early script in <head>): a valid link
+// carries type=recovery, an expired or already-used one carries an error.
+const _authParams = new URLSearchParams((window.__AUTH_HASH || '').replace(/^#/, ''));
+let RECOVERY_MODE = _authParams.get('type') === 'recovery' && !!_authParams.get('access_token');
+let pendingLinkError = !RECOVERY_MODE && !!(_authParams.get('error_code') || _authParams.get('error'));
+
 // FlyerBox-the-company settings (the flyerbox.net landing page, and full
 // read/write access to every agent's data) aren't per-agent, so there's no
 // real "owner" role system yet — just check against Scott's own agent id.
@@ -646,10 +675,25 @@ async function checkAuth() {
   const { data: { session } } = await sb.auth.getSession();
   const blockedEl = document.getElementById('accountBlocked');
   blockedEl.classList.add('hidden');
+  // Opened from a password-reset email: ask for a new password first, instead
+  // of dropping the visitor straight into the dashboard.
+  if (RECOVERY_MODE && session) {
+    gate.classList.add('hidden');
+    notAnAgent.classList.add('hidden');
+    adminApp.classList.add('hidden');
+    document.getElementById('recoveryGate').classList.remove('hidden');
+    return;
+  }
   if (!session) {
     gate.classList.remove('hidden');
     notAnAgent.classList.add('hidden');
     adminApp.classList.add('hidden');
+    if (pendingLinkError) {
+      pendingLinkError = false;
+      const le = document.getElementById('loginError');
+      le.textContent = 'That password-reset link has expired or was already used. Enter your email above and click "Forgot your password?" to get a new one.';
+      le.classList.remove('hidden');
+    }
     return;
   }
   let { data: agent, error } = await sb.from('agents').select('*').eq('id', session.user.id).maybeSingle();
@@ -794,6 +838,76 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   }
   checkAuth();
 });
+// "Forgot your password?" — emails a reset link to the address typed above.
+// The reply never says whether an account exists for that address.
+document.getElementById('forgotBtn').addEventListener('click', async () => {
+  const emailEl = document.getElementById('loginEmail');
+  const errEl = document.getElementById('loginError');
+  const infoEl = document.getElementById('loginInfo');
+  const btn = document.getElementById('forgotBtn');
+  errEl.classList.add('hidden'); infoEl.classList.add('hidden');
+  emailEl.classList.remove('invalid');
+  document.getElementById('loginPassword').classList.remove('invalid');
+  const email = emailEl.value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Type your email in the box above first, then click "Forgot your password?".';
+    errEl.classList.remove('hidden');
+    emailEl.classList.add('invalid'); emailEl.focus();
+    return;
+  }
+  btn.disabled = true;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/app' });
+  btn.disabled = false;
+  if (error) {
+    errEl.textContent = /rate limit|too many|seconds/i.test(error.message || '')
+      ? 'Too many requests. Wait a minute and try again.'
+      : (error.message || 'Could not send the email. Try again.');
+    errEl.classList.remove('hidden');
+    return;
+  }
+  infoEl.textContent = `If there's an account for ${email}, we've emailed a link to reset your password. Check your inbox (and spam).`;
+  infoEl.classList.remove('hidden');
+});
+
+// New-password screen (opened from the reset email).
+async function saveNewPassword() {
+  const p1El = document.getElementById('newPassword');
+  const p2El = document.getElementById('newPassword2');
+  const errEl = document.getElementById('recoveryError');
+  const btn = document.getElementById('newPasswordBtn');
+  errEl.classList.add('hidden');
+  p1El.classList.remove('invalid'); p2El.classList.remove('invalid');
+  const fail = (msg, ...inputs) => {
+    errEl.textContent = msg; errEl.classList.remove('hidden');
+    inputs.forEach(i => i.classList.add('invalid'));
+    (inputs[0] || p1El).focus();
+  };
+  if (!p1El.value) return fail('Enter a new password.', p1El);
+  if (p1El.value.length < 6) return fail('Password is too short — use at least 6 characters.', p1El);
+  if (p1El.value !== p2El.value) return fail('The two passwords don\'t match.', p2El);
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const { error } = await sb.auth.updateUser({ password: p1El.value });
+  btn.disabled = false; btn.textContent = 'Save new password';
+  if (error) {
+    const m = error.message || '';
+    if (/different from the old|same as/i.test(m)) return fail('Choose a password you haven\'t used before.', p1El);
+    if (/session/i.test(m)) return fail('That reset link has expired. Go back to sign in and click "Forgot your password?" for a new one.');
+    return fail(m || 'Could not save the new password. Try again.');
+  }
+  // Done: leave reset mode, tidy the address bar, and carry on into the dashboard.
+  RECOVERY_MODE = false;
+  document.getElementById('recoveryGate').classList.add('hidden');
+  history.replaceState(null, '', window.location.pathname);
+  await checkAuth();
+  toast('Password updated.');
+}
+document.getElementById('newPasswordBtn').addEventListener('click', saveNewPassword);
+['newPassword', 'newPassword2'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => el.classList.remove('invalid'));
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveNewPassword(); });
+});
+
 // Typing in a box clears its red marking.
 ['loginEmail', 'loginPassword'].forEach(id => document.getElementById(id).addEventListener('input', (e) => e.target.classList.remove('invalid')));
 document.getElementById('loginPassword').addEventListener('keydown', (e) => {
