@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyerBox | Beta for Utah agents</title>
+<meta name="description" content="Put a QR code on your yard sign that opens your live listing page, photo and video intro. Free during the private beta for 10 Utah agents.">
+<meta property="og:title" content="FlyerBox | Your yard sign, working harder">
+<meta property="og:description" content="One QR code on your sign opens your live listing page. 10 free beta spots for Utah agents.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://flyerbox.net/beta">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/styles.css">
+<style>
+  /* Beta page extras — reuses the landing-page theme from styles.css. */
+  .beta-fit{max-width:1080px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+  .beta-fit-card{background:var(--pq-surface);border:1px solid var(--pq-line);border-radius:8px;padding:26px;}
+  .beta-fit-card h3{font-family:var(--pq-display);font-weight:600;font-size:18px;margin:0 0 14px;color:var(--pq-ink);}
+  .beta-fit-card ul{list-style:none;margin:0;padding:0;}
+  .beta-fit-card li{position:relative;padding:7px 0 7px 26px;color:var(--pq-sub);font-size:15px;line-height:1.5;}
+  .beta-fit-card li::before{content:"";position:absolute;left:0;top:12px;width:12px;height:12px;border-radius:50%;background:var(--pq-cedar-soft);border:2px solid var(--pq-cedar);}
+  .beta-fit-card p{color:var(--pq-sub);font-size:15px;line-height:1.6;margin:0 0 12px;}
+  .beta-faq{max-width:760px;margin:0 auto;padding:0 28px;}
+  .beta-faq details{border-top:1px solid var(--pq-line);padding:16px 0;}
+  .beta-faq details:last-child{border-bottom:1px solid var(--pq-line);}
+  .beta-faq summary{cursor:pointer;font-family:var(--pq-display);font-weight:600;font-size:16px;color:var(--pq-ink);}
+  .beta-faq details p{color:var(--pq-sub);font-size:14.5px;line-height:1.6;margin:10px 0 0;}
+  .beta-spots{display:inline-block;font-family:var(--pq-mono);font-size:12px;color:var(--pq-sub);margin-top:14px;}
+  @media (max-width:760px){ .beta-fit{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="landing">
+  <header class="landing-header">
+    <div class="landing-brand">
+      <svg class="landing-logo" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/>
+      </svg>
+      <a href="/" class="landing-wordmark" style="text-decoration:none;">Flyer<span class="wm-box">Box</span></a>
+    </div>
+    <nav class="landing-nav">
+      <a href="/app" class="landing-nav-login">Log in</a>
+      <a class="btn btn-primary" href="/signup">Claim a spot</a>
+    </nav>
+  </header>
+
+  <section class="landing-hero">
+    <div class="landing-hero-grid no-video">
+      <div class="landing-hero-inner">
+        <span class="landing-eyebrow">Utah beta &middot; 10 spots</span>
+        <h1>Your yard sign, <em>working harder.</em></h1>
+        <p>Put one QR code on your sign. Buyers scan it and land on your own branded listing page, with the photos, the details, your video intro and your contact info. Change the price or the video any time, and the printed sign still works.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
+          <a class="btn btn-ghost" href="/scott-bird/listing?id=1227-n-50-w-7mck">See a live example &rarr;</a>
+        </div>
+        <span class="beta-spots">Free during the private beta &middot; takes about five minutes</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-benefits">
+    <div class="landing-benefits-inner">
+      <div class="landing-benefit">
+        <h3>Reprint less</h3>
+        <p>The QR code points at your live page, not a fixed flyer. When the price, status or video changes, you update it online instead of printing again.</p>
+      </div>
+      <div class="landing-benefit">
+        <h3>Turn drive-bys into visits</h3>
+        <p>A curbside visitor can see the home, meet you on video and reach you in one tap. You can also see when your sign gets scanned.</p>
+      </div>
+      <div class="landing-benefit">
+        <h3>More exposure for you</h3>
+        <p>Every listing lives on a page with your name, photo and brokerage, so the sign promotes you as well as the house.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-features" id="how-it-works">
+    <div class="landing-section-head">
+      <span class="landing-eyebrow">How it works</span>
+      <h2>From MLS number to yard sign in minutes.</h2>
+    </div>
+    <div class="landing-steps">
+      <div class="landing-step">
+        <div class="landing-step-num">01</div>
+        <h3>Create your account</h3>
+        <p>Pick your page address and connect Flexmls once. One click, about a minute.</p>
+      </div>
+      <div class="landing-step">
+        <div class="landing-step-num">02</div>
+        <h3>Add a listing</h3>
+        <p>Enter the MLS number and the price, photos and details fill in. Add a short video hello if you like.</p>
+      </div>
+      <div class="landing-step">
+        <div class="landing-step-num">03</div>
+        <h3>Print your QR code</h3>
+        <p>Put it on the sign. Every scan lands on your own branded page.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-features" style="padding-top:0;">
+    <div class="landing-section-head">
+      <span class="landing-eyebrow">Who it's for</span>
+      <h2>We're looking for 10 agents who fit this.</h2>
+    </div>
+    <div class="beta-fit">
+      <div class="beta-fit-card">
+        <h3>A good fit if you...</h3>
+        <ul>
+          <li>Put yard signs on your listings</li>
+          <li>Are a Utah agent on UtahRealEstate.com (Flexmls)</li>
+          <li>Want more leads from the signs you already have</li>
+          <li>Are tired of paying to reprint signs and flyers</li>
+          <li>Want more exposure for your name, not just the property</li>
+        </ul>
+      </div>
+      <div class="beta-fit-card">
+        <h3>What the beta means</h3>
+        <p>FlyerBox is new. It's free while we're in the private beta, and we'll ask for honest feedback so we can build what agents actually use.</p>
+        <p>Your pages are yours: your slug, your brand, your listings. If it isn't useful, you can walk away.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-features" style="padding-top:0;">
+    <div class="landing-section-head">
+      <span class="landing-eyebrow">Questions</span>
+      <h2>Quick answers.</h2>
+    </div>
+    <div class="beta-faq">
+      <details>
+        <summary>What does it cost?</summary>
+        <p>Nothing during the private beta. If we ever add pricing, you'll hear about it before anything changes.</p>
+      </details>
+      <details>
+        <summary>Which MLS does it work with?</summary>
+        <p>Flexmls, which is what UtahRealEstate.com uses. Autofill pulls the details straight from your board's feed after you approve the connection.</p>
+      </details>
+      <details>
+        <summary>Do I need new signs?</summary>
+        <p>No. You print the QR code and put it on the sign you already use.</p>
+      </details>
+      <details>
+        <summary>Who do I contact with questions?</summary>
+        <p>Email <a href="mailto:support@flyerbox.net">support@flyerbox.net</a> and a real person will answer.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="landing-cta-band">
+    <h2>Ready to put your sign to work?</h2>
+    <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
+  </section>
+
+  <footer class="landing-footer">
+    <span class="landing-wordmark small">Flyer<span class="wm-box">Box</span></span>
+    <span>&copy; <script>document.write(new Date().getFullYear())</script> FlyerBox. Free during the private beta.</span>
+  </footer>
+</div>
+</body>
+</html>

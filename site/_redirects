@@ -65,6 +65,10 @@ https://www.flyerbox.net/*  https://flyerbox.net/:splat  301!
 # Self-serve signup.
 /signup          /signup.html         200
 
+# Beta landing page for ad traffic (Facebook etc.) — see site/beta.html.
+# "beta" is also a reserved slug (schema.sql + signup.html).
+/beta            /beta.html           200
+
 # TODO: the other reserved words in PLANNING.md's "Tenant URL shape" list
 # (admin, api, www, login, signin, …) don't have real pages yet, so they're
 # not routed here — but they're still blocked from being CLAIMED as a slug

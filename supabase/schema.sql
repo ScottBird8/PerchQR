@@ -113,7 +113,7 @@ alter table public.agents add constraint agents_slug_not_reserved
     'app','admin','api','www','mail','cdn','static','assets',
     'login','signup','signin','signout','logout','account',
     'billing','dashboard','settings','pricing','about','blog',
-    'help','support','docs','terms','privacy','status','q','s'
+    'help','support','docs','terms','privacy','status','q','s','beta'
   ));
 
 -- ============================================================
