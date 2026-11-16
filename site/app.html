@@ -149,6 +149,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
     <div class="gate-ok hidden" id="loginInfo"></div>
     <p style="font-size:13px;margin-top:14px;"><button type="button" class="gate-link" id="forgotBtn">Forgot your password?</button></p>
     <p style="font-size:13px;color:var(--charcoal-soft);margin-top:10px;">New agent? <a href="/signup" style="color:var(--maroon);font-weight:600;">Create an account</a></p>
+    <p style="font-size:13px;color:var(--charcoal-soft);margin-top:10px;">Need help? <a href="mailto:support@flyerbox.net" style="color:var(--maroon);font-weight:600;">support@flyerbox.net</a></p>
   </div>
 </div>
 
@@ -742,7 +743,7 @@ async function checkAuth() {
       notAnAgent.classList.add('hidden');
       adminApp.classList.add('hidden');
       document.getElementById('accountBlockedText').textContent =
-        `Your FlyerBox account is currently ${st.name.toLowerCase()}, so the dashboard isn't available. Your information has not been deleted. Please contact FlyerBox to have access restored.`;
+        `Your FlyerBox account is currently ${st.name.toLowerCase()}, so the dashboard isn't available. Your information has not been deleted. Please email support@flyerbox.net to have access restored.`;
       blockedEl.classList.remove('hidden');
       return;
     }
