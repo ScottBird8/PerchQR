@@ -27,6 +27,12 @@ https://www.flyerbox.net/*  https://flyerbox.net/:splat  301!
 # which is why every page these rules point at uses ABSOLUTE asset/link paths
 # instead of relative ones — see the comment at the top of assets/perch.js.
 
+# Home page (flyerbox.net/) is the "Digital FlyerBox" page in site/beta.html.
+# The "!" forces it even though site/index.html exists (index.html still serves
+# every agent page via the /:slug rule at the bottom; its old no-slug landing
+# branch is no longer reached). /beta serves the same page, so ad links keep working.
+/                /beta.html           200!
+
 # QR redirector: /q/<qr_codes.id> -> resolves the code, logs the scan, and
 # forwards to its stored destination. See site/q.html.
 /q/:id           /q.html?id=:id       200
