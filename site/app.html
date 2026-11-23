@@ -84,6 +84,8 @@ body{background:var(--bg);}
 .row-meta{font-family:var(--mono);font-size:11.5px;color:var(--charcoal-soft);margin-top:3px;}
 .row-badges{font-size:12px;color:var(--charcoal-soft);margin-top:3px;}
 .row-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.row-videolink{display:block;margin-top:8px;padding:0;border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--maroon);text-decoration:underline;cursor:pointer;text-align:left;}
+.row-videolink:hover{text-decoration:none;}
 .chip{font-size:12px;padding:2px 9px;border-radius:6px;background:#eceeea;color:var(--charcoal-soft);}
 .chip.ok{background:#e6f2e8;color:#1f5c2c;}
 .chip.warn{background:#fbf1dc;color:#7a5410;}
@@ -1440,6 +1442,7 @@ function renderPropertyList() {
         <div class="row-addr">${Perch.esc(p.addr)}</div>
         <div class="row-meta">${Perch.esc(p.price)} &middot; ${Perch.TYPE_LABEL[p.type] || p.type}${p.mls ? ' &middot; MLS #' + Perch.esc(p.mls) : ''}</div>
         <div class="row-chips">${chips.join('')}</div>
+        ${!p.video_url && !sold ? `<button type="button" class="row-videolink" data-video-help="${p.id}">🎬 Not sure what to say? Get a script and tips</button>` : ''}
       </div>
       <div class="row-actions">
         ${!p.video_url && !sold ? `<button class="btn-sm primary" data-add-video="${p.id}">Add video</button>` : ''}
@@ -1470,6 +1473,15 @@ function renderPropertyList() {
   listEl.querySelectorAll('[data-add-video]').forEach(btn => btn.addEventListener('click', () => {
     openPropertyForm(btn.dataset.addVideo);
     setTimeout(() => document.getElementById('f_video').scrollIntoView({ block: 'center', behavior: 'smooth' }), 60);
+  }));
+  listEl.querySelectorAll('[data-video-help]').forEach(btn => btn.addEventListener('click', () => {
+    openPropertyForm(btn.dataset.videoHelp);
+    setTimeout(() => {
+      const help = document.getElementById('videoHelp');
+      help.open = true;
+      refreshVideoScript(false);
+      help.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, 60);
   }));
   listEl.querySelectorAll('[data-preview]').forEach(btn => btn.addEventListener('click', () => window.open(`/${AGENT.slug}/listing?id=${encodeURIComponent(btn.dataset.preview)}`, '_blank')));
   listEl.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => openPropertyForm(btn.dataset.edit)));
