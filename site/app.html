@@ -157,6 +157,17 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 .script-reader-bar .btn-sm{background:#2b2b2e;color:#fff;border-color:#4a4a4e;}
 .script-reader-text{flex:1;overflow-y:auto;padding:28px 24px 60px;font-family:var(--body);font-size:34px;line-height:1.5;max-width:820px;margin:0 auto;white-space:pre-wrap;}
 
+/* in-browser camera window (headshot) */
+.cam-modal{position:fixed;inset:0;z-index:450;background:rgba(20,20,22,0.8);display:none;align-items:center;justify-content:center;padding:16px;}
+.cam-modal.open{display:flex;}
+.cam-card{background:#fff;border-radius:var(--radius);width:100%;max-width:520px;padding:18px;}
+.cam-card h3{font-family:var(--display);margin:0 0 10px;font-size:18px;}
+.cam-stage{position:relative;background:#111;border-radius:10px;overflow:hidden;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;}
+.cam-stage video,.cam-stage canvas{width:100%;height:100%;object-fit:cover;display:block;}
+.cam-stage video{transform:scaleX(-1);}  /* mirror the live view like a selfie; the saved photo is not mirrored */
+.cam-msg{color:#fff;font-size:14px;padding:20px;text-align:center;}
+.cam-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;}
+
 /* toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--charcoal);color:#fff;padding:11px 20px;border-radius:100px;font-size:13px;opacity:0;transition:all .25s;z-index:500;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -267,6 +278,12 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <div class="field full">
             <label>Headshot photo</label>
             <input type="file" id="pf_headshot_file" accept="image/*">
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <button type="button" class="btn-sm" id="takeHeadshotBtn">📷 Take a photo with your camera</button>
+              <span class="field-hint" style="margin:0;">or choose a file above. Click Save changes afterward.</span>
+            </div>
+            <!-- Phones/tablets: opens the camera app straight to the front camera -->
+            <input type="file" id="pf_headshot_camera" accept="image/*" capture="user" class="hidden">
             <div id="pfHeadshotPreview" class="thumb-strip"></div>
           </div>
           <div class="field full">
@@ -647,6 +664,24 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="cam-modal" id="camModal" role="dialog" aria-label="Take a photo">
+  <div class="cam-card">
+    <h3>Take your headshot</h3>
+    <div class="cam-stage" id="camStage">
+      <video id="camVideo" autoplay playsinline muted></video>
+      <canvas id="camCanvas" class="hidden"></canvas>
+      <div class="cam-msg hidden" id="camMsg"></div>
+    </div>
+    <div class="field-hint" id="camHint" style="margin-top:8px;">Face the light, look into the camera and smile.</div>
+    <div class="cam-actions">
+      <button type="button" class="btn-sm" id="camCancel">Cancel</button>
+      <button type="button" class="btn-sm hidden" id="camRetake">Retake</button>
+      <button type="button" class="btn-sm primary" id="camSnap">Take photo</button>
+      <button type="button" class="btn-sm primary hidden" id="camUse">Use this photo</button>
+    </div>
+  </div>
+</div>
+
 <div class="script-reader" id="scriptReader" role="dialog" aria-label="Video script">
   <div class="script-reader-bar">
     <span>Read this while you record. Look into the camera.</span>
@@ -1204,6 +1239,73 @@ document.getElementById('pf_headshot_file').addEventListener('change', (e) => {
   pfHeadshotFile = e.target.files[0] || null;
   renderPfPreview('pfHeadshotPreview', pfHeadshotFile, pfHeadshotExistingUrl);
 });
+/* ---- Take a headshot with the camera ---- */
+function setHeadshotFromFile(file) {
+  pfHeadshotFile = file || null;
+  renderPfPreview('pfHeadshotPreview', pfHeadshotFile, pfHeadshotExistingUrl);
+  if (file) toast('Photo ready. Click Save changes to keep it.');
+}
+// Phones and tablets: the hidden input with capture="user" opens the camera app itself.
+document.getElementById('pf_headshot_camera').addEventListener('change', (e) => {
+  setHeadshotFromFile(e.target.files[0]);
+  e.target.value = '';
+});
+let camStream = null;
+const camEl = (id) => document.getElementById(id);
+function camShow(mode) {   // 'live' | 'shot' | 'error'
+  camEl('camVideo').classList.toggle('hidden', mode !== 'live');
+  camEl('camCanvas').classList.toggle('hidden', mode !== 'shot');
+  camEl('camMsg').classList.toggle('hidden', mode !== 'error');
+  camEl('camSnap').classList.toggle('hidden', mode !== 'live');
+  camEl('camRetake').classList.toggle('hidden', mode !== 'shot');
+  camEl('camUse').classList.toggle('hidden', mode !== 'shot');
+}
+function camStop() {
+  if (camStream) camStream.getTracks().forEach(t => t.stop());
+  camStream = null;
+  camEl('camVideo').srcObject = null;
+}
+function camClose() { camStop(); camEl('camModal').classList.remove('open'); }
+async function camStart() {
+  camShow('live');
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+    camEl('camVideo').srcObject = camStream;
+  } catch (err) {
+    console.error(err);
+    const denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+    camEl('camMsg').textContent = denied
+      ? "Your browser blocked the camera. Click the camera icon in the address bar to allow it, then try again, or close this and upload a photo instead."
+      : "We couldn't find a camera on this device. Close this and upload a photo instead.";
+    camShow('error');
+  }
+}
+document.getElementById('takeHeadshotBtn').addEventListener('click', () => {
+  const touchDevice = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  if (touchDevice || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+    document.getElementById('pf_headshot_camera').click();   // native camera (or file picker if none)
+    return;
+  }
+  camEl('camModal').classList.add('open');
+  camStart();
+});
+camEl('camCancel').addEventListener('click', camClose);
+camEl('camRetake').addEventListener('click', () => camShow('live'));
+camEl('camSnap').addEventListener('click', () => {
+  const v = camEl('camVideo'), c = camEl('camCanvas');
+  if (!v.videoWidth) return;
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);   // not mirrored
+  camShow('shot');
+});
+camEl('camUse').addEventListener('click', () => {
+  camEl('camCanvas').toBlob((blob) => {
+    if (!blob) { toast('Could not capture the photo. Please try again.'); return; }
+    setHeadshotFromFile(new File([blob], 'headshot.jpg', { type: 'image/jpeg' }));
+    camClose();
+  }, 'image/jpeg', 0.92);
+});
+
 document.getElementById('pf_logo_file').addEventListener('change', (e) => {
   pfLogoFile = e.target.files[0] || null;
   renderPfPreview('pfLogoPreview', pfLogoFile, pfLogoExistingUrl);
