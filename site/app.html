@@ -359,7 +359,7 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
     <div class="tab-panel" id="tab-homepage">
       <div class="overlay-card" style="max-width:560px;padding:24px;">
         <h2 style="font-size:16px;">Home page welcome video</h2>
-        <p class="field-hint" style="margin-bottom:16px;">Optional. Shown at the top of your homepage; if you don't upload one, that space is simply left out.</p>
+        <p class="field-hint" style="margin-bottom:16px;">Optional. This is your chance to introduce yourself: who you are, your experience, what you like to do. It's shown at the top of your homepage. If you don't upload one, that space is simply left out.</p>
 
         <div class="field" style="margin-bottom:8px;">
           <label>Welcome video &mdash; 50 MB max</label>
@@ -367,6 +367,60 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
           <div class="field-hint" style="margin-top:6px;">Maximum file size: 50 MB. MP4 works best.</div>
           <div id="homeVideoStatus" class="field-hint" style="margin-top:6px;">Loading&hellip;</div>
           <video id="homeVideoPreview" controls class="hidden" style="margin-top:10px;max-width:260px;border-radius:8px;background:#000;"></video>
+
+          <details class="video-help" id="homeVideoHelp">
+            <summary>🎬 Need help with your video? Get a script and tips</summary>
+            <div class="video-help-body">
+              <p class="vh-lead">Introduce yourself the way you would to a new neighbor. Share your experience, a bit about who you are, and what you love to do. People hire people they like, so keep it real.</p>
+
+              <div class="vh-row">
+                <div class="vh-col">
+                  <label for="hv_years">How long in real estate</label>
+                  <input id="hv_years" placeholder="e.g. 8 years">
+                </div>
+                <div class="vh-col">
+                  <label for="hv_area">Where you work</label>
+                  <input id="hv_area" placeholder="e.g. Cedar City and Iron County">
+                </div>
+              </div>
+              <div class="vh-row">
+                <div class="vh-col">
+                  <label for="hv_hobby">Something you love to do</label>
+                  <input id="hv_hobby" placeholder="e.g. hiking and fishing with my kids">
+                </div>
+                <div class="vh-col">
+                  <label for="hv_care">What you care about most</label>
+                  <input id="hv_care" placeholder="e.g. treating every client like family">
+                </div>
+              </div>
+
+              <label for="homeVideoScript">Your script &mdash; edit it so it sounds like you</label>
+              <textarea id="homeVideoScript" rows="7"></textarea>
+              <div class="vh-meta"><span id="homeVideoScriptTime"></span></div>
+              <div class="vh-actions">
+                <button type="button" class="btn-sm primary" id="homeVideoScriptCopy">Copy script</button>
+                <button type="button" class="btn-sm" id="homeVideoScriptFull">Read it full screen</button>
+                <button type="button" class="btn-sm" id="homeVideoScriptReset">Start over</button>
+              </div>
+
+              <div class="vh-tips">
+                <strong>Tips for a great introduction</strong>
+                <ul>
+                  <li>Keep it under 60 seconds. Don't overthink it.</li>
+                  <li>Be yourself: natural and confident. Look into the camera.</li>
+                  <li>Share who you are: your experience, what you like to do, your hobbies, anything that shows you.</li>
+                  <li>Record at your office, outdoors, or somewhere that feels like you.</li>
+                  <li>It doesn't have to be permanent. Replace it any time with a new video.</li>
+                </ul>
+                <strong>So it uploads easily</strong>
+                <ul>
+                  <li>Record in 1080p (not 4K) so the file stays under 50 MB.</li>
+                  <li>iPhone: Settings &rarr; Camera &rarr; Formats &rarr; Most Compatible.</li>
+                  <li>The file should be an MP4. Short clips almost always fit.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
         </div>
 
         <div class="form-actions" style="justify-content:flex-start;">
@@ -1678,14 +1732,56 @@ function setScriptReaderSize(px) {
   scriptReaderSize = Math.min(64, Math.max(20, px));
   document.getElementById('scriptReaderText').style.fontSize = scriptReaderSize + 'px';
 }
-document.getElementById('videoScriptFull').addEventListener('click', () => {
-  document.getElementById('scriptReaderText').textContent = document.getElementById('videoScript').value;
+function openScriptReader(text) {
+  document.getElementById('scriptReaderText').textContent = text;
   setScriptReaderSize(34);
   document.getElementById('scriptReader').classList.add('open');
-});
+}
+document.getElementById('videoScriptFull').addEventListener('click', () => openScriptReader(document.getElementById('videoScript').value));
 document.getElementById('scriptReaderClose').addEventListener('click', () => document.getElementById('scriptReader').classList.remove('open'));
 document.getElementById('scriptReaderBigger').addEventListener('click', () => setScriptReaderSize(scriptReaderSize + 4));
 document.getElementById('scriptReaderSmaller').addEventListener('click', () => setScriptReaderSize(scriptReaderSize - 4));
+
+/* ---- Video help panel for the home page welcome video: a personal introduction ---- */
+var homeScriptEdited = false;   // true once the agent types in the script box
+function buildHomeVideoScript() {
+  const val = (id) => (document.getElementById(id).value || '').trim();
+  const name = (AGENT && AGENT.display_name) || '[your name]';
+  const brokerage = AGENT && AGENT.brokerage_name ? ` with ${AGENT.brokerage_name}` : '';
+  const years = val('hv_years') || '[how long]';
+  const area = val('hv_area') || '[where you work]';
+  const hobby = val('hv_hobby') || '[something you love to do]';
+  const care = val('hv_care') || '[what you care about most]';
+  return `Hi, I'm ${name}${brokerage}. I've been helping people buy and sell homes in ${area} for ${years}. Outside of work, I love ${hobby}. What I care about most is ${care}. Whether you're buying or selling, I'd love to help, so give me a call.`;
+}
+function updateHomeScriptTime() {
+  const words = (document.getElementById('homeVideoScript').value.match(/\S+/g) || []).length;
+  const secs = Math.max(1, Math.round(words / 2.4));
+  const el = document.getElementById('homeVideoScriptTime');
+  el.textContent = secs > 60
+    ? `About ${secs} seconds read aloud. That's long. Try trimming it to stay under 60.`
+    : `About ${secs} seconds read aloud. Nice and short.`;
+  el.parentElement.classList.toggle('long', secs > 60);
+}
+function refreshHomeScript(force) {
+  if (homeScriptEdited && !force) return;
+  document.getElementById('homeVideoScript').value = buildHomeVideoScript();
+  if (force) homeScriptEdited = false;
+  updateHomeScriptTime();
+}
+document.getElementById('homeVideoHelp').addEventListener('toggle', (e) => { if (e.target.open) refreshHomeScript(false); });
+['hv_years', 'hv_area', 'hv_hobby', 'hv_care'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => refreshHomeScript(false));
+});
+document.getElementById('homeVideoScript').addEventListener('input', () => { homeScriptEdited = true; updateHomeScriptTime(); });
+document.getElementById('homeVideoScriptReset').addEventListener('click', () => refreshHomeScript(true));
+document.getElementById('homeVideoScriptCopy').addEventListener('click', async () => {
+  const text = document.getElementById('homeVideoScript').value;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const ta = document.getElementById('homeVideoScript'); ta.select(); document.execCommand('copy'); }
+  toast('Script copied.');
+});
+document.getElementById('homeVideoScriptFull').addEventListener('click', () => openScriptReader(document.getElementById('homeVideoScript').value));
 
 function openPropertyForm(id) {
   resetPropertyForm();
