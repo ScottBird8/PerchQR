@@ -3,56 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FlyerBox | Beta for Utah agents</title>
-<meta name="description" content="Put a QR code on your yard sign that opens your live listing page and video intro. The first 10 beta users use FlyerBox free for life.">
-<meta property="og:title" content="FlyerBox | Your yard sign, working harder">
-<meta property="og:description" content="One QR code on your sign opens your live listing page. The first 10 beta users are free for life.">
+<title>FlyerBox | The Digital FlyerBox</title>
+<meta name="description" content="The Digital FlyerBox is finally here! Replace the paper flyer box on your yard sign with a QR code. Every listing gets its own flyer and its own video.">
+<meta property="og:title" content="The Digital FlyerBox">
+<meta property="og:description" content="Every listing gets its own flyer, its own video, and it's quick and easy to update. The first 10 beta users are free for life.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://flyerbox.net/beta">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Karla:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/styles.css">
 <style>
-  /* Beta page extras — reuses the landing-page theme from styles.css. */
-  .beta-flow{max-width:1080px;margin:0 auto;padding:50px 28px;display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:18px;align-items:center;}
-  .beta-flow-step{text-align:center;}
-  .beta-flow-step svg{width:104px;height:104px;color:var(--pq-slate);display:block;margin:0 auto 12px;}
-  .beta-flow-step h3{font-family:var(--pq-display);font-weight:600;font-size:18px;margin:0 0 4px;color:var(--pq-ink);}
-  .beta-flow-step p{color:var(--pq-sub);font-size:14px;line-height:1.5;margin:0 auto;max-width:24ch;}
-  .beta-flow-arrow{color:var(--pq-cedar);}
-  .beta-flow-arrow svg{width:34px;height:34px;display:block;}
+  /* Digital FlyerBox landing page — reuses the landing theme from styles.css. */
+  .beta-hero{max-width:1080px;margin:0 auto;padding:44px 28px 40px;display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center;}
+  .beta-hero h1{font-family:var(--pq-display);font-weight:600;font-size:clamp(42px,6vw,66px);line-height:1.02;letter-spacing:-.01em;margin:0 0 16px;color:var(--pq-ink);}
+  .beta-hero h1 em{font-style:italic;color:var(--pq-cedar);}
+  .beta-hero .lede{color:var(--pq-sub);font-size:18px;line-height:1.55;margin:0 0 26px;max-width:34ch;}
+  .beta-hero .illus{width:100%;height:auto;}
+  .beta-note{display:inline-block;font-family:var(--pq-mono);font-size:12px;color:var(--pq-sub);margin-top:14px;}
 
-  .beta-grid{max-width:1080px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
-  .beta-item{background:var(--pq-surface);border:1px solid var(--pq-line);border-radius:8px;padding:22px 20px;}
-  .beta-item svg{width:30px;height:30px;color:var(--pq-slate);margin-bottom:12px;display:block;}
-  .beta-item h3{font-family:var(--pq-display);font-weight:600;font-size:16px;margin:0 0 6px;color:var(--pq-ink);}
-  .beta-item p{color:var(--pq-sub);font-size:13.5px;line-height:1.5;margin:0;}
-  .beta-item.highlight{background:var(--pq-cedar-soft);border-color:var(--pq-cedar);}
-  .beta-item.highlight svg{color:var(--pq-cedar);}
+  .beta-why{max-width:1080px;margin:0 auto;padding:10px 28px 56px;}
+  .beta-why h2{font-family:var(--pq-display);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.1;letter-spacing:-.01em;color:var(--pq-ink);margin:0 0 20px;padding-bottom:10px;border-bottom:3px solid var(--pq-cedar);}
+  .beta-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .beta-card{background:var(--pq-surface);border:1px solid var(--pq-line);border-radius:10px;padding:22px 24px;display:flex;flex-direction:column;}
+  .beta-card .head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .beta-card .head svg{width:30px;height:30px;color:var(--pq-slate);flex:none;}
+  .beta-card h3{font-family:var(--pq-display);font-weight:600;font-size:21px;line-height:1.15;margin:0;color:var(--pq-ink);}
+  .beta-card p{font-size:15.5px;line-height:1.5;color:var(--pq-sub);margin:0 0 12px;}
+  .beta-perk{margin-top:auto;font-size:15px;line-height:1.45;color:var(--pq-ink);}
+  .beta-perk i{font-style:normal;font-family:var(--pq-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--pq-cedar);margin-right:8px;}
+  .beta-card.cta{background:var(--pq-slate);border-color:var(--pq-slate);justify-content:center;align-items:flex-start;}
+  .beta-card.cta .tag{font-family:var(--pq-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--pq-cedar-soft);margin-bottom:8px;}
+  .beta-card.cta h3{color:#fff;font-size:26px;margin:0 0 8px;}
+  .beta-card.cta p{color:#D9DEE4;margin:0 0 18px;}
+  .landing .beta-card.cta .btn-primary{background:var(--pq-cedar);color:#fff;}
+  .landing .beta-card.cta .btn-primary:hover{background:#c96a34;}
 
-  .beta-fit{max-width:1080px;margin:0 auto;padding:0 28px;display:grid;grid-template-columns:1fr 1fr;gap:26px;}
-  .beta-fit-card{background:var(--pq-surface);border:1px solid var(--pq-line);border-radius:8px;padding:26px;}
-  .beta-fit-card h3{font-family:var(--pq-display);font-weight:600;font-size:18px;margin:0 0 14px;color:var(--pq-ink);}
-  .beta-fit-card ul{list-style:none;margin:0;padding:0;}
-  .beta-fit-card li{position:relative;padding:7px 0 7px 26px;color:var(--pq-sub);font-size:15px;line-height:1.5;}
-  .beta-fit-card li::before{content:"";position:absolute;left:0;top:12px;width:12px;height:12px;border-radius:50%;background:var(--pq-cedar-soft);border:2px solid var(--pq-cedar);}
-  .beta-fit-card p{color:var(--pq-sub);font-size:15px;line-height:1.6;margin:0 0 12px;}
-  .beta-fit-card p:last-child{margin-bottom:0;}
+  .beta-faq-wrap{padding:0 0 50px;}
+  .beta-faq-wrap .landing-section-head{margin-bottom:18px;}
   .beta-faq{max-width:760px;margin:0 auto;padding:0 28px;}
   .beta-faq details{border-top:1px solid var(--pq-line);padding:16px 0;}
   .beta-faq details:last-child{border-bottom:1px solid var(--pq-line);}
   .beta-faq summary{cursor:pointer;font-family:var(--pq-display);font-weight:600;font-size:16px;color:var(--pq-ink);}
   .beta-faq details p{color:var(--pq-sub);font-size:14.5px;line-height:1.6;margin:10px 0 0;}
-  .beta-spots{display:inline-block;font-family:var(--pq-mono);font-size:12px;color:var(--pq-sub);margin-top:14px;}
-  @media (max-width:900px){
-    .beta-grid{grid-template-columns:repeat(2,1fr);}
-    .beta-flow{grid-template-columns:1fr;gap:6px;padding:36px 28px;}
-    .beta-flow-arrow{transform:rotate(90deg);margin:0 auto;}
+
+  @media (max-width:860px){
+    .beta-hero{grid-template-columns:1fr;gap:18px;padding-top:32px;}
+    .beta-hero .lede{max-width:none;}
   }
-  @media (max-width:760px){ .beta-fit{grid-template-columns:1fr;} }
-  @media (max-width:480px){ .beta-grid{grid-template-columns:1fr;} }
+  @media (max-width:700px){ .beta-cards{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -73,163 +73,133 @@
     </nav>
   </header>
 
-  <section class="landing-hero">
-    <div class="landing-hero-grid no-video">
-      <div class="landing-hero-inner">
-        <span class="landing-eyebrow">Beta &middot; 10 spots &middot; free for life</span>
-        <h1>Your yard sign, <em>working harder.</em></h1>
-        <p>Put a QR code on your sign. Buyers scan it, see the home, and meet you on video before they ever call. The first 10 agents to join the beta test use FlyerBox free for life.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
-          <a class="btn btn-ghost" href="/scott-bird/listing?id=1227-n-50-w-7mck">See a live example &rarr;</a>
+  <section class="beta-hero">
+    <div>
+      <h1>The <em>Digital</em><br>FlyerBox</h1>
+      <p class="lede">&hellip;is finally here! Every listing gets its own flyer, its own video, and quick and easy to update.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
+        <a class="btn btn-ghost" href="/scott-bird/listing?id=1227-n-50-w-7mck">See a live example &rarr;</a>
+      </div>
+      <span class="beta-note">It takes only a couple minutes to set up</span>
+    </div>
+
+    <!-- Old way (paper flyer box on a sign) -> new way (QR code on the sign) -->
+    <svg class="illus" viewBox="0 0 420 256" fill="none" stroke="#3B4A5A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="A yard sign with a paper flyer box, replaced by a yard sign with a QR code">
+      <path d="M6 228h408" stroke="#DBDDD5" stroke-width="3"/>
+
+      <!-- LEFT: sign with a paper flyer box -->
+      <path d="M30 18v210M30 28h140"/>
+      <rect x="38" y="36" width="130" height="84" rx="4" fill="#fff"/>
+      <text x="103" y="62" text-anchor="middle" font-family="Karla, Arial" font-size="15" font-weight="800" fill="#3B4A5A" stroke="none" letter-spacing="1">FOR SALE</text>
+      <path d="M58 76h90M70 88h66M80 102h46" stroke="#DBDDD5" stroke-width="5"/>
+      <path d="M72 120v8M120 120v8" stroke-width="2"/>
+      <path d="M60 138l6-10h58l6 10z" fill="#23262B" stroke="#23262B" stroke-width="2"/>
+      <rect x="60" y="138" width="70" height="72" rx="3" fill="#23262B" stroke="#23262B" stroke-width="2"/>
+      <rect x="65" y="142" width="60" height="56" fill="#fff" stroke="none"/>
+      <rect x="68" y="145" width="54" height="24" fill="#F1DFCB" stroke="none"/>
+      <path d="M72 165l10-10 8 7 8-9 12 12z" fill="#B75A26" stroke="none" opacity=".75"/>
+      <text x="95" y="187" text-anchor="middle" font-family="Karla, Arial" font-size="11.5" font-weight="800" fill="#C0302A" stroke="none">TAKE ONE</text>
+      <rect x="60" y="198" width="70" height="12" rx="2" fill="#23262B" stroke="#23262B" stroke-width="2"/>
+      <circle cx="148" cy="188" r="13" fill="#B75A26" stroke="#fff" stroke-width="2.5"/>
+      <path d="M142 182l12 12M154 182l-12 12" stroke="#fff" stroke-width="3"/>
+      <text x="98" y="248" text-anchor="middle" font-family="Karla, Arial" font-size="11.5" font-weight="600" fill="#585F5C" stroke="none">Paper flyer box</text>
+
+      <path d="M182 82h46M220 73l9 9-9 9" stroke="#B75A26" stroke-width="3.4"/>
+
+      <!-- RIGHT: same sign, QR code instead -->
+      <path d="M258 18v210M258 28h140"/>
+      <rect x="266" y="36" width="130" height="84" rx="4" fill="#fff"/>
+      <text x="331" y="52" text-anchor="middle" font-family="Karla, Arial" font-size="10" font-weight="800" fill="#3B4A5A" stroke="none" letter-spacing="1">FOR SALE</text>
+      <rect x="304" y="58" width="54" height="54" rx="2" stroke-width="2"/>
+      <rect x="308" y="62" width="14" height="14" stroke-width="2.4"/><rect x="312" y="66" width="6" height="6" fill="#3B4A5A" stroke="none"/>
+      <rect x="340" y="62" width="14" height="14" stroke-width="2.4"/><rect x="344" y="66" width="6" height="6" fill="#3B4A5A" stroke="none"/>
+      <rect x="308" y="94" width="14" height="14" stroke-width="2.4"/><rect x="312" y="98" width="6" height="6" fill="#3B4A5A" stroke="none"/>
+      <g fill="#3B4A5A" stroke="none"><rect x="326" y="62" width="5" height="5"/><rect x="330" y="71" width="5" height="5"/><rect x="323" y="79" width="5" height="5"/><rect x="334" y="82" width="5" height="5"/><rect x="345" y="80" width="5" height="5"/><rect x="326" y="92" width="5" height="5"/><rect x="338" y="94" width="5" height="5"/><rect x="347" y="100" width="5" height="5"/><rect x="328" y="102" width="5" height="5"/></g>
+      <rect x="341" y="92" width="6" height="6" fill="#B75A26" stroke="none"/>
+      <text x="334" y="248" text-anchor="middle" font-family="Karla, Arial" font-size="12" font-weight="800" fill="#3B4A5A" stroke="none">Digital FlyerBox</text>
+    </svg>
+  </section>
+
+  <section class="beta-why">
+    <h2>Why Agents Switch</h2>
+    <div class="beta-cards">
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg>
+          <h3>A flyer for every listing</h3>
         </div>
-        <span class="beta-spots">It takes only a couple minutes to set up</span>
+        <p>Each home gets its own digital flyer, ready the moment the Realtor adds it.</p>
+        <div class="beta-perk"><i>Realtor</i>Make your sellers happy by always having updated flyers for every listing.</div>
       </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
+          <h3>A custom video for every home</h3>
+        </div>
+        <p>Every flyer showcases the home with a personalized video highlighting the property.</p>
+        <div class="beta-perk"><i>Realtor</i>Gets a warm introduction to the buyer.</div>
+      </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 8.8c-.4-.9-1.4-1.4-2.5-1.4-1.4 0-2.5.8-2.5 1.9 0 2.7 5.2 1.3 5.2 4 0 1.1-1.1 1.9-2.7 1.9-1.2 0-2.2-.5-2.7-1.4M12 6v1.4M12 16.6V18"/></svg>
+          <h3>Save Money</h3>
+        </div>
+        <p>One QR code for all your signs. Save time and money reprinting new codes for each listing.</p>
+        <div class="beta-perk"><i>Realtor</i>No more reprinting flyers or signs.</div>
+      </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>
+          <h3>Easy to use</h3>
+        </div>
+        <p>Syncs with the MLS and pulls in your full listing information.</p>
+        <div class="beta-perk"><i>Realtor</i>Enter an MLS number. The rest fills itself in.</div>
+      </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          <h3>Your own website</h3>
+        </div>
+        <p>Showcase your listings and your videos. Get your own page showing all your listings and an individual page for each listing.</p>
+        <div class="beta-perk"><i>Realtor</i>Keep one page. No separate site to build.</div>
+      </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <h3>Get comfortable on camera</h3>
+        </div>
+        <p>We'll show you how to record and help you write your scripts.</p>
+        <div class="beta-perk"><i>Realtor</i>Feel confident in front of the camera.</div>
+      </div>
+
+      <div class="beta-card">
+        <div class="head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
+          <h3>Control your QR codes</h3>
+        </div>
+        <p>Create unlimited QR codes customized to your business with the ability to change the URL for any code. Even redirect it to another site if you prefer.</p>
+        <div class="beta-perk"><i>Realtor</i>Update a code's link in seconds, without reprinting.</div>
+      </div>
+
+      <!-- Call to action (in the slot where the flyer has its QR code) -->
+      <div class="beta-card cta">
+        <div class="tag">Ready when you are</div>
+        <h3>Try the Digital FlyerBox</h3>
+        <p>Set up your account in a couple of minutes.</p>
+        <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
+      </div>
+
     </div>
   </section>
 
-  <!-- Scan -> See -> Call: the whole idea in three pictures. -->
-  <section class="landing-benefits">
-    <div class="beta-flow">
-      <div class="beta-flow-step">
-        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M16 88h64M48 52v36"/>
-          <rect x="16" y="8" width="64" height="44" rx="4"/>
-          <rect x="26" y="17" width="14" height="14" rx="2"/>
-          <rect x="56" y="17" width="14" height="14" rx="2"/>
-          <rect x="26" y="33" width="14" height="14" rx="2"/>
-          <path d="M45 33h4v4h-4M56 33h4M52 42h4M62 42h8"/>
-        </svg>
-        <h3>1. Scan</h3>
-        <p>A buyer scans the QR code on your sign.</p>
-      </div>
-      <div class="beta-flow-arrow" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </div>
-      <div class="beta-flow-step">
-        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="26" y="6" width="44" height="84" rx="7"/>
-          <path d="M26 20h44M26 76h44"/>
-          <rect x="33" y="27" width="30" height="20" rx="2"/>
-          <path d="M44 32l10 5-10 5z" fill="currentColor"/>
-          <path d="M33 54h30M33 61h22M33 68h16"/>
-        </svg>
-        <h3>2. See</h3>
-        <p>Your page opens with the home, the details and your video intro.</p>
-      </div>
-      <div class="beta-flow-arrow" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </div>
-      <div class="beta-flow-step">
-        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="48" cy="30" r="14"/>
-          <path d="M20 86c0-17 12-28 28-28s28 11 28 28"/>
-          <path d="M66 14c5 3 8 8 8 14M72 8c8 5 12 12 12 20"/>
-        </svg>
-        <h3>3. Call you</h3>
-        <p>They already know your face and your voice. They reach you in one tap.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="landing-features">
-    <div class="landing-section-head">
-      <span class="landing-eyebrow">What you get</span>
-      <h2>Everything you get as a beta user</h2>
-    </div>
-    <div class="beta-grid">
-      <div class="beta-item highlight">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
-        <h3>Free for life</h3>
-        <p>The first 10 beta users never pay, in exchange for your feedback.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3M19 14h2M14 19h2M19 19h2"/></svg>
-        <h3>QR codes in seconds</h3>
-        <p>Create a code for any listing in a couple of clicks.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-        <h3>One code, every listing</h3>
-        <p>Use the same QR code on all your signs. Scan it at a home and it opens that home.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h12M12 6l6 6-6 6M4 5v14"/></svg>
-        <h3>Point it anywhere</h3>
-        <p>Send a QR code to one of your own listings or to your own page.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
-        <h3>Unlimited custom codes</h3>
-        <p>Make as many QR codes as you like, for as many listings as you like.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>
-        <h3>A video for every listing</h3>
-        <p>Record a personal hello for each home, in your own words.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
-        <h3>Buyers meet you first</h3>
-        <p>They see your face and hear your voice before they pick up the phone.</p>
-      </div>
-      <div class="beta-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
-        <h3>Easy to update</h3>
-        <p>Change the price, status or video any time. The printed sign keeps working.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="landing-features" style="padding-top:0;">
-    <div class="landing-section-head">
-      <span class="landing-eyebrow">Getting started</span>
-      <h2>From MLS number to yard sign in minutes.</h2>
-    </div>
-    <div class="landing-steps">
-      <div class="landing-step">
-        <div class="landing-step-num">01</div>
-        <h3>Create your account</h3>
-        <p>Pick your page address and connect FlexMLS once. One click, about a minute.</p>
-      </div>
-      <div class="landing-step">
-        <div class="landing-step-num">02</div>
-        <h3>Add a listing</h3>
-        <p>Enter the MLS number and the price, photos and details fill in. Add a short video hello if you like.</p>
-      </div>
-      <div class="landing-step">
-        <div class="landing-step-num">03</div>
-        <h3>Print your QR code</h3>
-        <p>Put it on the sign. Every scan lands on your own branded page.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="landing-features" style="padding-top:0;">
-    <div class="landing-section-head">
-      <span class="landing-eyebrow">Who it's for</span>
-      <h2>We're looking for 10 agents who fit this.</h2>
-    </div>
-    <div class="beta-fit">
-      <div class="beta-fit-card">
-        <h3>A good fit if you...</h3>
-        <ul>
-          <li>Put yard signs on your listings</li>
-          <li>Use FlexMLS</li>
-          <li>Want more leads from the signs you already have</li>
-          <li>Are tired of paying to reprint signs and flyers</li>
-          <li>Want more exposure for your name, not just the property</li>
-        </ul>
-      </div>
-      <div class="beta-fit-card">
-        <h3>What the beta means</h3>
-        <p>FlyerBox is new. The first 10 agents who help us test it get the service free for life, plus 5 yard signs at no charge.</p>
-        <p>In return, we ask for your honest feedback.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="landing-features" style="padding-top:0;">
+  <section class="landing-features beta-faq-wrap">
     <div class="landing-section-head">
       <span class="landing-eyebrow">Questions</span>
       <h2>Quick answers.</h2>
@@ -252,11 +222,6 @@
         <p>Email <a href="mailto:support@flyerbox.net">support@flyerbox.net</a>.</p>
       </details>
     </div>
-  </section>
-
-  <section class="landing-cta-band">
-    <h2>Ready to put your sign to work?</h2>
-    <a class="btn btn-primary" href="/signup">Claim a beta spot</a>
   </section>
 
   <footer class="landing-footer">
