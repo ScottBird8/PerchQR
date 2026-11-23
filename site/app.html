@@ -120,6 +120,10 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 .field textarea{resize:vertical;min-height:70px;font-family:var(--mono);font-size:12.5px;}
 .field-hint{font-size:11.5px;color:var(--charcoal-soft);margin-top:4px;}
 .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+/* Cancel / Save also sit at the top of the listing form, and stay in view while scrolling. */
+.form-topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff;margin:-28px -28px 18px;padding:14px 28px;border-bottom:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0;}
+.form-topbar h2{margin:0!important;}
+.form-topbar-actions{display:flex;gap:10px;}
 .missing-banner{background:var(--maroon-wash);color:var(--maroon);border:1px solid var(--maroon);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px;}
 .thumb-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
 .thumb-chip{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;background:var(--bg);border:1px solid var(--line);}
@@ -430,7 +434,13 @@ select.qstatus{font-family:var(--mono);font-size:11.5px;padding:6px 8px;border-r
 <!-- Property add/edit form -->
 <div class="overlay" id="propertyOverlay">
   <div class="overlay-card">
-    <h2 id="propertyFormTitle">Add property</h2>
+    <div class="form-topbar">
+      <h2 id="propertyFormTitle">Add property</h2>
+      <div class="form-topbar-actions">
+        <button class="btn-sm" id="propertyCancelBtnTop" type="button">Cancel</button>
+        <button class="btn-sm primary" id="propertySaveBtnTop" type="button">Save property</button>
+      </div>
+    </div>
     <div id="missingBanner" class="missing-banner hidden"></div>
 
     <div class="field full" id="mlsLookupSection">
@@ -1616,6 +1626,15 @@ function openPropertyForm(id) {
 }
 document.getElementById('addPropertyBtn').addEventListener('click', () => openPropertyForm(null));
 document.getElementById('propertyCancelBtn').addEventListener('click', () => propertyOverlay.classList.remove('open'));
+// The Cancel / Save buttons at the top of the form just press the ones at the bottom,
+// so both places always behave identically (validation, "Saving…", errors).
+document.getElementById('propertyCancelBtnTop').addEventListener('click', () => document.getElementById('propertyCancelBtn').click());
+document.getElementById('propertySaveBtnTop').addEventListener('click', () => document.getElementById('propertySaveBtn').click());
+(() => {
+  const bottom = document.getElementById('propertySaveBtn'), top = document.getElementById('propertySaveBtnTop');
+  const mirror = () => { top.disabled = bottom.disabled; top.textContent = bottom.textContent; };
+  new MutationObserver(mirror).observe(bottom, { attributes: true, childList: true, characterData: true, subtree: true });
+})();
 
 document.getElementById('mlsLookupBtn').addEventListener('click', async () => {
   const mlsNumber = document.getElementById('f_mls_lookup').value.trim();
@@ -1698,6 +1717,7 @@ document.getElementById('propertySaveBtn').addEventListener('click', async () =>
   if (missing.length) {
     banner.textContent = 'Please fill in: ' + missing.join(', ');
     banner.classList.remove('hidden');
+    banner.scrollIntoView({ block: 'center', behavior: 'smooth' });  // the form is long; make sure it's seen
     return;
   }
   banner.classList.add('hidden');
